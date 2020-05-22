@@ -1,0 +1,28 @@
+[package]
+name = "bibliothecula"
+version = "0.1.0"
+authors = ["Manos Pitsidianakis <el13635@mail.ntua.gr>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+glib = "*"
+pango = "^0"
+unicode-segmentation = "1.6.0"
+rusqlite = { version = "0.23.1", features = [ "uuid", ] }
+uuid = { version = "0.8.0", features = [ "v5", ] }
+
+[dependencies.gtk]
+version = "0.8.1"
+features = ["v3_16"]
+
+[dependencies.gio]
+version = ""
+features = ["v2_44"]
+
+[profile.release]
+lto = true
+opt-level = "z"
+debug = false
+codegen-units = 1
