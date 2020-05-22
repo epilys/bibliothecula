@@ -19,6 +19,7 @@
  * along with bibliothecula. If not, see <http://www.gnu.org/licenses/>.
  */
 
+extern crate gdk;
 extern crate gio;
 extern crate glib;
 extern crate gtk;
@@ -27,11 +28,12 @@ extern crate pango;
 use gio::prelude::*;
 use gtk::prelude::*;
 
-use gtk::{Application, ApplicationWindow, Button};
+use gtk::Application;
 
 use glib::clone;
 use gtk::{IconSize, Orientation, ReliefStyle, Widget};
 
+use std::convert::TryInto;
 use std::rc::Rc;
 
 mod models;
@@ -40,7 +42,7 @@ mod widgets;
 use models::DatabaseConnection;
 use widgets::{EditDocumentFrame, Notebook};
 
-fn build_menu_bar(builder: &gtk::Builder) {
+fn build_menu_bar(builder: &gtk::Builder, conn: Rc<DatabaseConnection>) {
     let button: gtk::ToolButton = builder
         .get_object("new-button")
         .expect("Couldn't get new-button");
@@ -53,7 +55,10 @@ fn build_menu_bar(builder: &gtk::Builder) {
             if pages_no == 1 {
                 notebook.set_show_tabs(true);
             }
-            let edit_document_widget = EditDocumentFrame::new();
+            let edit_document_widget = EditDocumentFrame::new(
+
+        conn.clone()
+                );
             let idx = Notebook::create_tab(&notebook, "New Document", edit_document_widget.frame().upcast());
             let tab = notebook.get_nth_page(Some(idx)).unwrap();
             edit_document_widget.title_entry().connect_changed(clone!(@weak notebook as notebook, @weak tab as tab => move |slf| {
@@ -89,21 +94,31 @@ fn build_ui(application: &gtk::Application, conn: Rc<DatabaseConnection>) {
             &[0, 1, 2, 3, 4],
             &[
                 &d.title.as_str(),
-                &"",
-                &1,
-                &"",
+                &conn
+                    .get_authors(&d.uuid)
+                    .into_iter()
+                    .map(|t| t.1)
+                    .collect::<Vec<String>>()
+                    .join(", ")
+                    .as_str(),
+                &conn.get_files_no(&d.uuid).try_into().unwrap_or(0),
+                &conn
+                    .get_tags(&d.uuid)
+                    .into_iter()
+                    .map(|t| t.1)
+                    .collect::<Vec<String>>()
+                    .join(", ")
+                    .as_str(),
                 &d.uuid.to_string().as_str(),
             ],
         );
     }
-    build_menu_bar(&builder);
+    build_menu_bar(&builder, conn.clone());
     let notebook: gtk::Notebook = builder
         .get_object("global-notebook")
         .expect("Couldn't get window");
-    let edit_document_widget = EditDocumentFrame::new().with_document(
-        conn.clone(),
-        models::Document::new("Magna Carta".to_string()).uuid,
-    );
+    let edit_document_widget = EditDocumentFrame::new(conn.clone())
+        .with_document(models::Document::new("Magna Carta".to_string()).uuid);
     let _idx = Notebook::create_tab(
         &notebook,
         edit_document_widget

@@ -61,16 +61,15 @@ impl Notebook {
     }
 }
 
-pub struct EditDocumentFrame(gtk::Builder);
+pub struct EditDocumentFrame(gtk::Builder, Rc<DatabaseConnection>);
 
 impl EditDocumentFrame {
-    pub fn new() -> Self {
+    pub fn new(connection: Rc<DatabaseConnection>) -> Self {
         let widget_src = include_str!("./EditDocumentFrame.glade");
         let builder = gtk::Builder::new_from_string(widget_src);
 
         let add_file_button: gtk::Button = builder.get_object("add-file-button").unwrap();
         add_file_button.connect_clicked(clone!(@strong builder as parent_builder => move |_| {
-            println!("add_file_button!");
             let widget_src = include_str!("./AddFileAssistant.glade");
             let builder = gtk::Builder::new_from_string(widget_src);
             let assistant: gtk::Assistant = builder.get_object("add-file-assistant").unwrap();
@@ -104,7 +103,136 @@ impl EditDocumentFrame {
 
             assistant.show_all();
         }));
-        EditDocumentFrame(builder)
+        {
+            let author_cloud: gtk::IconView = builder.get_object("author_cloud").unwrap();
+            let author_open_item: gtk::MenuItem = builder.get_object("author_open_item").unwrap();
+            author_open_item.connect_activate(clone!(@strong builder as builder => move |_| {
+                let t: gtk::CellRendererText =
+                    builder.get_object("author_name_cell").unwrap();
+                //println!("{}", t.get_property_text().unwrap());
+                let uc: gtk::CellRendererText =
+                    builder.get_object("author_uuid_cell").unwrap();
+                //println!("{}", uc.get_property_text().unwrap());
+                let uuid = uc.get_property_text().unwrap();
+                println!("Open author with uuid {}", uuid);
+            }
+            ));
+            let author_remove_item: gtk::MenuItem =
+                builder.get_object("author_remove_item").unwrap();
+            author_remove_item.connect_activate(clone!(@strong builder as builder => move |_| {
+                let t: gtk::CellRendererText =
+                    builder.get_object("author_name_cell").unwrap();
+                //println!("{}", t.get_property_text().unwrap());
+                let uc: gtk::CellRendererText =
+                    builder.get_object("author_uuid_cell").unwrap();
+                //println!("{}", uc.get_property_text().unwrap());
+                let uuid = uc.get_property_text().unwrap();
+                println!("Remove author tag with uuid {}", uuid);
+            }));
+            author_cloud.connect_button_press_event({
+                let builder = builder.clone();
+                let author_cloud = author_cloud.clone();
+
+                move |this, event| {
+                    println!("{:?}", &event);
+                    if event.get_event_type() == gdk::EventType::ButtonPress
+                        && event.get_button() == 3
+                    {
+                        if let Some((x, y)) = event.get_coords() {
+                            if let Some((_, item)) =
+                                author_cloud.get_item_at_pos(x as i32, y as i32)
+                            {
+                                let t: gtk::CellRendererText =
+                                    item.downcast::<gtk::CellRendererText>().unwrap();
+                                println!("{}", t.get_property_text().unwrap());
+                                let uc: gtk::CellRendererText =
+                                    builder.get_object("author_uuid_cell").unwrap();
+                                println!("{}", uc.get_property_text().unwrap());
+                                let author_name_header_menu: gtk::MenuItem =
+                                    builder.get_object("author_name_title").unwrap();
+                                author_name_header_menu
+                                    .set_label(t.get_property_text().unwrap().as_str());
+                                let author_uuid_header_menu: gtk::MenuItem =
+                                    builder.get_object("author_uuid_item").unwrap();
+                                author_uuid_header_menu.set_label(&format!(
+                                    "Uuid: {}",
+                                    uc.get_property_text().unwrap().as_str()
+                                ));
+                                let menu: gtk::Menu = builder.get_object("author_menu").unwrap();
+                                menu.set_property_attach_widget(Some(this));
+
+                                menu.show_all();
+                                menu.popup_easy(event.get_button(), event.get_time());
+                                return Inhibit(true); //It has been handled.
+                            }
+                        }
+                    }
+                    Inhibit(false)
+                }
+            });
+        }
+        let tag_cloud: gtk::IconView = builder.get_object("tag_cloud").unwrap();
+        tag_cloud.connect_button_press_event({
+            let builder = builder.clone();
+            let tag_cloud = tag_cloud.clone();
+
+            move |this, event| {
+                println!("{:?}", &event);
+                if event.get_event_type() == gdk::EventType::ButtonPress && event.get_button() == 3
+                {
+                    if let Some((x, y)) = event.get_coords() {
+                        if let Some((_, item)) = tag_cloud.get_item_at_pos(x as i32, y as i32) {
+                            let t: gtk::CellRendererText =
+                                item.downcast::<gtk::CellRendererText>().unwrap();
+                            println!("{}", t.get_property_text().unwrap());
+                            let uc: gtk::CellRendererText =
+                                builder.get_object("tag_uuid_cell").unwrap();
+                            println!("{}", uc.get_property_text().unwrap());
+                            let tag_name_header_menu: gtk::MenuItem =
+                                builder.get_object("tag_name_header_item").unwrap();
+                            tag_name_header_menu.set_label(t.get_property_text().unwrap().as_str());
+                            let tag_uuid_header_menu: gtk::MenuItem =
+                                builder.get_object("tag_uuid_item").unwrap();
+                            tag_uuid_header_menu.set_label(&format!(
+                                "Uuid: {}",
+                                uc.get_property_text().unwrap().as_str()
+                            ));
+                            let menu: gtk::Menu = builder.get_object("tag_menu").unwrap();
+                            menu.set_property_attach_widget(Some(this));
+
+                            menu.show_all();
+                            menu.popup_easy(event.get_button(), event.get_time());
+                            return Inhibit(true); //It has been handled.
+                        }
+                    }
+                }
+                Inhibit(false)
+            }
+        });
+        let tag_open_item: gtk::MenuItem = builder.get_object("tag_open_item").unwrap();
+        tag_open_item.connect_activate(clone!(@strong builder as builder => move |_| {
+            let t: gtk::CellRendererText =
+                builder.get_object("tag_name_cell").unwrap();
+            //println!("{}", t.get_property_text().unwrap());
+            let uc: gtk::CellRendererText =
+                builder.get_object("tag_uuid_cell").unwrap();
+            //println!("{}", uc.get_property_text().unwrap());
+            let uuid = uc.get_property_text().unwrap();
+            println!("Open tag with uuid {}", uuid);
+        }
+        ));
+        let tag_remove_item: gtk::MenuItem = builder.get_object("tag_remove_item").unwrap();
+        tag_remove_item.connect_activate(clone!(@strong builder as builder => move |_| {
+            let t: gtk::CellRendererText =
+                builder.get_object("tag_name_cell").unwrap();
+            //println!("{}", t.get_property_text().unwrap());
+            let uc: gtk::CellRendererText =
+                builder.get_object("tag_uuid_cell").unwrap();
+            //println!("{}", uc.get_property_text().unwrap());
+            let uuid = uc.get_property_text().unwrap();
+            println!("Remove tag tag with uuid {}", uuid);
+        }));
+        EditDocumentFrame(builder, connection)
     }
 
     pub fn frame(&self) -> gtk::Frame {
@@ -120,39 +248,22 @@ impl EditDocumentFrame {
         title_entry
     }
 
-    pub fn with_document(
-        self,
-        connection: Rc<DatabaseConnection>,
-        uuid: models::DocumentUuid,
-    ) -> Self {
+    pub fn with_document(self, uuid: models::DocumentUuid) -> Self {
+        let connection = &self.1;
         let d: crate::models::Document = connection.get(&uuid);
         self.title_entry().set_text(d.title.as_str());
         for f in connection.get_files(&uuid) {
-            let file_list_box: gtk::ListBox = self.0.get_object("file-list-box").unwrap();
-            file_list_box.set_visible(true);
-            let button = gtk::Button::new();
-            let label = gtk::Label::new(Some(&format!(
-                "{} ({})",
+            self.add_file_entry(
+                &format!(
+                    "{} ({})",
+                    match f.1 {
+                        crate::models::StorageType::Local(ref path) => path.display().to_string(),
+                        crate::models::StorageType::InDatabase(ref mime_type) =>
+                            mime_type.to_string(),
+                    },
+                    Bytes(f.2)
+                ),
                 match f.1 {
-                    crate::models::StorageType::Local(ref path) => path.display().to_string(),
-                    crate::models::StorageType::InDatabase(ref mime_type) => mime_type.to_string(),
-                },
-                Bytes((f.2))
-            )));
-            /*
-            label.set_attributes(Some(&{
-                let list = pango::AttrList::new();
-                list.insert(
-                    pango::Attribute::new_background(std::u16::MAX, std::u16::MAX, std::u16::MAX)
-                        .unwrap(),
-                );
-                list
-            }));
-            */
-            let entry = gtk::Box::new(Orientation::Horizontal, 0);
-
-            let open_image = gtk::Image::new_from_icon_name(
-                Some(match f.1 {
                     crate::models::StorageType::Local(_) => "document-open",
                     crate::models::StorageType::InDatabase(ref mime_type) => {
                         match mime_type.as_str() {
@@ -160,38 +271,81 @@ impl EditDocumentFrame {
                             _ => "document-open",
                         }
                     }
-                }),
-                IconSize::Button,
-            );
-            button.set_relief(ReliefStyle::None);
-            button.set_focus_on_click(false);
-            button.add(&open_image);
-            button.set_tooltip_text(Some(match f.1 {
-                crate::models::StorageType::Local(_) => "Open with xdg-open",
-                crate::models::StorageType::InDatabase(ref mime_type) => match mime_type.as_str() {
-                    "text/plain" => "View text in a new window",
-                    _ => "Open with xdg-open",
                 },
-            }));
-
-            entry.pack_start(&label, false, false, 0);
-            entry.pack_start(&button, false, false, 0);
-            entry.show_all();
-            file_list_box.prepend(&entry);
-            let u = f.0.clone();
-            button.connect_clicked(clone!(@weak connection as connection => move |_| {
-                let bytes = connection.get_data(&u);
-                let data = String::from_utf8_lossy(&bytes);
-                let viewer = TextViewerWindow::new().set_text(&data);
-                viewer.window().set_position(gtk::WindowPosition::Center);
-                viewer.window().set_default_size(640, 480);
-                viewer.window().show_all();
-
-                println!("edit {:?}", &u);
-            }));
+                match f.1 {
+                    crate::models::StorageType::Local(_) => "Open with xdg-open",
+                    crate::models::StorageType::InDatabase(ref mime_type) => {
+                        match mime_type.as_str() {
+                            "text/plain" => "View text in a new window",
+                            _ => "Open with xdg-open",
+                        }
+                    }
+                },
+                f.0,
+            );
             println!("{:?}", f);
         }
+        for a in connection.get_authors(&uuid) {
+            self.add_author_entry(&a.1, a.0);
+        }
+        for t in connection.get_tags(&uuid) {
+            self.add_tag_entry(&t.1, t.0);
+        }
         self
+    }
+
+    pub fn add_file_entry(
+        &self,
+        label_text: &str,
+        icon_name: &str,
+        button_tooltip_text: &str,
+        uuid: models::MetadataUuid,
+    ) {
+        let connection = &self.1;
+        let file_list_box: gtk::ListBox = self.0.get_object("file-list-box").unwrap();
+        file_list_box.set_visible(true);
+
+        let file_entry_builder = gtk::Builder::new_from_string(include_str!("./FileSlotBox.glade"));
+        let button = gtk::Button::new();
+        let label: gtk::Label = file_entry_builder
+            .get_object("file_identifier_label")
+            .unwrap();
+        label.set_text(label_text);
+
+        let open_image = gtk::Image::new_from_icon_name(Some(icon_name), IconSize::Button);
+        button.set_relief(ReliefStyle::None);
+        button.set_focus_on_click(false);
+        button.add(&open_image);
+        button.set_tooltip_text(Some(button_tooltip_text));
+        let button_box: gtk::ButtonBox = file_entry_builder.get_object("file_button_box").unwrap();
+        button_box.add(&button);
+
+        let entry: gtk::Box = file_entry_builder.get_object("file_slot_box").unwrap();
+        file_list_box.prepend(&entry);
+        button.connect_clicked(clone!(@weak connection as connection => move |_| {
+            let bytes = connection.get_data(&uuid);
+            let data = String::from_utf8_lossy(&bytes);
+            let viewer = TextViewerWindow::new().set_text(&data);
+            viewer.window().set_position(gtk::WindowPosition::Center);
+            viewer.window().set_default_size(640, 480);
+            viewer.window().show_all();
+
+            println!("edit {:?}", &uuid);
+        }));
+    }
+
+    pub fn add_tag_entry(&self, label_text: &str, uuid: models::MetadataUuid) {
+        let tag_cloud: gtk::IconView = self.0.get_object("tag_cloud").unwrap();
+        tag_cloud.set_visible(true);
+        let tag_store: gtk::ListStore = self.0.get_object("tag_store").unwrap();
+        tag_store.insert_with_values(None, &[0, 1], &[&uuid.to_string().as_str(), &label_text]);
+    }
+
+    pub fn add_author_entry(&self, label_text: &str, uuid: models::MetadataUuid) {
+        let author_cloud: gtk::IconView = self.0.get_object("author_cloud").unwrap();
+        author_cloud.set_visible(true);
+        let author_store: gtk::ListStore = self.0.get_object("author_store").unwrap();
+        author_store.insert_with_values(None, &[0, 1], &[&uuid.to_string().as_str(), &label_text]);
     }
 }
 

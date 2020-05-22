@@ -21,6 +21,9 @@ features = ["v3_16"]
 version = ""
 features = ["v2_44"]
 
+[dependencies.gdk]
+version = "0.12.1"
+
 [profile.release]
 lto = true
 opt-level = "z"

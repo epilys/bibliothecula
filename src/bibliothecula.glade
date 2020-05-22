@@ -39,15 +39,6 @@
       <!-- column-name uuid -->
       <column type="gchararray"/>
     </columns>
-    <data>
-      <row>
-        <col id="0">test title</col>
-        <col id="1" translatable="yes">tesst authors</col>
-        <col id="2">0</col>
-        <col id="3" translatable="yes"> tags</col>
-        <col id="4" translatable="yes">0000-0000</col>
-      </row>
-    </data>
   </object>
   <object class="GtkWindow" id="main-window">
     <property name="can_focus">False</property>
@@ -316,6 +307,7 @@
                     </child>
                     <child>
                       <object class="GtkTreeViewColumn">
+                        <property name="resizable">True</property>
                         <property name="min_width">7</property>
                         <property name="title" translatable="yes">Authors</property>
                         <property name="reorderable">True</property>
@@ -342,6 +334,7 @@
                     </child>
                     <child>
                       <object class="GtkTreeViewColumn">
+                        <property name="resizable">True</property>
                         <property name="min_width">7</property>
                         <property name="title" translatable="yes">Tags</property>
                         <property name="reorderable">True</property>
