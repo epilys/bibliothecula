@@ -42,7 +42,7 @@ mod widgets;
 use models::DatabaseConnection;
 use widgets::{EditDocumentFrame, Notebook};
 
-fn build_menu_bar(builder: &gtk::Builder, conn: Rc<DatabaseConnection>) {
+fn build_menu_bar(builder: Rc<gtk::Builder>, conn: Rc<DatabaseConnection>) {
     let button: gtk::ToolButton = builder
         .get_object("new-button")
         .expect("Couldn't get new-button");
@@ -50,15 +50,12 @@ fn build_menu_bar(builder: &gtk::Builder, conn: Rc<DatabaseConnection>) {
         .get_object("global-notebook")
         .expect("Couldn't get window");
     button.connect_clicked(
-        clone!(@strong notebook as notebook => move |_| {
+        clone!(@strong notebook as notebook, @strong builder as builder => move |_| {
             let pages_no = notebook.get_n_pages();
             if pages_no == 1 {
                 notebook.set_show_tabs(true);
             }
-            let edit_document_widget = EditDocumentFrame::new(
-
-        conn.clone()
-                );
+            let edit_document_widget = EditDocumentFrame::new( conn.clone(), builder.clone());
             let idx = Notebook::create_tab(&notebook, "New Document", edit_document_widget.frame().upcast());
             let tab = notebook.get_nth_page(Some(idx)).unwrap();
             edit_document_widget.title_entry().connect_changed(clone!(@weak notebook as notebook, @weak tab as tab => move |slf| {
@@ -77,7 +74,7 @@ fn build_menu_bar(builder: &gtk::Builder, conn: Rc<DatabaseConnection>) {
 
 fn build_ui(application: &gtk::Application, conn: Rc<DatabaseConnection>) {
     let glade_src = include_str!("./bibliothecula.glade");
-    let builder = gtk::Builder::new_from_string(glade_src);
+    let builder = Rc::new(gtk::Builder::new_from_string(glade_src));
     let window: gtk::Window = builder
         .get_object("main-window")
         .expect("Couldn't get window");
@@ -113,11 +110,11 @@ fn build_ui(application: &gtk::Application, conn: Rc<DatabaseConnection>) {
             ],
         );
     }
-    build_menu_bar(&builder, conn.clone());
+    build_menu_bar(builder.clone(), conn.clone());
     let notebook: gtk::Notebook = builder
         .get_object("global-notebook")
         .expect("Couldn't get window");
-    let edit_document_widget = EditDocumentFrame::new(conn.clone())
+    let edit_document_widget = EditDocumentFrame::new(conn.clone(), builder.clone())
         .with_document(models::Document::new("Magna Carta".to_string()).uuid);
     let _idx = Notebook::create_tab(
         &notebook,

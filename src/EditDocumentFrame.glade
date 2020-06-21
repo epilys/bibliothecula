@@ -486,8 +486,12 @@
         </child>
       </object>
     </child>
-    <child type="label_item">
-      <placeholder/>
+    <child type="label">
+      <object class="GtkLabel" id="uuid_label">
+        <property name="sensitive">False</property>
+        <property name="can_focus">False</property>
+        <property name="double_buffered">False</property>
+      </object>
     </child>
   </object>
 </interface>

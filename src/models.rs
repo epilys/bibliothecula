@@ -40,6 +40,12 @@ macro_rules! uuid_hash_type {
             }
         }
 
+        impl From<&str> for $n {
+            fn from(from: &str) -> Self {
+                $n(Uuid::parse_str(from).unwrap())
+            }
+        }
+
         impl $n {
             /*
             fn new() -> Self {
@@ -248,6 +254,30 @@ impl DatabaseConnection {
             params![uuid.inner(), metadata_uuid.inner()],
         )?;
         Ok(metadata_uuid)
+    }
+
+    pub fn remove_tag_from_document(
+        &self,
+        metadata_uuid: &MetadataUuid,
+        uuid: &DocumentUuid,
+    ) -> Result<()> {
+        self.0.execute(
+            "DELETE FROM DocumentHasTag where document_uuid = ?1 AND metadata_uuid = ?2",
+            params![uuid.inner(), metadata_uuid.inner()],
+        )?;
+        Ok(())
+    }
+
+    pub fn remove_metadata_from_document(
+        &self,
+        metadata_uuid: &MetadataUuid,
+        uuid: &DocumentUuid,
+    ) -> Result<()> {
+        self.0.execute(
+            "DELETE FROM DocumentHasMetadata where document_uuid = ?1 AND metadata_uuid = ?2",
+            params![uuid.inner(), metadata_uuid.inner()],
+        )?;
+        Ok(())
     }
 
     pub fn insert_storage(

@@ -61,15 +61,19 @@ impl Notebook {
     }
 }
 
-pub struct EditDocumentFrame(gtk::Builder, Rc<DatabaseConnection>);
+pub struct EditDocumentFrame {
+    builder: gtk::Builder,
+    parent_builder: Rc<gtk::Builder>,
+    connection: Rc<DatabaseConnection>,
+}
 
 impl EditDocumentFrame {
-    pub fn new(connection: Rc<DatabaseConnection>) -> Self {
+    pub fn new(connection: Rc<DatabaseConnection>, parent_builder: Rc<gtk::Builder>) -> Self {
         let widget_src = include_str!("./EditDocumentFrame.glade");
         let builder = gtk::Builder::new_from_string(widget_src);
 
         let add_file_button: gtk::Button = builder.get_object("add-file-button").unwrap();
-        add_file_button.connect_clicked(clone!(@strong builder as parent_builder => move |_| {
+        add_file_button.connect_clicked(clone!(@strong builder as parent_builder, @strong connection as connection => move |_| {
             let widget_src = include_str!("./AddFileAssistant.glade");
             let builder = gtk::Builder::new_from_string(widget_src);
             let assistant: gtk::Assistant = builder.get_object("add-file-assistant").unwrap();
@@ -119,7 +123,7 @@ impl EditDocumentFrame {
             ));
             let author_remove_item: gtk::MenuItem =
                 builder.get_object("author_remove_item").unwrap();
-            author_remove_item.connect_activate(clone!(@strong builder as builder => move |_| {
+            author_remove_item.connect_activate(clone!(@strong builder as builder, @strong connection as connection => move |_| {
                 let t: gtk::CellRendererText =
                     builder.get_object("author_name_cell").unwrap();
                 //println!("{}", t.get_property_text().unwrap());
@@ -128,6 +132,30 @@ impl EditDocumentFrame {
                 //println!("{}", uc.get_property_text().unwrap());
                 let uuid = uc.get_property_text().unwrap();
                 println!("Remove author tag with uuid {}", uuid);
+
+                let dialog = gtk::Dialog::new_with_buttons::<gtk::Window>(Some("Remove tag?"), None, gtk::DialogFlags::MODAL, &[("No", gtk::ResponseType::No), ("Yes", gtk::ResponseType::Yes), ]);
+                let text = gtk::Label::new(Some("Remove author tag? This will not delete the tag."));
+                dialog.get_content_area().add(&text);
+                dialog.show_all();
+
+                let ret = dialog.run();
+
+                dialog.destroy();
+                println!("{:?}", ret);
+                if ret == gtk::ResponseType::Yes {
+                    let document_label =
+                        builder.get_object::<gtk::Label>("uuid_label").unwrap().get_text();
+                    if !document_label.as_ref().map(|g| g.as_str()).unwrap_or_default().is_empty() {
+                        connection.remove_metadata_from_document(&uuid.as_str().into(), &document_label.unwrap().as_str().into()).unwrap();
+                    }
+                    let author_store: gtk::ListStore = builder.get_object("author_store").unwrap();
+                    let author_cloud: gtk::IconView = builder.get_object("author_cloud").unwrap();
+                    let selected = author_cloud.get_selected_items();
+                    for path in selected {
+                        let idx = author_store.get_iter(&path).unwrap();
+                        author_store.remove(&idx);
+                    }
+                }
             }));
             author_cloud.connect_button_press_event({
                 let builder = builder.clone();
@@ -139,9 +167,10 @@ impl EditDocumentFrame {
                         && event.get_button() == 3
                     {
                         if let Some((x, y)) = event.get_coords() {
-                            if let Some((_, item)) =
+                            if let Some((treepath, item)) =
                                 author_cloud.get_item_at_pos(x as i32, y as i32)
                             {
+                                author_cloud.select_path(&treepath);
                                 let t: gtk::CellRendererText =
                                     item.downcast::<gtk::CellRendererText>().unwrap();
                                 println!("{}", t.get_property_text().unwrap());
@@ -232,26 +261,30 @@ impl EditDocumentFrame {
             let uuid = uc.get_property_text().unwrap();
             println!("Remove tag tag with uuid {}", uuid);
         }));
-        EditDocumentFrame(builder, connection)
+        EditDocumentFrame{builder, connection, parent_builder}
     }
 
     pub fn frame(&self) -> gtk::Frame {
         let edit_document_frame: gtk::Frame = self
-            .0
+            .builder
             .get_object("EditDocumentFrame")
             .expect("Could not build EditDocumentFrame");
         edit_document_frame
     }
 
     pub fn title_entry(&self) -> gtk::Entry {
-        let title_entry: gtk::Entry = self.0.get_object("title-entry").unwrap();
+        let title_entry: gtk::Entry = self.builder.get_object("title-entry").unwrap();
         title_entry
     }
 
     pub fn with_document(self, uuid: models::DocumentUuid) -> Self {
-        let connection = &self.1;
+        let connection = &self.connection;
         let d: crate::models::Document = connection.get(&uuid);
         self.title_entry().set_text(d.title.as_str());
+        self.builder
+            .get_object::<gtk::Label>("uuid_label")
+            .unwrap()
+            .set_text(d.uuid.to_string().as_str());
         for f in connection.get_files(&uuid) {
             self.add_file_entry(
                 &format!(
@@ -301,8 +334,8 @@ impl EditDocumentFrame {
         button_tooltip_text: &str,
         uuid: models::MetadataUuid,
     ) {
-        let connection = &self.1;
-        let file_list_box: gtk::ListBox = self.0.get_object("file-list-box").unwrap();
+        let connection = &self.connection;
+        let file_list_box: gtk::ListBox = self.builder.get_object("file-list-box").unwrap();
         file_list_box.set_visible(true);
 
         let file_entry_builder = gtk::Builder::new_from_string(include_str!("./FileSlotBox.glade"));
@@ -335,16 +368,16 @@ impl EditDocumentFrame {
     }
 
     pub fn add_tag_entry(&self, label_text: &str, uuid: models::MetadataUuid) {
-        let tag_cloud: gtk::IconView = self.0.get_object("tag_cloud").unwrap();
+        let tag_cloud: gtk::IconView = self.builder.get_object("tag_cloud").unwrap();
         tag_cloud.set_visible(true);
-        let tag_store: gtk::ListStore = self.0.get_object("tag_store").unwrap();
+        let tag_store: gtk::ListStore = self.builder.get_object("tag_store").unwrap();
         tag_store.insert_with_values(None, &[0, 1], &[&uuid.to_string().as_str(), &label_text]);
     }
 
     pub fn add_author_entry(&self, label_text: &str, uuid: models::MetadataUuid) {
-        let author_cloud: gtk::IconView = self.0.get_object("author_cloud").unwrap();
+        let author_cloud: gtk::IconView = self.builder.get_object("author_cloud").unwrap();
         author_cloud.set_visible(true);
-        let author_store: gtk::ListStore = self.0.get_object("author_store").unwrap();
+        let author_store: gtk::ListStore = self.builder.get_object("author_store").unwrap();
         author_store.insert_with_values(None, &[0, 1], &[&uuid.to_string().as_str(), &label_text]);
     }
 }
@@ -400,5 +433,16 @@ impl core::fmt::Display for Bytes {
         } else {
             write!(f, "{:.2} PiB", bytes / PETABYTE)
         }
+    }
+}
+
+
+trait StoreExt {
+    fn len(&self) -> i32;
+}
+
+impl StoreExt for gtk::ListStore {
+    fn len(&self) -> i32{
+         self.iter_n_children(None)
     }
 }
