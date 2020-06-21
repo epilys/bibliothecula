@@ -25,6 +25,31 @@
   <object class="GtkMenu" id="main-tree-view-context-menu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="main-tree-view-context-menu-name-header-item">
+        <property name="visible">True</property>
+        <property name="sensitive">False</property>
+        <property name="can_focus">False</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="main-tree-view-context-menu-uuid-header-item">
+        <property name="visible">True</property>
+        <property name="sensitive">False</property>
+        <property name="can_focus">False</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="main-tree-view-context-menu-open-item-in-new-tab">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Open In New Tab</property>
+        <property name="use_underline">True</property>
+        <accelerator key="a" signal="activate"/>
+      </object>
+    </child>
   </object>
   <object class="GtkListStore" id="main-tree-view-list-store">
     <columns>

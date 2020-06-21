@@ -40,9 +40,9 @@ macro_rules! uuid_hash_type {
             }
         }
 
-        impl From<&str> for $n {
-            fn from(from: &str) -> Self {
-                $n(Uuid::parse_str(from).unwrap())
+        impl<S: AsRef<str>> From<S> for $n {
+            fn from(from: S) -> Self {
+                $n(Uuid::parse_str(from.as_ref()).unwrap())
             }
         }
 

@@ -20,10 +20,27 @@
  */
 
 use super::*;
-pub struct Notebook;
+mod edit_document_frame;
+pub use edit_document_frame::*;
+
+mod text_viewer;
+pub use text_viewer::*;
+
+pub struct Notebook {
+    builder: Rc<gtk::Builder>,
+    conn: Rc<DatabaseConnection>,
+}
 
 impl Notebook {
-    pub fn create_tab(notebook: &gtk::Notebook, title: &str, widget: Widget) -> u32 {
+    pub fn new(builder: Rc<gtk::Builder>, conn: Rc<DatabaseConnection>) -> Self {
+        Self { builder, conn }
+    }
+
+    pub fn create_tab(&self, title: &str, widget: Widget) -> u32 {
+        let notebook: gtk::Notebook = self
+            .builder
+            .get_object("global-notebook")
+            .expect("Couldn't get window");
         let close_image = gtk::Image::new_from_icon_name(Some("window-close"), IconSize::Button);
         let button = gtk::Button::new();
         let label = gtk::Label::new(Some(title));
@@ -59,135 +76,77 @@ impl Notebook {
 
         index
     }
-}
 
-pub struct EditDocumentFrame {
-    builder: gtk::Builder,
-    parent_builder: Rc<gtk::Builder>,
-    connection: Rc<DatabaseConnection>,
-}
-
-impl EditDocumentFrame {
-    pub fn new(connection: Rc<DatabaseConnection>, parent_builder: Rc<gtk::Builder>) -> Self {
-        let widget_src = include_str!("./EditDocumentFrame.glade");
-        let builder = gtk::Builder::new_from_string(widget_src);
-
-        let add_file_button: gtk::Button = builder.get_object("add-file-button").unwrap();
-        add_file_button.connect_clicked(clone!(@strong builder as parent_builder, @strong connection as connection => move |_| {
-            let widget_src = include_str!("./AddFileAssistant.glade");
-            let builder = gtk::Builder::new_from_string(widget_src);
-            let assistant: gtk::Assistant = builder.get_object("add-file-assistant").unwrap();
-            assistant.connect_close(clone!(@strong builder as builder => move |_| {
-                let assistant: gtk::Assistant = builder.get_object("add-file-assistant").unwrap();
-                assistant.destroy();
-            }));
-            assistant.connect_cancel(clone!(@strong builder as builder => move |_| {
-                let assistant: gtk::Assistant = builder.get_object("add-file-assistant").unwrap();
-                assistant.destroy();
-            }));
-            assistant.connect_apply(clone!(@strong builder as builder => move |_| {
-            }));
-            assistant.set_forward_page_func(Some(Box::new(clone!(@strong builder as _builder => move |current_page:i32| {
-                println!("current_page: {}", current_page);
-                current_page + 1
-            }))));
-            let embedded_radio_button: gtk::RadioButton = builder.get_object("embedded-radio-button").unwrap();
-            embedded_radio_button.set_active(true);
-            let select_file_radio_button: gtk::RadioButton = builder.get_object("select-file-radio-button").unwrap();
-            select_file_radio_button.set_active(true);
-            select_file_radio_button.connect_toggled(clone!(@strong builder as builder => move |b| {
-                let file_chooser_button: gtk::FileChooserButton = builder.get_object("file-chooser-button").unwrap();
-                file_chooser_button.set_sensitive(b.get_active());
-            }));
-            let direct_input_radio_button: gtk::RadioButton = builder.get_object("direct-input-radio-button").unwrap();
-            direct_input_radio_button.connect_toggled(clone!(@strong builder as builder => move |b| {
-                let direct_input_text_view: gtk::TextView = builder.get_object("direct-input-text-view").unwrap();
-                direct_input_text_view.set_sensitive(b.get_active());
-            }));
-
-            assistant.show_all();
-        }));
-        {
-            let author_cloud: gtk::IconView = builder.get_object("author_cloud").unwrap();
-            let author_open_item: gtk::MenuItem = builder.get_object("author_open_item").unwrap();
-            author_open_item.connect_activate(clone!(@strong builder as builder => move |_| {
-                let t: gtk::CellRendererText =
-                    builder.get_object("author_name_cell").unwrap();
-                //println!("{}", t.get_property_text().unwrap());
-                let uc: gtk::CellRendererText =
-                    builder.get_object("author_uuid_cell").unwrap();
-                //println!("{}", uc.get_property_text().unwrap());
-                let uuid = uc.get_property_text().unwrap();
-                println!("Open author with uuid {}", uuid);
+    pub fn build_menu_bar(&self) {
+        let Self {
+            ref builder,
+            ref conn,
+        } = self;
+        let button: gtk::ToolButton = builder
+            .get_object("new-button")
+            .expect("Couldn't get new-button");
+        button.connect_clicked(
+        clone!(@strong conn as conn, @strong builder as builder => move |_| {
+        let notebook: gtk::Notebook = builder
+            .get_object("global-notebook")
+            .expect("Couldn't get window");
+            let pages_no = notebook.get_n_pages();
+            if pages_no == 1 {
+                notebook.set_show_tabs(true);
             }
-            ));
-            let author_remove_item: gtk::MenuItem =
-                builder.get_object("author_remove_item").unwrap();
-            author_remove_item.connect_activate(clone!(@strong builder as builder, @strong connection as connection => move |_| {
-                let t: gtk::CellRendererText =
-                    builder.get_object("author_name_cell").unwrap();
-                //println!("{}", t.get_property_text().unwrap());
-                let uc: gtk::CellRendererText =
-                    builder.get_object("author_uuid_cell").unwrap();
-                //println!("{}", uc.get_property_text().unwrap());
-                let uuid = uc.get_property_text().unwrap();
-                println!("Remove author tag with uuid {}", uuid);
-
-                let dialog = gtk::Dialog::new_with_buttons::<gtk::Window>(Some("Remove tag?"), None, gtk::DialogFlags::MODAL, &[("No", gtk::ResponseType::No), ("Yes", gtk::ResponseType::Yes), ]);
-                let text = gtk::Label::new(Some("Remove author tag? This will not delete the tag."));
-                dialog.get_content_area().add(&text);
-                dialog.show_all();
-
-                let ret = dialog.run();
-
-                dialog.destroy();
-                println!("{:?}", ret);
-                if ret == gtk::ResponseType::Yes {
-                    let document_label =
-                        builder.get_object::<gtk::Label>("uuid_label").unwrap().get_text();
-                    if !document_label.as_ref().map(|g| g.as_str()).unwrap_or_default().is_empty() {
-                        connection.remove_metadata_from_document(&uuid.as_str().into(), &document_label.unwrap().as_str().into()).unwrap();
-                    }
-                    let author_store: gtk::ListStore = builder.get_object("author_store").unwrap();
-                    let author_cloud: gtk::IconView = builder.get_object("author_cloud").unwrap();
-                    let selected = author_cloud.get_selected_items();
-                    for path in selected {
-                        let idx = author_store.get_iter(&path).unwrap();
-                        author_store.remove(&idx);
-                    }
+            let edit_document_widget = EditDocumentFrame::new( conn.clone(), builder.clone());
+            let idx = Self { builder: builder.clone(), conn: conn.clone() }.create_tab("New Document", edit_document_widget.frame().upcast());
+            let tab = notebook.get_nth_page(Some(idx)).unwrap();
+            edit_document_widget.title_entry().connect_changed(clone!(@weak notebook as notebook, @weak tab as tab => move |slf| {
+                let label_box: gtk::Box = notebook.get_tab_label(&tab).unwrap().downcast().unwrap();
+                let label: gtk::Label = label_box.get_children().remove(0).downcast().unwrap();
+                if let Some(title) = slf.get_text().and_then(|title| if title.as_str().is_empty() { None } else { Some(title) }) {
+                    label.set_label(&format!("{} (unsaved)", title.as_str()));
+                } else {
+                    label.set_label("New Document");
                 }
             }));
-            author_cloud.connect_button_press_event({
-                let builder = builder.clone();
-                let author_cloud = author_cloud.clone();
+            println!("new-icon!");
+        }),
+    );
+    }
 
-                move |this, event| {
-                    println!("{:?}", &event);
-                    if event.get_event_type() == gdk::EventType::ButtonPress
-                        && event.get_button() == 3
-                    {
-                        if let Some((x, y)) = event.get_coords() {
-                            if let Some((treepath, item)) =
-                                author_cloud.get_item_at_pos(x as i32, y as i32)
-                            {
-                                author_cloud.select_path(&treepath);
-                                let t: gtk::CellRendererText =
-                                    item.downcast::<gtk::CellRendererText>().unwrap();
-                                println!("{}", t.get_property_text().unwrap());
-                                let uc: gtk::CellRendererText =
-                                    builder.get_object("author_uuid_cell").unwrap();
-                                println!("{}", uc.get_property_text().unwrap());
-                                let author_name_header_menu: gtk::MenuItem =
-                                    builder.get_object("author_name_title").unwrap();
-                                author_name_header_menu
-                                    .set_label(t.get_property_text().unwrap().as_str());
-                                let author_uuid_header_menu: gtk::MenuItem =
-                                    builder.get_object("author_uuid_item").unwrap();
-                                author_uuid_header_menu.set_label(&format!(
-                                    "Uuid: {}",
-                                    uc.get_property_text().unwrap().as_str()
-                                ));
-                                let menu: gtk::Menu = builder.get_object("author_menu").unwrap();
+    pub fn build_treeview(&self) {
+        let main_tree_view: gtk::TreeView = self
+            .builder
+            .get_object("main-tree-view")
+            .expect("Couldn't get main-tree-view");
+        main_tree_view.connect_button_press_event({
+            let main_tree_view = main_tree_view.clone();
+            let conn = self.conn.clone();
+            let builder = self.builder.clone();
+            move |this, event| {
+                println!("main_tree_view.connect_button_press_event {:?}", &event);
+                if event.get_event_type() == gdk::EventType::ButtonPress && event.get_button() == 3
+                {
+                    if let Some((x, y)) = event.get_coords() {
+                        if let Some((Some(path), col, cellx, celly)) =
+                            std::dbg!(main_tree_view.get_path_at_pos(x as i32, y as i32))
+                        {
+                            main_tree_view.grab_focus();
+                            main_tree_view.set_cursor(&path, col.as_ref(), false);
+                            let selection: gtk::TreeSelection = main_tree_view.get_selection();
+                            if let Some((tree_model, tree_iter)) = selection.get_selected() {
+                                let uuid_val = tree_model
+                                    .get_value(&tree_iter, 4)
+                                    .downcast::<glib::GString>()
+                                    .unwrap()
+                                    .get()
+                                    .unwrap()
+                                    .to_string();
+                                println!("uuid_val: {}", &uuid_val);
+                                let main_tree_view_context_menu_uuid_header_item: gtk::MenuItem =
+                                    builder
+                                        .get_object("main-tree-view-context-menu-uuid-header-item")
+                                        .unwrap();
+                                main_tree_view_context_menu_uuid_header_item.set_label(&uuid_val);
+                                let menu: gtk::Menu =
+                                    builder.get_object("main-tree-view-context-menu").unwrap();
                                 menu.set_property_attach_widget(Some(this));
 
                                 menu.show_all();
@@ -196,217 +155,44 @@ impl EditDocumentFrame {
                             }
                         }
                     }
-                    Inhibit(false)
-                }
-            });
-        }
-        let tag_cloud: gtk::IconView = builder.get_object("tag_cloud").unwrap();
-        tag_cloud.connect_button_press_event({
-            let builder = builder.clone();
-            let tag_cloud = tag_cloud.clone();
-
-            move |this, event| {
-                println!("{:?}", &event);
-                if event.get_event_type() == gdk::EventType::ButtonPress && event.get_button() == 3
-                {
-                    if let Some((x, y)) = event.get_coords() {
-                        if let Some((_, item)) = tag_cloud.get_item_at_pos(x as i32, y as i32) {
-                            let t: gtk::CellRendererText =
-                                item.downcast::<gtk::CellRendererText>().unwrap();
-                            println!("{}", t.get_property_text().unwrap());
-                            let uc: gtk::CellRendererText =
-                                builder.get_object("tag_uuid_cell").unwrap();
-                            println!("{}", uc.get_property_text().unwrap());
-                            let tag_name_header_menu: gtk::MenuItem =
-                                builder.get_object("tag_name_header_item").unwrap();
-                            tag_name_header_menu.set_label(t.get_property_text().unwrap().as_str());
-                            let tag_uuid_header_menu: gtk::MenuItem =
-                                builder.get_object("tag_uuid_item").unwrap();
-                            tag_uuid_header_menu.set_label(&format!(
-                                "Uuid: {}",
-                                uc.get_property_text().unwrap().as_str()
-                            ));
-                            let menu: gtk::Menu = builder.get_object("tag_menu").unwrap();
-                            menu.set_property_attach_widget(Some(this));
-
-                            menu.show_all();
-                            menu.popup_easy(event.get_button(), event.get_time());
-                            return Inhibit(true); //It has been handled.
-                        }
-                    }
                 }
                 Inhibit(false)
             }
         });
-        let tag_open_item: gtk::MenuItem = builder.get_object("tag_open_item").unwrap();
-        tag_open_item.connect_activate(clone!(@strong builder as builder => move |_| {
-            let t: gtk::CellRendererText =
-                builder.get_object("tag_name_cell").unwrap();
-            //println!("{}", t.get_property_text().unwrap());
-            let uc: gtk::CellRendererText =
-                builder.get_object("tag_uuid_cell").unwrap();
-            //println!("{}", uc.get_property_text().unwrap());
-            let uuid = uc.get_property_text().unwrap();
-            println!("Open tag with uuid {}", uuid);
-        }
-        ));
-        let tag_remove_item: gtk::MenuItem = builder.get_object("tag_remove_item").unwrap();
-        tag_remove_item.connect_activate(clone!(@strong builder as builder => move |_| {
-            let t: gtk::CellRendererText =
-                builder.get_object("tag_name_cell").unwrap();
-            //println!("{}", t.get_property_text().unwrap());
-            let uc: gtk::CellRendererText =
-                builder.get_object("tag_uuid_cell").unwrap();
-            //println!("{}", uc.get_property_text().unwrap());
-            let uuid = uc.get_property_text().unwrap();
-            println!("Remove tag tag with uuid {}", uuid);
-        }));
-        EditDocumentFrame{builder, connection, parent_builder}
-    }
-
-    pub fn frame(&self) -> gtk::Frame {
-        let edit_document_frame: gtk::Frame = self
+        let main_tree_view_context_menu_open_item_in_new_tab: gtk::MenuItem = self
             .builder
-            .get_object("EditDocumentFrame")
-            .expect("Could not build EditDocumentFrame");
-        edit_document_frame
-    }
-
-    pub fn title_entry(&self) -> gtk::Entry {
-        let title_entry: gtk::Entry = self.builder.get_object("title-entry").unwrap();
-        title_entry
-    }
-
-    pub fn with_document(self, uuid: models::DocumentUuid) -> Self {
-        let connection = &self.connection;
-        let d: crate::models::Document = connection.get(&uuid);
-        self.title_entry().set_text(d.title.as_str());
-        self.builder
-            .get_object::<gtk::Label>("uuid_label")
-            .unwrap()
-            .set_text(d.uuid.to_string().as_str());
-        for f in connection.get_files(&uuid) {
-            self.add_file_entry(
-                &format!(
-                    "{} ({})",
-                    match f.1 {
-                        crate::models::StorageType::Local(ref path) => path.display().to_string(),
-                        crate::models::StorageType::InDatabase(ref mime_type) =>
-                            mime_type.to_string(),
-                    },
-                    Bytes(f.2)
-                ),
-                match f.1 {
-                    crate::models::StorageType::Local(_) => "document-open",
-                    crate::models::StorageType::InDatabase(ref mime_type) => {
-                        match mime_type.as_str() {
-                            "text/plain" => "text-x-generic",
-                            _ => "document-open",
-                        }
-                    }
-                },
-                match f.1 {
-                    crate::models::StorageType::Local(_) => "Open with xdg-open",
-                    crate::models::StorageType::InDatabase(ref mime_type) => {
-                        match mime_type.as_str() {
-                            "text/plain" => "View text in a new window",
-                            _ => "Open with xdg-open",
-                        }
-                    }
-                },
-                f.0,
-            );
-            println!("{:?}", f);
-        }
-        for a in connection.get_authors(&uuid) {
-            self.add_author_entry(&a.1, a.0);
-        }
-        for t in connection.get_tags(&uuid) {
-            self.add_tag_entry(&t.1, t.0);
-        }
-        self
-    }
-
-    pub fn add_file_entry(
-        &self,
-        label_text: &str,
-        icon_name: &str,
-        button_tooltip_text: &str,
-        uuid: models::MetadataUuid,
-    ) {
-        let connection = &self.connection;
-        let file_list_box: gtk::ListBox = self.builder.get_object("file-list-box").unwrap();
-        file_list_box.set_visible(true);
-
-        let file_entry_builder = gtk::Builder::new_from_string(include_str!("./FileSlotBox.glade"));
-        let button = gtk::Button::new();
-        let label: gtk::Label = file_entry_builder
-            .get_object("file_identifier_label")
+            .get_object("main-tree-view-context-menu-open-item-in-new-tab")
             .unwrap();
-        label.set_text(label_text);
-
-        let open_image = gtk::Image::new_from_icon_name(Some(icon_name), IconSize::Button);
-        button.set_relief(ReliefStyle::None);
-        button.set_focus_on_click(false);
-        button.add(&open_image);
-        button.set_tooltip_text(Some(button_tooltip_text));
-        let button_box: gtk::ButtonBox = file_entry_builder.get_object("file_button_box").unwrap();
-        button_box.add(&button);
-
-        let entry: gtk::Box = file_entry_builder.get_object("file_slot_box").unwrap();
-        file_list_box.prepend(&entry);
-        button.connect_clicked(clone!(@weak connection as connection => move |_| {
-            let bytes = connection.get_data(&uuid);
-            let data = String::from_utf8_lossy(&bytes);
-            let viewer = TextViewerWindow::new().set_text(&data);
-            viewer.window().set_position(gtk::WindowPosition::Center);
-            viewer.window().set_default_size(640, 480);
-            viewer.window().show_all();
-
-            println!("edit {:?}", &uuid);
-        }));
-    }
-
-    pub fn add_tag_entry(&self, label_text: &str, uuid: models::MetadataUuid) {
-        let tag_cloud: gtk::IconView = self.builder.get_object("tag_cloud").unwrap();
-        tag_cloud.set_visible(true);
-        let tag_store: gtk::ListStore = self.builder.get_object("tag_store").unwrap();
-        tag_store.insert_with_values(None, &[0, 1], &[&uuid.to_string().as_str(), &label_text]);
-    }
-
-    pub fn add_author_entry(&self, label_text: &str, uuid: models::MetadataUuid) {
-        let author_cloud: gtk::IconView = self.builder.get_object("author_cloud").unwrap();
-        author_cloud.set_visible(true);
-        let author_store: gtk::ListStore = self.builder.get_object("author_store").unwrap();
-        author_store.insert_with_values(None, &[0, 1], &[&uuid.to_string().as_str(), &label_text]);
-    }
-}
-
-pub struct TextViewerWindow(gtk::Builder);
-
-impl TextViewerWindow {
-    pub fn new() -> Self {
-        let widget_src = include_str!("./TextViewerWindow.glade");
-        let builder = gtk::Builder::new_from_string(widget_src);
-        TextViewerWindow(builder)
-    }
-
-    pub fn window(&self) -> gtk::Window {
-        self.0
-            .get_object("text_viewer_window")
-            .expect("Couldn't get text_viewer_window")
-    }
-
-    pub fn set_text(self, text: &str) -> Self {
-        let text_view: gtk::TextView = self
-            .0
-            .get_object("text_view")
-            .expect("Couldn't get text_view");
-        text_view
-            .get_buffer()
-            .expect("Couldn't get text_view")
-            .set_text(text);
-        self
+        main_tree_view_context_menu_open_item_in_new_tab.connect_activate(
+            clone!(@strong self.builder as builder, @strong self.conn as conn => move |_| {
+                let uc: gtk::MenuItem =
+                    builder.get_object("main-tree-view-context-menu-uuid-header-item").unwrap();
+                //println!("{}", uc.get_property_text().unwrap());
+                // FIXME: This gets the item's UUID to open from the menu item's label, there
+                // must be a better way to get the current selection's UUID value from the
+                // TreeModel. Note that this label is set when the menu is opened in
+                // connect_button_press_event
+                let uuid = uc.get_label().unwrap().to_string();
+                println!("Open document with uuid {}", uuid);
+                let edit_document_widget = EditDocumentFrame::new(conn.clone(), builder.clone())
+                    .with_document(uuid.into());
+                let _idx = Self { builder: builder.clone(), conn: conn.clone() }.create_tab(
+                    edit_document_widget
+                    .title_entry()
+                    .get_text()
+                    .as_ref()
+                    .map(|title| title.as_str())
+                    .unwrap_or_default(),
+                    edit_document_widget.frame().upcast(),
+                );
+            }
+            ),
+        );
+        main_tree_view.connect_popup_menu({
+            let conn = self.conn.clone();
+            let builder = self.builder.clone();
+            move |this| false
+        });
     }
 }
 
@@ -433,16 +219,5 @@ impl core::fmt::Display for Bytes {
         } else {
             write!(f, "{:.2} PiB", bytes / PETABYTE)
         }
-    }
-}
-
-
-trait StoreExt {
-    fn len(&self) -> i32;
-}
-
-impl StoreExt for gtk::ListStore {
-    fn len(&self) -> i32{
-         self.iter_n_children(None)
     }
 }

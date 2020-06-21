@@ -42,36 +42,6 @@ mod widgets;
 use models::DatabaseConnection;
 use widgets::{EditDocumentFrame, Notebook};
 
-fn build_menu_bar(builder: Rc<gtk::Builder>, conn: Rc<DatabaseConnection>) {
-    let button: gtk::ToolButton = builder
-        .get_object("new-button")
-        .expect("Couldn't get new-button");
-    let notebook: gtk::Notebook = builder
-        .get_object("global-notebook")
-        .expect("Couldn't get window");
-    button.connect_clicked(
-        clone!(@strong notebook as notebook, @strong builder as builder => move |_| {
-            let pages_no = notebook.get_n_pages();
-            if pages_no == 1 {
-                notebook.set_show_tabs(true);
-            }
-            let edit_document_widget = EditDocumentFrame::new( conn.clone(), builder.clone());
-            let idx = Notebook::create_tab(&notebook, "New Document", edit_document_widget.frame().upcast());
-            let tab = notebook.get_nth_page(Some(idx)).unwrap();
-            edit_document_widget.title_entry().connect_changed(clone!(@weak notebook as notebook, @weak tab as tab => move |slf| {
-                let label_box: gtk::Box = notebook.get_tab_label(&tab).unwrap().downcast().unwrap();
-                let label: gtk::Label = label_box.get_children().remove(0).downcast().unwrap();
-                if let Some(title) = slf.get_text().and_then(|title| if title.as_str().is_empty() { None } else { Some(title) }) {
-                    label.set_label(&format!("{} (unsaved)", title.as_str()));
-                } else {
-                    label.set_label("New Document");
-                }
-            }));
-            println!("new-icon!");
-        }),
-    );
-}
-
 fn build_ui(application: &gtk::Application, conn: Rc<DatabaseConnection>) {
     let glade_src = include_str!("./bibliothecula.glade");
     let builder = Rc::new(gtk::Builder::new_from_string(glade_src));
@@ -110,14 +80,12 @@ fn build_ui(application: &gtk::Application, conn: Rc<DatabaseConnection>) {
             ],
         );
     }
-    build_menu_bar(builder.clone(), conn.clone());
-    let notebook: gtk::Notebook = builder
-        .get_object("global-notebook")
-        .expect("Couldn't get window");
+    let notebook = Notebook::new(builder.clone(), conn.clone());
+    notebook.build_menu_bar();
+    notebook.build_treeview();
     let edit_document_widget = EditDocumentFrame::new(conn.clone(), builder.clone())
         .with_document(models::Document::new("Magna Carta".to_string()).uuid);
-    let _idx = Notebook::create_tab(
-        &notebook,
+    let _idx = notebook.create_tab(
         edit_document_widget
             .title_entry()
             .get_text()
@@ -129,20 +97,6 @@ fn build_ui(application: &gtk::Application, conn: Rc<DatabaseConnection>) {
     window.set_position(gtk::WindowPosition::Center);
     window.set_default_size(640, 480);
     window.show_all();
-    return;
-
-    /*
-    let mut notebook = Notebook::new();
-
-    for i in 1..4 {
-        let title = format!("sheet {}", i);
-        let label = gtk::Label::new(Some(&*title));
-        notebook.create_tab(&title, label.upcast());
-    }
-
-    window.add(&notebook.notebook);
-    window.show_all();
-    */
 }
 
 fn append_column(column: &gtk::TreeViewColumn, tree: &gtk::TreeView, id: i32) {
