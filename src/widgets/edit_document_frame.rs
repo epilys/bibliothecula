@@ -173,7 +173,8 @@ impl EditDocumentFrame {
                 if event.get_event_type() == gdk::EventType::ButtonPress && event.get_button() == 3
                 {
                     if let Some((x, y)) = event.get_coords() {
-                        if let Some((_, item)) = tag_cloud.get_item_at_pos(x as i32, y as i32) {
+                        if let Some((treepath, item)) = tag_cloud.get_item_at_pos(x as i32, y as i32) {
+                            tag_cloud.select_path(&treepath);
                             let t: gtk::CellRendererText =
                                 item.downcast::<gtk::CellRendererText>().unwrap();
                             println!("{}", t.get_property_text().unwrap());
