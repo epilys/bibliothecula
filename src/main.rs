@@ -81,8 +81,6 @@ fn build_ui(application: &gtk::Application, conn: Rc<DatabaseConnection>) {
         );
     }
     let notebook = Notebook::new(builder.clone(), conn.clone());
-    notebook.build_menu_bar();
-    notebook.build_treeview();
     let edit_document_widget = EditDocumentFrame::new(conn.clone(), builder.clone())
         .with_document(models::Document::new("Magna Carta".to_string()).uuid);
     let _idx = notebook.create_tab(

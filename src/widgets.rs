@@ -33,7 +33,9 @@ pub struct Notebook {
 
 impl Notebook {
     pub fn new(builder: Rc<gtk::Builder>, conn: Rc<DatabaseConnection>) -> Self {
-        Self { builder, conn }
+        let ret = Self { builder, conn };
+        ret.init();
+        ret
     }
 
     pub fn create_tab(&self, title: &str, widget: Widget) -> u32 {
@@ -77,7 +79,7 @@ impl Notebook {
         index
     }
 
-    pub fn build_menu_bar(&self) {
+    fn build_menu_bar(&self) {
         let Self {
             ref builder,
             ref conn,
@@ -111,7 +113,7 @@ impl Notebook {
     );
     }
 
-    pub fn build_treeview(&self) {
+    fn build_treeview(&self) {
         let main_tree_view: gtk::TreeView = self
             .builder
             .get_object("main-tree-view")
@@ -193,6 +195,15 @@ impl Notebook {
             let builder = self.builder.clone();
             move |this| false
         });
+    }
+
+    pub fn init(&self) {
+        self.build_menu_bar();
+        self.build_treeview();
+        let search_box_src = include_str!("./widgets/SearchTab.glade");
+        let builder = Rc::new(gtk::Builder::new_from_string(search_box_src));
+        let box_: gtk::Box = builder.get_object("search-tab").unwrap();
+        self.create_tab("search", box_.upcast());
     }
 }
 
