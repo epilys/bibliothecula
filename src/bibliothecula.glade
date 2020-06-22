@@ -22,49 +22,6 @@
     <property name="can_focus">False</property>
     <property name="icon_name">document-save</property>
   </object>
-  <object class="GtkMenu" id="main-tree-view-context-menu">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <child>
-      <object class="GtkMenuItem" id="main-tree-view-context-menu-name-header-item">
-        <property name="visible">True</property>
-        <property name="sensitive">False</property>
-        <property name="can_focus">False</property>
-        <property name="use_underline">True</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="main-tree-view-context-menu-uuid-header-item">
-        <property name="visible">True</property>
-        <property name="sensitive">False</property>
-        <property name="can_focus">False</property>
-        <property name="use_underline">True</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="main-tree-view-context-menu-open-item-in-new-tab">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Open In New Tab</property>
-        <property name="use_underline">True</property>
-        <accelerator key="a" signal="activate"/>
-      </object>
-    </child>
-  </object>
-  <object class="GtkListStore" id="main-tree-view-list-store">
-    <columns>
-      <!-- column-name title -->
-      <column type="gchararray"/>
-      <!-- column-name authors -->
-      <column type="gchararray"/>
-      <!-- column-name files_no -->
-      <column type="gulong"/>
-      <!-- column-name tags -->
-      <column type="gchararray"/>
-      <!-- column-name uuid -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkWindow" id="main-window">
     <property name="can_focus">False</property>
     <child>
@@ -317,129 +274,10 @@
             <property name="can_focus">False</property>
             <property name="show_tabs">False</property>
             <child>
-              <object class="GtkBox" id="main-box">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
-                <child>
-                  <object class="GtkSearchEntry" id="main-search-entry">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="primary_icon_name">edit-find-symbolic</property>
-                    <property name="primary_icon_activatable">False</property>
-                    <property name="primary_icon_sensitive">False</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkTreeView" id="main-tree-view">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="hscroll_policy">natural</property>
-                    <property name="vscroll_policy">natural</property>
-                    <property name="model">main-tree-view-list-store</property>
-                    <property name="reorderable">True</property>
-                    <property name="rules_hint">True</property>
-                    <property name="search_column">0</property>
-                    <property name="rubber_banding">True</property>
-                    <property name="enable_grid_lines">vertical</property>
-                    <property name="enable_tree_lines">True</property>
-                    <child internal-child="selection">
-                      <object class="GtkTreeSelection">
-                        <property name="mode">browse</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkTreeViewColumn">
-                        <property name="resizable">True</property>
-                        <property name="min_width">7</property>
-                        <property name="title" translatable="yes">Title</property>
-                        <property name="clickable">True</property>
-                        <property name="reorderable">True</property>
-                        <property name="sort_indicator">True</property>
-                        <child>
-                          <object class="GtkCellRendererText"/>
-                          <attributes>
-                            <attribute name="text">0</attribute>
-                          </attributes>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkTreeViewColumn">
-                        <property name="resizable">True</property>
-                        <property name="min_width">7</property>
-                        <property name="title" translatable="yes">Authors</property>
-                        <property name="reorderable">True</property>
-                        <child>
-                          <object class="GtkCellRendererText"/>
-                          <attributes>
-                            <attribute name="text">1</attribute>
-                          </attributes>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkTreeViewColumn">
-                        <property name="min_width">7</property>
-                        <property name="title" translatable="yes"># files</property>
-                        <property name="reorderable">True</property>
-                        <child>
-                          <object class="GtkCellRendererText"/>
-                          <attributes>
-                            <attribute name="text">2</attribute>
-                          </attributes>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkTreeViewColumn">
-                        <property name="resizable">True</property>
-                        <property name="min_width">7</property>
-                        <property name="title" translatable="yes">Tags</property>
-                        <property name="reorderable">True</property>
-                        <child>
-                          <object class="GtkCellRendererText"/>
-                          <attributes>
-                            <attribute name="text">3</attribute>
-                          </attributes>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkTreeViewColumn">
-                        <property name="visible">False</property>
-                        <property name="title" translatable="yes">Uuid</property>
-                        <child>
-                          <object class="GtkCellRendererText"/>
-                          <attributes>
-                            <attribute name="text">4</attribute>
-                          </attributes>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-              </object>
+              <placeholder/>
             </child>
             <child type="tab">
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">search</property>
-              </object>
-              <packing>
-                <property name="tab_fill">False</property>
-              </packing>
+              <placeholder/>
             </child>
             <child>
               <placeholder/>
@@ -461,6 +299,162 @@
           </packing>
         </child>
       </object>
+    </child>
+  </object>
+  <object class="GtkMenu" id="main-tree-view-context-menu">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="main-tree-view-context-menu-name-header-item">
+        <property name="visible">True</property>
+        <property name="sensitive">False</property>
+        <property name="can_focus">False</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="main-tree-view-context-menu-uuid-header-item">
+        <property name="visible">True</property>
+        <property name="sensitive">False</property>
+        <property name="can_focus">False</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="main-tree-view-context-menu-open-item-in-new-tab">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Open In New Tab</property>
+        <property name="use_underline">True</property>
+        <accelerator key="a" signal="activate"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkListStore" id="main-tree-view-list-store">
+    <columns>
+      <!-- column-name title -->
+      <column type="gchararray"/>
+      <!-- column-name authors -->
+      <column type="gchararray"/>
+      <!-- column-name files_no -->
+      <column type="gulong"/>
+      <!-- column-name tags -->
+      <column type="gchararray"/>
+      <!-- column-name uuid -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkBox" id="search-box">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkSearchEntry" id="main-search-entry">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="primary_icon_name">edit-find-symbolic</property>
+        <property name="primary_icon_activatable">False</property>
+        <property name="primary_icon_sensitive">False</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkTreeView" id="main-tree-view">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="hscroll_policy">natural</property>
+        <property name="vscroll_policy">natural</property>
+        <property name="model">main-tree-view-list-store</property>
+        <property name="reorderable">True</property>
+        <property name="rules_hint">True</property>
+        <property name="search_column">0</property>
+        <property name="rubber_banding">True</property>
+        <property name="enable_grid_lines">vertical</property>
+        <property name="enable_tree_lines">True</property>
+        <child internal-child="selection">
+          <object class="GtkTreeSelection">
+            <property name="mode">browse</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkTreeViewColumn">
+            <property name="resizable">True</property>
+            <property name="min_width">7</property>
+            <property name="title" translatable="yes">Title</property>
+            <property name="clickable">True</property>
+            <property name="reorderable">True</property>
+            <property name="sort_indicator">True</property>
+            <child>
+              <object class="GtkCellRendererText"/>
+              <attributes>
+                <attribute name="text">0</attribute>
+              </attributes>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkTreeViewColumn">
+            <property name="resizable">True</property>
+            <property name="min_width">7</property>
+            <property name="title" translatable="yes">Authors</property>
+            <property name="reorderable">True</property>
+            <child>
+              <object class="GtkCellRendererText"/>
+              <attributes>
+                <attribute name="text">1</attribute>
+              </attributes>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkTreeViewColumn">
+            <property name="min_width">7</property>
+            <property name="title" translatable="yes"># files</property>
+            <property name="reorderable">True</property>
+            <child>
+              <object class="GtkCellRendererText"/>
+              <attributes>
+                <attribute name="text">2</attribute>
+              </attributes>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkTreeViewColumn">
+            <property name="resizable">True</property>
+            <property name="min_width">7</property>
+            <property name="title" translatable="yes">Tags</property>
+            <property name="reorderable">True</property>
+            <child>
+              <object class="GtkCellRendererText"/>
+              <attributes>
+                <attribute name="text">3</attribute>
+              </attributes>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkTreeViewColumn">
+            <property name="visible">False</property>
+            <property name="title" translatable="yes">Uuid</property>
+            <child>
+              <object class="GtkCellRendererText"/>
+              <attributes>
+                <attribute name="text">4</attribute>
+              </attributes>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
     </child>
   </object>
 </interface>

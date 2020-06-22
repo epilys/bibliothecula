@@ -1,31 +1,34 @@
 /*
- * meli - 
+ * bibliothecula
  *
- * Copyright  Manos Pitsidianakis
+ * Copyright 2020 Manos Pitsidianakis
  *
- * This file is part of meli.
+ * This file is part of bibliothecula.
  *
- * meli is free software: you can redistribute it and/or modify
+ * bibliothecula is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * meli is distributed in the hope that it will be useful,
+ * bibliothecula is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with meli. If not, see <http://www.gnu.org/licenses/>.
+ * along with bibliothecula. If not, see <http://www.gnu.org/licenses/>.
  */
 
 use super::*;
+use crate::models::Document;
 use std::cell::Cell;
 use std::cell::RefCell;
 
 pub struct EditDocumentFrame {
     builder: gtk::Builder,
     parent_builder: Rc<gtk::Builder>,
+    is_dirty: RefCell<bool>,
+    original_document: Rc<Option<Document>>,
     file_entry_builders: RefCell<Vec<gtk::Builder>>,
     connection: Rc<DatabaseConnection>,
 }
@@ -106,8 +109,7 @@ impl EditDocumentFrame {
                 dialog.destroy();
                 println!("{:?}", ret);
                 if ret == gtk::ResponseType::Yes {
-                    let document_label = 
-                        builder.get_object::<gtk::Label>("uuid_label").unwrap().get_text();
+                    let document_label = builder.get_object::<gtk::Label>("uuid_label").unwrap().get_text();
                     if !document_label.as_ref().map(|g| g.as_str()).unwrap_or_default().is_empty() {
                         connection.remove_metadata_from_document(&uuid.as_str().into(), &document_label.unwrap().as_str().into()).unwrap();
                     }
@@ -173,7 +175,9 @@ impl EditDocumentFrame {
                 if event.get_event_type() == gdk::EventType::ButtonPress && event.get_button() == 3
                 {
                     if let Some((x, y)) = event.get_coords() {
-                        if let Some((treepath, item)) = tag_cloud.get_item_at_pos(x as i32, y as i32) {
+                        if let Some((treepath, item)) =
+                            tag_cloud.get_item_at_pos(x as i32, y as i32)
+                        {
                             tag_cloud.select_path(&treepath);
                             let t: gtk::CellRendererText =
                                 item.downcast::<gtk::CellRendererText>().unwrap();
@@ -225,11 +229,43 @@ impl EditDocumentFrame {
             let uuid = uc.get_property_text().unwrap();
             println!("Remove tag tag with uuid {}", uuid);
         }));
-        builder
-            .get_object::<gtk::Frame>("EditDocumentFrame")
-            .unwrap()
-            .show_all();
-        EditDocumentFrame{builder, connection, parent_builder, file_entry_builders: RefCell::new(vec![])}
+        let ret = EditDocumentFrame {
+            builder,
+            connection,
+            parent_builder,
+            file_entry_builders: RefCell::new(vec![]),
+            is_dirty: RefCell::new(false),
+            original_document: Rc::new(None),
+        };
+        ret.frame().show_all();
+        ret
+    }
+
+    pub fn init_as_tab(&self) {
+        /* Initialise parent Notebook stuff */
+        let notebook = self
+            .parent_builder
+            .get_object::<gtk::Notebook>("global-notebook")
+            .expect("Couldn't get global-notebook");
+        let tab = self.frame();
+
+        self.title_entry().connect_changed(clone!(@strong self.original_document as original_document, @weak notebook as notebook, @weak tab as tab => move |slf| {
+            println!("title entry changed {:?}", slf);
+            let label_box: gtk::Box = notebook.get_tab_label(&tab).unwrap().downcast().unwrap();
+            let label: gtk::Label = label_box.get_children().remove(0).downcast().unwrap();
+            if let Some(title) = slf.get_text().and_then(|title| if title.as_str().is_empty() { None } else { Some(title) }) {
+                if original_document.as_ref().as_ref().map(|og| og.title == title.as_str()).unwrap_or(false) {
+                    label.set_label(original_document.as_ref().as_ref().unwrap().title.as_str());
+                } else {
+                    label.set_label(&format!("{} (unsaved)", title.as_str()));
+                }
+            } else if let Some(og) = original_document.as_ref() {
+                label.set_label(og.title.as_str());
+            } else {
+                label.set_label("New Document");
+            }
+            label.show_all();
+        }));
     }
 
     pub fn frame(&self) -> gtk::Frame {
@@ -245,15 +281,19 @@ impl EditDocumentFrame {
         title_entry
     }
 
-    pub fn with_document(self, uuid: models::DocumentUuid) -> Self {
+    pub fn with_document(mut self, uuid: models::DocumentUuid) -> Self {
         println!("with_document: {}", &uuid);
-        let connection = &self.connection;
-        let d: crate::models::Document = connection.get(&uuid);
+        let d: crate::models::Document = self.connection.get(&uuid);
         self.title_entry().set_text(d.title.as_str());
         self.builder
             .get_object::<gtk::Label>("uuid_label")
             .unwrap()
             .set_text(d.uuid.to_string().as_str());
+        self = Self {
+            original_document: Rc::new(Some(d)),
+            ..self
+        };
+        let connection = &self.connection;
         for f in connection.get_files(&uuid) {
             self.add_file_entry(
                 &format!(
@@ -338,7 +378,9 @@ impl EditDocumentFrame {
 
             println!("edit {:?}", &uuid);
         }));
-        self.file_entry_builders.borrow_mut().push(file_entry_builder);
+        self.file_entry_builders
+            .borrow_mut()
+            .push(file_entry_builder);
     }
 
     pub fn add_tag_entry(&self, label_text: &str, uuid: models::MetadataUuid) {
@@ -355,4 +397,3 @@ impl EditDocumentFrame {
         author_store.insert_with_values(None, &[0, 1], &[&uuid.to_string().as_str(), &label_text]);
     }
 }
-

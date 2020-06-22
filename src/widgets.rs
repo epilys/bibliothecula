@@ -98,6 +98,7 @@ impl Notebook {
             }
             let edit_document_widget = EditDocumentFrame::new( conn.clone(), builder.clone());
             let idx = Self { builder: builder.clone(), conn: conn.clone() }.create_tab("New Document", edit_document_widget.frame().upcast());
+            edit_document_widget.init_as_tab();
             let tab = notebook.get_nth_page(Some(idx)).unwrap();
             edit_document_widget.title_entry().connect_changed(clone!(@weak notebook as notebook, @weak tab as tab => move |slf| {
                 let label_box: gtk::Box = notebook.get_tab_label(&tab).unwrap().downcast().unwrap();
@@ -187,6 +188,7 @@ impl Notebook {
                     .unwrap_or_default(),
                     edit_document_widget.frame().upcast(),
                 );
+                edit_document_widget.init_as_tab();
             }
             ),
         );
@@ -200,9 +202,7 @@ impl Notebook {
     pub fn init(&self) {
         self.build_menu_bar();
         self.build_treeview();
-        let search_box_src = include_str!("./widgets/SearchTab.glade");
-        let builder = Rc::new(gtk::Builder::new_from_string(search_box_src));
-        let box_: gtk::Box = builder.get_object("search-tab").unwrap();
+        let box_: gtk::Box = self.builder.get_object("search-box").unwrap();
         self.create_tab("search", box_.upcast());
     }
 }
