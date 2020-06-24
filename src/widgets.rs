@@ -38,7 +38,7 @@ impl Notebook {
         ret
     }
 
-    pub fn create_tab(&self, title: &str, widget: Widget) -> u32 {
+    pub fn create_tab(&self, title: &str, widget: Widget, sticky: bool) -> u32 {
         let notebook: gtk::Notebook = self
             .builder
             .get_object("global-notebook")
@@ -48,12 +48,16 @@ impl Notebook {
         let label = gtk::Label::new(Some(title));
         let tab = gtk::Box::new(Orientation::Horizontal, 0);
 
-        button.set_relief(ReliefStyle::None);
-        button.set_focus_on_click(false);
-        button.add(&close_image);
+        if !sticky {
+            button.set_relief(ReliefStyle::None);
+            button.set_focus_on_click(false);
+            button.add(&close_image);
+        }
 
         tab.pack_start(&label, false, false, 0);
-        tab.pack_start(&button, false, false, 0);
+        if !sticky {
+            tab.pack_start(&button, false, false, 0);
+        }
         tab.show_all();
 
         let index = notebook.append_page(&widget, Some(&tab));
@@ -63,16 +67,18 @@ impl Notebook {
             notebook.set_show_tabs(true);
         }
 
-        button.connect_clicked(clone!(@weak notebook as notebook => move |_| {
-            let index = notebook
-                .page_num(&widget)
-                .expect("Couldn't get page_num from notebook");
-            notebook.remove_page(Some(index));
-            let pages_no = notebook.get_n_pages();
-            if pages_no == 1 {
-                notebook.set_show_tabs(false);
-            }
-        }));
+        if !sticky {
+            button.connect_clicked(clone!(@weak notebook as notebook => move |_| {
+                let index = notebook
+                    .page_num(&widget)
+                    .expect("Couldn't get page_num from notebook");
+                notebook.remove_page(Some(index));
+                let pages_no = notebook.get_n_pages();
+                if pages_no == 1 {
+                    notebook.set_show_tabs(false);
+                }
+            }));
+        }
         println!("new-tab! idx = {}, title = {}", index, title);
         notebook.set_current_page(Some(index));
 
@@ -97,7 +103,7 @@ impl Notebook {
                 notebook.set_show_tabs(true);
             }
             let edit_document_widget = EditDocumentFrame::new( conn.clone(), builder.clone());
-            let idx = Self { builder: builder.clone(), conn: conn.clone() }.create_tab("New Document", edit_document_widget.frame().upcast());
+            let idx = Self { builder: builder.clone(), conn: conn.clone() }.create_tab("New Document", edit_document_widget.frame().upcast(), false);
             edit_document_widget.init_as_tab();
             let tab = notebook.get_nth_page(Some(idx)).unwrap();
             edit_document_widget.title_entry().connect_changed(clone!(@weak notebook as notebook, @weak tab as tab => move |slf| {
@@ -187,6 +193,7 @@ impl Notebook {
                     .map(|title| title.as_str())
                     .unwrap_or_default(),
                     edit_document_widget.frame().upcast(),
+                    false,
                 );
                 edit_document_widget.init_as_tab();
             }
@@ -203,7 +210,7 @@ impl Notebook {
         self.build_menu_bar();
         self.build_treeview();
         let box_: gtk::Box = self.builder.get_object("search-box").unwrap();
-        self.create_tab("search", box_.upcast());
+        self.create_tab("search", box_.upcast(), true);
     }
 }
 

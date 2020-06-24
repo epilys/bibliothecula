@@ -91,6 +91,7 @@ fn build_ui(application: &gtk::Application, conn: Rc<DatabaseConnection>) {
             .map(|title| title.as_str())
             .unwrap_or_default(),
         edit_document_widget.frame().upcast(),
+        false,
     );
     window.set_position(gtk::WindowPosition::Center);
     window.set_default_size(640, 480);
