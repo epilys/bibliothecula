@@ -36,20 +36,20 @@ pub struct EditDocumentFrame {
 impl EditDocumentFrame {
     pub fn new(connection: Rc<DatabaseConnection>, parent_builder: Rc<gtk::Builder>) -> Self {
         let widget_src = include_str!("./EditDocumentFrame.glade");
-        let builder = gtk::Builder::new_from_string(widget_src);
+        let builder = gtk::Builder::from_string(widget_src);
 
         let add_file_button: gtk::Button = builder.get_object("add-file-button").unwrap();
         add_file_button.connect_clicked(clone!(@strong builder as parent_builder, @strong connection as connection => move |_| {
             let widget_src = include_str!("./AddFileAssistant.glade");
-            let builder = gtk::Builder::new_from_string(widget_src);
+            let builder = gtk::Builder::from_string(widget_src);
             let assistant: gtk::Assistant = builder.get_object("add-file-assistant").unwrap();
             assistant.connect_close(clone!(@strong builder as builder => move |_| {
                 let assistant: gtk::Assistant = builder.get_object("add-file-assistant").unwrap();
-                assistant.destroy();
+                assistant.close();
             }));
             assistant.connect_cancel(clone!(@strong builder as builder => move |_| {
                 let assistant: gtk::Assistant = builder.get_object("add-file-assistant").unwrap();
-                assistant.destroy();
+                assistant.close();
             }));
             assistant.connect_apply(clone!(@strong builder as builder => move |_| {
             }));
@@ -99,19 +99,19 @@ impl EditDocumentFrame {
                 let uuid = uc.get_property_text().unwrap();
                 println!("Remove author tag with uuid {}", uuid);
 
-                let dialog = gtk::Dialog::new_with_buttons::<gtk::Window>(Some("Remove tag?"), None, gtk::DialogFlags::MODAL, &[("No", gtk::ResponseType::No), ("Yes", gtk::ResponseType::Yes), ]);
+                let dialog = gtk::Dialog::with_buttons::<gtk::Window>(Some("Remove tag?"), None, gtk::DialogFlags::MODAL, &[("No", gtk::ResponseType::No), ("Yes", gtk::ResponseType::Yes), ]);
                 let text = gtk::Label::new(Some("Remove author tag? This will not delete the tag."));
                 dialog.get_content_area().add(&text);
                 dialog.show_all();
 
                 let ret = dialog.run();
 
-                dialog.destroy();
+                dialog.close();
                 println!("{:?}", ret);
                 if ret == gtk::ResponseType::Yes {
                     let document_label = builder.get_object::<gtk::Label>("uuid_label").unwrap().get_text();
-                    if !document_label.as_ref().map(|g| g.as_str()).unwrap_or_default().is_empty() {
-                        connection.remove_metadata_from_document(&uuid.as_str().into(), &document_label.unwrap().as_str().into()).unwrap();
+                    if !document_label.as_str().is_empty() {
+                        connection.remove_metadata_from_document(&uuid.as_str().into(), &document_label.as_str().into()).unwrap();
                     }
                     let author_store: gtk::ListStore = builder.get_object("author_store").unwrap();
                     let author_cloud: gtk::IconView = builder.get_object("author_cloud").unwrap();
@@ -253,7 +253,7 @@ impl EditDocumentFrame {
             println!("title entry changed {:?}", slf);
             let label_box: gtk::Box = notebook.get_tab_label(&tab).unwrap().downcast().unwrap();
             let label: gtk::Label = label_box.get_children().remove(0).downcast().unwrap();
-            if let Some(title) = slf.get_text().and_then(|title| if title.as_str().is_empty() { None } else { Some(title) }) {
+            if let Some(title) = Some(slf.get_text()).and_then(|title| if title.as_str().is_empty() { None } else { Some(title) }) {
                 if original_document.as_ref().as_ref().map(|og| og.title == title.as_str()).unwrap_or(false) {
                     label.set_label(original_document.as_ref().as_ref().unwrap().title.as_str());
                 } else {
@@ -351,14 +351,14 @@ impl EditDocumentFrame {
         let file_list_box: gtk::ListBox = self.builder.get_object("file-list-box").unwrap();
         file_list_box.set_visible(true);
 
-        let file_entry_builder = gtk::Builder::new_from_string(include_str!("./FileSlotBox.glade"));
+        let file_entry_builder = gtk::Builder::from_string(include_str!("./FileSlotBox.glade"));
         let button = gtk::Button::new();
         let label: gtk::Label = file_entry_builder
             .get_object("file_identifier_label")
             .unwrap();
         label.set_text(label_text);
 
-        let open_image = gtk::Image::new_from_icon_name(Some(icon_name), IconSize::Button);
+        let open_image = gtk::Image::from_icon_name(Some(icon_name), IconSize::Button);
         button.set_relief(ReliefStyle::None);
         button.set_focus_on_click(false);
         button.add(&open_image);

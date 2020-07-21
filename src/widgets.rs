@@ -43,7 +43,7 @@ impl Notebook {
             .builder
             .get_object("global-notebook")
             .expect("Couldn't get window");
-        let close_image = gtk::Image::new_from_icon_name(Some("window-close"), IconSize::Button);
+        let close_image = gtk::Image::from_icon_name(Some("window-close"), IconSize::Button);
         let button = gtk::Button::new();
         let label = gtk::Label::new(Some(title));
         let tab = gtk::Box::new(Orientation::Horizontal, 0);
@@ -109,7 +109,7 @@ impl Notebook {
             edit_document_widget.title_entry().connect_changed(clone!(@weak notebook as notebook, @weak tab as tab => move |slf| {
                 let label_box: gtk::Box = notebook.get_tab_label(&tab).unwrap().downcast().unwrap();
                 let label: gtk::Label = label_box.get_children().remove(0).downcast().unwrap();
-                if let Some(title) = slf.get_text().and_then(|title| if title.as_str().is_empty() { None } else { Some(title) }) {
+                if let Some(title) = Some(slf.get_text()).and_then(|title| if title.as_str().is_empty() { None } else { Some(title) }) {
                     label.set_label(&format!("{} (unsaved)", title.as_str()));
                 } else {
                     label.set_label("New Document");
@@ -154,6 +154,26 @@ impl Notebook {
                                         .get_object("main-tree-view-context-menu-uuid-header-item")
                                         .unwrap();
                                 main_tree_view_context_menu_uuid_header_item.set_label(&uuid_val);
+                                //(model, iter) = selection.get_selected()
+                                //print(model[iter][0])
+                                /*
+                                    let t: gtk::CellRendererText =
+                                        item.downcast::<gtk::CellRendererText>().unwrap();
+                                    println!("{}", t.get_property_text().unwrap());
+                                    let uc: gtk::CellRendererText =
+                                        builder.get_object("author_uuid_cell").unwrap();
+                                    println!("{}", uc.get_property_text().unwrap());
+                                    let author_name_header_menu: gtk::MenuItem =
+                                        builder.get_object("author_name_title").unwrap();
+                                    author_name_header_menu
+                                        .set_label(t.get_property_text().unwrap().as_str());
+                                    let author_uuid_header_menu: gtk::MenuItem =
+                                        builder.get_object("author_uuid_item").unwrap();
+                                    author_uuid_header_menu.set_label(&format!(
+                                        "Uuid: {}",
+                                        uc.get_property_text().unwrap().as_str()
+                                    ));
+                                */
                                 let menu: gtk::Menu =
                                     builder.get_object("main-tree-view-context-menu").unwrap();
                                 menu.set_property_attach_widget(Some(this));
@@ -189,9 +209,7 @@ impl Notebook {
                     edit_document_widget
                     .title_entry()
                     .get_text()
-                    .as_ref()
-                    .map(|title| title.as_str())
-                    .unwrap_or_default(),
+                    .as_str(),
                     edit_document_widget.frame().upcast(),
                     false,
                 );

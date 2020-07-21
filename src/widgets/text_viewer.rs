@@ -26,7 +26,7 @@ pub struct TextViewerWindow(gtk::Builder);
 impl TextViewerWindow {
     pub fn new() -> Self {
         let widget_src = include_str!("./TextViewerWindow.glade");
-        let builder = gtk::Builder::new_from_string(widget_src);
+        let builder = gtk::Builder::from_string(widget_src);
         TextViewerWindow(builder)
     }
 
