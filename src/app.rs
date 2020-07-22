@@ -20,19 +20,31 @@
  */
 
 use super::*;
+use gio::ApplicationFlags;
+use glib::subclass;
+use glib::translate::*;
+use gtk::prelude::*;
+use gtk::subclass::prelude::*;
+use once_cell::unsync::OnceCell;
 
-pub struct App;
-
-impl App {
+impl Application {
     pub fn build_ui(application: &gtk::Application, conn: Rc<DatabaseConnection>) {
         let glade_src = include_str!("./bibliothecula.glade");
         let builder = Rc::new(gtk::Builder::from_string(glade_src));
+        builder.set_application(application);
         let window: gtk::Window = builder
             .get_object("main-window")
             .expect("Couldn't get window");
         window.set_application(Some(application));
-        //let window = gtk::ApplicationWindow::new(application);
         window.set_title("bibliothecula");
+        let about_menu_item: gtk::MenuItem = builder
+            .get_object("about-menu-item")
+            .expect("Couldn't get about-menu-item");
+        about_menu_item.connect_activate(clone!(@strong builder as builder => move |_| {
+            let app = builder.get_application().unwrap();
+            let about = crate::about::AboutBibliothecula::new(&app);
+            about.show_all();
+        }));
 
         let doc_list_store: gtk::ListStore = builder
             .get_object("main-tree-view-list-store")
@@ -82,5 +94,98 @@ impl App {
         // Association of the view's column with the model's `id` column.
         column.add_attribute(&cell, "text", id);
         tree.append_column(column);
+    }
+}
+
+#[derive(Debug)]
+pub struct ApplicationPrivate {
+    //about: OnceCell<crate::about::AboutBibliothecula>,
+}
+
+impl ObjectSubclass for ApplicationPrivate {
+    const NAME: &'static str = "Application";
+    type ParentType = gtk::Application;
+    type Instance = subclass::simple::InstanceStruct<Self>;
+    type Class = subclass::simple::ClassStruct<Self>;
+
+    glib_object_subclass!();
+
+    fn new() -> Self {
+        Self {
+            //about: OnceCell::new(),
+        }
+    }
+}
+
+impl ObjectImpl for ApplicationPrivate {
+    glib_object_impl!();
+}
+
+// When our application starts, the `startup` signal will be fired.
+// This gives us a chance to perform initialisation tasks that are not directly
+// related to showing a new window. After this, depending on how
+// the application is started, either `activate` or `open` will be called next.
+impl ApplicationImpl for ApplicationPrivate {
+    // `gio::Application::activate` is what gets called when the
+    // application is launched by the desktop environment and
+    // aksed to present itself.
+    fn activate(&self, _app: &gio::Application) {
+        /*
+        let about = self
+            .about
+            .get()
+            .expect("Should always be initiliazed in gio_application_startup");
+        about.show_all();
+        about.hide();
+        //    about.present();
+        //    */
+    }
+
+    // `gio::Application` is bit special. It does not get initialized
+    // when `new` is called and the object created, but rather
+    // once the `startup` signal is emitted and the `gio::Application::startup`
+    // is called.
+    //
+    // Due to this, we create and initialize the `Window` widget
+    // here. Widgets can't be created before `startup` has been called.
+    fn startup(&self, app: &gio::Application) {
+        self.parent_startup(app);
+
+        /*
+        let app = app.downcast_ref::<gtk::Application>().unwrap();
+        let about = crate::about::AboutBibliothecula::new(&app);
+        self.about
+            .set(about)
+            .expect("Failed to initialize application about window");
+        */
+    }
+}
+
+impl GtkApplicationImpl for ApplicationPrivate {}
+
+glib_wrapper! {
+    pub struct Application(
+        Object<subclass::simple::InstanceStruct<ApplicationPrivate>,
+        subclass::simple::ClassStruct<ApplicationPrivate>,
+        ApplicationClass>)
+        @extends gio::Application, gtk::Application;
+
+    match fn {
+        get_type => || ApplicationPrivate::get_type().to_glib(),
+    }
+}
+
+impl Application {
+    pub fn new() -> Self {
+        glib::Object::new(
+            Self::static_type(),
+            &[
+                ("application-id", &"org.epilys.bibliothecula"),
+                ("flags", &ApplicationFlags::empty()),
+            ],
+        )
+        .expect("Failed to create App")
+        .downcast()
+        .expect("Created app is of wrong type")
     }
 }

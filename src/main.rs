@@ -20,7 +20,9 @@
  */
 
 extern crate gdk;
+extern crate gdk_pixbuf;
 extern crate gio;
+#[macro_use]
 extern crate glib;
 extern crate gtk;
 extern crate pango;
@@ -28,14 +30,13 @@ extern crate pango;
 use gio::prelude::*;
 use gtk::prelude::*;
 
-use gtk::Application;
-
 use glib::clone;
 use gtk::{IconSize, Orientation, ReliefStyle, Widget};
 
 use std::convert::TryInto;
 use std::rc::Rc;
 
+pub mod about;
 mod app;
 mod models;
 mod undo;
@@ -46,10 +47,9 @@ use widgets::{EditDocumentFrame, Notebook};
 
 fn main() {
     let conn = Rc::new(models::create_connection().unwrap());
-    let application = Application::new(Some("com.github.bibliothecula"), Default::default())
-        .expect("failed to initialize GTK application");
+    let application = crate::app::Application::new();
     application.connect_activate(move |app| {
-        app::App::build_ui(app, conn.clone());
+        crate::app::Application::build_ui(app.upcast_ref::<gtk::Application>(), conn.clone());
     });
 
     application.run(&[]);
