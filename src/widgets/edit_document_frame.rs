@@ -219,7 +219,7 @@ impl EditDocumentFrame {
         }
         ));
         let tag_remove_item: gtk::MenuItem = builder.get_object("tag_remove_item").unwrap();
-        tag_remove_item.connect_activate(clone!(@strong builder as builder => move |_| {
+        tag_remove_item.connect_activate(clone!(@strong builder as builder, @strong connection as connection => move |_| {
             let t: gtk::CellRendererText =
                 builder.get_object("tag_name_cell").unwrap();
             //println!("{}", t.get_property_text().unwrap());
@@ -228,6 +228,28 @@ impl EditDocumentFrame {
             //println!("{}", uc.get_property_text().unwrap());
             let uuid = uc.get_property_text().unwrap();
             println!("Remove tag tag with uuid {}", uuid);
+            let dialog = gtk::Dialog::with_buttons::<gtk::Window>(Some("Remove tag?"), None, gtk::DialogFlags::MODAL, &[("No", gtk::ResponseType::No), ("Yes", gtk::ResponseType::Yes), ]);
+            let text = gtk::Label::new(Some("Remove tag association? This will not delete the tag."));
+            dialog.get_content_area().add(&text);
+            dialog.show_all();
+
+            let ret = dialog.run();
+
+            dialog.close();
+            println!("{:?}", ret);
+            if ret == gtk::ResponseType::Yes {
+                let document_label = builder.get_object::<gtk::Label>("uuid_label").unwrap().get_text();
+                if !document_label.as_str().is_empty() {
+                    connection.remove_metadata_from_document(&uuid.as_str().into(), &document_label.as_str().into()).unwrap();
+                }
+                let tag_store: gtk::ListStore = builder.get_object("tag_store").unwrap();
+                let tag_cloud: gtk::IconView = builder.get_object("tag_cloud").unwrap();
+                let selected = tag_cloud.get_selected_items();
+                for path in selected {
+                    let idx = tag_store.get_iter(&path).unwrap();
+                    tag_store.remove(&idx);
+                }
+            }
         }));
         let ret = EditDocumentFrame {
             builder,
