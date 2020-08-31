@@ -19,13 +19,27 @@
  * along with bibliothecula. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use rusqlite::{params, Connection, Result};
-use std::path::{Path, PathBuf};
+use crate::errors::*;
+use diesel::prelude::*;
+use diesel::sqlite::SqliteConnection;
+
+use diesel::deserialize::FromSql;
+use diesel::serialize::{Output, ToSql};
+use diesel::sql_types::{BigInt, Binary, Nullable};
+
+use std::convert::TryFrom;
+use std::path::PathBuf;
 use uuid::Uuid;
+
+pub mod schema;
+sql_function! {
+    fn length(x: Nullable<Binary>) -> BigInt;
+}
 
 macro_rules! uuid_hash_type {
     ($n:ident) => {
-        #[derive(PartialEq, Hash, Eq, Copy, Clone, Default)]
+        #[derive(PartialEq, Hash, Eq, Copy, Clone, Default, AsExpression, FromSqlRow)]
+        #[sql_type = "Binary"]
         pub struct $n(Uuid);
 
         impl core::fmt::Debug for $n {
@@ -40,6 +54,33 @@ macro_rules! uuid_hash_type {
             }
         }
 
+        impl<DB: diesel::backend::Backend> ToSql<Binary, DB> for $n
+        where
+            [u8]: ToSql<Binary, DB>,
+        {
+            fn to_sql<W>(&self, out: &mut Output<W, DB>) -> diesel::serialize::Result
+            where
+                W: std::io::Write,
+            {
+                let v = &self.0.as_bytes()[0..];
+                v.to_sql(out)
+            }
+        }
+
+        impl<DB: diesel::backend::Backend> FromSql<Binary, DB> for $n
+        where
+            *const [u8]: FromSql<Binary, DB>,
+        {
+            fn from_sql(bytes: Option<&DB::RawValue>) -> diesel::deserialize::Result<Self> {
+                let slice_ptr = <*const [u8]>::from_sql(bytes)?;
+                // We know that the pointer impl will never return null since it's not
+                // Nullable<Binary>
+                let bytes = unsafe { &*slice_ptr };
+                let b16 = <[u8; 16]>::try_from(bytes)?;
+                Ok($n(uuid::Uuid::from_bytes(b16)))
+            }
+        }
+
         impl<S: AsRef<str>> From<S> for $n {
             fn from(from: S) -> Self {
                 $n(Uuid::parse_str(from.as_ref()).unwrap())
@@ -47,11 +88,6 @@ macro_rules! uuid_hash_type {
         }
 
         impl $n {
-            /*
-            fn new() -> Self {
-                $n(Uuid::new_v4())
-            }
-            */
             pub fn new_v5(namespace: &Uuid, b: &[u8]) -> Self {
                 $n(Uuid::new_v5(namespace, b))
             }
@@ -67,6 +103,37 @@ macro_rules! uuid_hash_type {
     };
 }
 
+impl DocumentUuid {
+    pub fn new(title: &str) -> Self {
+        DocumentUuid::new_v5(&Uuid::NAMESPACE_OID, title.as_bytes())
+    }
+}
+
+impl MetadataUuid {
+    pub fn new_tag(title: &str) -> Self {
+        MetadataUuid::new_v5(&Uuid::NAMESPACE_OID, format!("tag\0{}", title).as_bytes())
+    }
+
+    pub fn new_data(name: Option<&str>, data: &[u8]) -> Self {
+        if let Some(name) = name {
+            let mut name = name.as_bytes().to_vec();
+            name.push(b'\0');
+            name.extend(data.iter().cloned());
+            MetadataUuid::new_v5(&Uuid::NAMESPACE_OID, &name)
+        } else {
+            MetadataUuid::new_v5(&Uuid::NAMESPACE_OID, data)
+        }
+    }
+
+    pub fn new_storage_data(data: &[u8]) -> Self {
+        MetadataUuid::new_v5(&Uuid::NAMESPACE_DNS, data)
+    }
+
+    pub fn new_filesystem_path(path: &[u8]) -> Self {
+        MetadataUuid::new_v5(&Uuid::NAMESPACE_URL, path)
+    }
+}
+
 uuid_hash_type!(DocumentUuid);
 uuid_hash_type!(MetadataUuid);
 
@@ -76,56 +143,85 @@ pub enum StorageType {
     Local(PathBuf),
 }
 
-#[derive(Debug)]
+use schema::Document as SchemaDocument;
+#[derive(Debug, Queryable, Insertable)]
+#[table_name = "SchemaDocument"]
 pub struct Document {
     pub uuid: DocumentUuid,
     pub title: String,
+    pub created: chrono::NaiveDateTime,
+    pub last_modified: chrono::NaiveDateTime,
+}
+
+use schema::Metadata as SchemaMetadata;
+#[derive(Debug, Insertable, Queryable)]
+#[table_name = "SchemaMetadata"]
+pub struct Metadata {
+    pub uuid: MetadataUuid,
+    pub name: Option<String>,
+    pub data: Option<Vec<u8>>,
+    pub created: chrono::NaiveDateTime,
+    pub last_modified: chrono::NaiveDateTime,
 }
 
 impl Document {
     pub fn new(title: String) -> Self {
         Document {
-            uuid: DocumentUuid::new_v5(&Uuid::NAMESPACE_OID, title.as_bytes()),
+            uuid: DocumentUuid::new(&title),
             title,
+            created: chrono::Utc::now().naive_utc(),
+            last_modified: chrono::Utc::now().naive_utc(),
         }
     }
 }
 
-pub struct DatabaseConnection(Connection);
+pub struct DatabaseConnection {
+    inner: SqliteConnection,
+}
 
 impl DatabaseConnection {
     pub fn all(&self) -> Vec<Document> {
-        let mut stmt = self.0.prepare("SELECT uuid, title FROM Document").unwrap();
-        let doc_iter = stmt
-            .query_map(params![], |row| {
-                Ok(Document {
-                    uuid: DocumentUuid(row.get(0).unwrap()),
-                    title: row.get(1).unwrap(),
-                })
-            })
-            .unwrap();
-
-        doc_iter.collect::<Result<Vec<_>>>().unwrap()
+        schema::Document::table.load(&self.inner).unwrap()
     }
 
     pub fn get(&self, uuid: &DocumentUuid) -> Document {
-        let mut stmt = self
-            .0
-            .prepare("SELECT uuid, title FROM Document WHERE uuid = ?1")
-            .unwrap();
-        let doc_iter = stmt
-            .query_map(params![uuid.inner()], |row| {
-                Ok(Document {
-                    uuid: DocumentUuid(row.get(0).unwrap()),
-                    title: row.get(1).unwrap(),
-                })
-            })
-            .unwrap();
-
-        doc_iter.collect::<Result<Vec<_>>>().unwrap().remove(0)
+        schema::Document::table
+            .filter(schema::Document::uuid.eq(uuid))
+            .first(&self.inner)
+            .optional()
+            .unwrap()
+            .unwrap()
     }
 
     pub fn get_files(&self, uuid: &DocumentUuid) -> Vec<(MetadataUuid, StorageType, usize)> {
+        let v: Vec<(MetadataUuid, Option<String>, bool, i64)> = schema::Metadata::table
+            .inner_join(schema::DocumentHasStorage::table.inner_join(schema::Document::table))
+            .filter(schema::Document::uuid.eq(uuid))
+            .select((
+                schema::Metadata::uuid,
+                schema::Metadata::name,
+                schema::DocumentHasStorage::is_data,
+                length(schema::Metadata::data),
+            ))
+            .load(&self.inner)
+            .unwrap();
+        eprintln!("v = {:?}", &v);
+        v.into_iter()
+            .map(|(mu, opt_s, b, len)| {
+                (
+                    mu,
+                    {
+                        if b {
+                            StorageType::InDatabase(String::new())
+                        } else {
+                            StorageType::Local(opt_s.unwrap_or_default().into())
+                        }
+                    },
+                    <usize>::try_from(len).unwrap_or(0),
+                )
+            })
+            .collect()
+        /*
         let mut stmt = self.0.prepare("SELECT m.uuid, hs.is_data, (CASE WHEN hs.is_data THEN  m.name ELSE m.data END), length(m.data) FROM Metadata AS m, DocumentHasStorage AS hs, Document AS d WHERE hs.document_uuid = d.uuid AND d.uuid=?1 AND m.uuid = hs.metadata_uuid;").unwrap();
         let storage_iter = stmt
             .query_map(params![uuid.inner()], |row| {
@@ -152,64 +248,77 @@ impl DatabaseConnection {
             .unwrap();
 
         storage_iter.collect::<Result<Vec<_>>>().unwrap()
+        */
     }
 
     pub fn get_files_no(&self, uuid: &DocumentUuid) -> usize {
-        let mut stmt = self.0.prepare("SELECT * FROM Metadata AS m, DocumentHasStorage AS hs, Document AS d WHERE hs.document_uuid = d.uuid AND d.uuid=?1 AND m.uuid = hs.metadata_uuid;").unwrap();
-        let storage_iter = stmt.query_map(params![uuid.inner()], |row| Ok(())).unwrap();
-
-        storage_iter.collect::<Result<Vec<_>>>().unwrap().len()
+        <usize as TryFrom<i64>>::try_from(
+            schema::Metadata::table
+                .inner_join(schema::DocumentHasStorage::table.inner_join(schema::Document::table))
+                .filter(schema::Document::uuid.eq(uuid))
+                .count()
+                .get_result(&self.inner)
+                .unwrap(),
+        )
+        .unwrap_or(0)
     }
 
     pub fn get_data(&self, uuid: &MetadataUuid) -> Vec<u8> {
-        let mut stmt = self
-            .0
-            .prepare("SELECT m.data FROM Metadata AS m WHERE m.uuid=?1")
-            .unwrap();
-        let storage_iter = stmt
-            .query_map(params![uuid.inner()], |row| {
-                Ok(row.get(0).unwrap_or_else(|_| {
-                    let text: String = row.get(0).unwrap();
-                    text.into_bytes()
-                }))
-            })
+        let v: Option<Vec<u8>> = schema::Metadata::table
+            .filter(schema::Metadata::uuid.eq(uuid))
+            .select(schema::Metadata::data)
+            .first(&self.inner)
             .unwrap();
 
-        storage_iter.collect::<Result<Vec<_>>>().unwrap().remove(0)
+        v.unwrap_or_default()
     }
 
     pub fn get_tags(&self, uuid: &DocumentUuid) -> Vec<(MetadataUuid, String)> {
-        let mut stmt = self.0.prepare("SELECT m.uuid, m.data FROM Metadata AS m, DocumentHasTag AS hs, Document AS d WHERE m.name = 'tag' AND hs.document_uuid = d.uuid AND d.uuid=?1 AND m.uuid = hs.metadata_uuid;").unwrap();
-        let tag_iter = stmt
-            .query_map(params![uuid.inner()], |row| {
-                Ok((MetadataUuid(row.get(0).unwrap()), row.get(1).unwrap()))
+        let v: Vec<(MetadataUuid, String)> = schema::Metadata::table
+            .inner_join(schema::DocumentHasTag::table.inner_join(schema::Document::table))
+            .filter(schema::Document::uuid.eq(uuid))
+            .filter(schema::Metadata::name.eq("tag"))
+            .select((schema::Metadata::uuid, schema::Metadata::data))
+            .load(&self.inner)
+            .unwrap()
+            .into_iter()
+            .map(|(m, opt): (MetadataUuid, Option<Vec<u8>>)| {
+                (
+                    m,
+                    opt.map(|v| String::from_utf8_lossy(&v).to_string())
+                        .unwrap_or_default(),
+                )
             })
-            .unwrap();
-
-        tag_iter.collect::<Result<Vec<_>>>().unwrap()
+            .collect();
+        v
     }
 
     pub fn get_authors(&self, uuid: &DocumentUuid) -> Vec<(MetadataUuid, String)> {
-        let mut stmt = self.0.prepare("SELECT m.uuid, m.data FROM Metadata AS m, DocumentHasMetadata AS hs, Document AS d WHERE m.name = 'author' AND hs.document_uuid = d.uuid AND d.uuid=?1 AND m.uuid = hs.metadata_uuid;").unwrap();
-        let author_iter = stmt
-            .query_map(params![uuid.inner()], |row| {
-                Ok((
-                    MetadataUuid(row.get(0).unwrap()),
-                    String::from_utf8_lossy(&row.get::<_, Vec<u8>>(1).unwrap()).into_owned(),
-                ))
+        let v: Vec<(MetadataUuid, String)> = schema::Metadata::table
+            .inner_join(schema::DocumentHasMetadata::table.inner_join(schema::Document::table))
+            .filter(schema::Document::uuid.eq(uuid))
+            .filter(schema::Metadata::name.eq("author"))
+            .select((schema::Metadata::uuid, schema::Metadata::data))
+            .load(&self.inner)
+            .unwrap()
+            .into_iter()
+            .map(|(m, opt): (MetadataUuid, Option<Vec<u8>>)| {
+                (
+                    m,
+                    opt.map(|v| String::from_utf8_lossy(&v).to_string())
+                        .unwrap_or_default(),
+                )
             })
-            .unwrap();
-
-        author_iter.collect::<Result<Vec<_>>>().unwrap()
+            .collect();
+        v
     }
 
     pub fn insert_document(&self, name: &str) -> Result<DocumentUuid> {
         let mc = Document::new(name.to_string());
 
-        self.0.execute(
-            "INSERT INTO Document (uuid, title) VALUES (?1, ?2)",
-            params![mc.uuid.inner(), mc.title],
-        )?;
+        diesel::insert_into(schema::Document::table)
+            .values(&mc)
+            .execute(&self.inner)?;
         Ok(mc.uuid)
     }
 
@@ -220,39 +329,40 @@ impl DatabaseConnection {
         is_text: bool,
         uuid: &DocumentUuid,
     ) -> Result<MetadataUuid> {
-        let metadata_uuid = MetadataUuid(if let Some(name) = name {
-            let mut name = name.as_bytes().to_vec();
-            name.push(b'\0');
-            name.extend(data.iter().cloned());
-            Uuid::new_v5(&Uuid::NAMESPACE_OID, &name)
-        } else {
-            Uuid::new_v5(&Uuid::NAMESPACE_OID, data)
-        });
-        self.0.execute(
-            "INSERT OR IGNORE INTO Metadata (uuid, name, data) VALUES (?1, ?2, ?3)",
-            params![metadata_uuid.inner(), name.unwrap_or_default(), data],
-        )?;
-        self.0.execute(
-            "INSERT OR IGNORE INTO DocumentHasMetadata (document_uuid, metadata_uuid, is_text) VALUES (?1, ?2, ?3)",
-            params![uuid.inner(), metadata_uuid.inner(), is_text],
-        )?;
+        let metadata_uuid = MetadataUuid::new_data(name, data);
+        let mv = Metadata {
+            uuid: metadata_uuid,
+            name: name.map(|n| n.to_string()),
+            data: Some(data.to_vec()),
+            created: chrono::Utc::now().naive_utc(),
+            last_modified: chrono::Utc::now().naive_utc(),
+        };
+
+        diesel::insert_into(schema::Metadata::table)
+            .values(&mv)
+            .execute(&self.inner)?;
         Ok(metadata_uuid)
     }
 
     pub fn insert_tag(&self, data: &str, uuid: &DocumentUuid) -> Result<MetadataUuid> {
-        let metadata_uuid = MetadataUuid(Uuid::new_v5(
-            &Uuid::NAMESPACE_OID,
-            format!("tag\0{}", data).as_bytes(),
-        ));
+        let metadata_uuid = MetadataUuid::new_tag(data);
+        let mv = Metadata {
+            uuid: metadata_uuid,
+            name: Some("tag".to_string()),
+            data: Some(data.as_bytes().to_vec()),
+            created: chrono::Utc::now().naive_utc(),
+            last_modified: chrono::Utc::now().naive_utc(),
+        };
 
-        self.0.execute(
-            "INSERT OR IGNORE INTO Metadata (uuid, name, data) VALUES (?1, ?2, ?3)",
-            params![metadata_uuid.inner(), "tag", data],
-        )?;
-        self.0.execute(
-            "INSERT OR IGNORE INTO DocumentHasTag (document_uuid, metadata_uuid) VALUES (?1, ?2)",
-            params![uuid.inner(), metadata_uuid.inner()],
-        )?;
+        diesel::insert_into(schema::Metadata::table)
+            .values(&mv)
+            .execute(&self.inner)?;
+        diesel::insert_into(schema::DocumentHasTag::table)
+            .values((
+                schema::DocumentHasTag::document_uuid.eq(uuid),
+                schema::DocumentHasTag::metadata_uuid.eq(uuid),
+            ))
+            .execute(&self.inner)?;
         Ok(metadata_uuid)
     }
 
@@ -261,10 +371,18 @@ impl DatabaseConnection {
         metadata_uuid: &MetadataUuid,
         uuid: &DocumentUuid,
     ) -> Result<()> {
-        self.0.execute(
-            "DELETE FROM DocumentHasTag where document_uuid = ?1 AND metadata_uuid = ?2",
-            params![uuid.inner(), metadata_uuid.inner()],
-        )?;
+        diesel::delete(
+            schema::DocumentHasTag::table
+                .filter(schema::DocumentHasTag::document_uuid.eq(uuid))
+                .filter(schema::DocumentHasTag::metadata_uuid.eq(metadata_uuid)),
+        )
+        .execute(&self.inner)
+        .chain_err(|| {
+            format!(
+                "Error removing tag {} from document {}",
+                metadata_uuid, uuid
+            )
+        })?;
         Ok(())
     }
 
@@ -273,10 +391,18 @@ impl DatabaseConnection {
         metadata_uuid: &MetadataUuid,
         uuid: &DocumentUuid,
     ) -> Result<()> {
-        self.0.execute(
-            "DELETE FROM DocumentHasMetadata where document_uuid = ?1 AND metadata_uuid = ?2",
-            params![uuid.inner(), metadata_uuid.inner()],
-        )?;
+        diesel::delete(
+            schema::DocumentHasMetadata::table
+                .filter(schema::DocumentHasMetadata::document_uuid.eq(uuid))
+                .filter(schema::DocumentHasMetadata::metadata_uuid.eq(metadata_uuid)),
+        )
+        .execute(&self.inner)
+        .chain_err(|| {
+            format!(
+                "Error removing metadata {} from document {}",
+                metadata_uuid, uuid
+            )
+        })?;
         Ok(())
     }
 
@@ -286,37 +412,48 @@ impl DatabaseConnection {
         mime_type: &str,
         uuid: &DocumentUuid,
     ) -> Result<MetadataUuid> {
+        diesel::insert_into(schema::DocumentHasTag::table)
+            .values((
+                schema::DocumentHasTag::document_uuid.eq(uuid),
+                schema::DocumentHasTag::metadata_uuid.eq(uuid),
+            ))
+            .execute(&self.inner)?;
         match storage {
             StorageType::InDatabase(ref data) => {
-                let storage_uuid =
-                    MetadataUuid(Uuid::new_v5(&Uuid::NAMESPACE_DNS, data.as_bytes()));
-                self.0.execute(
-                    "INSERT INTO Metadata (uuid, name, data) VALUES (?1, ?2, ?3)",
-                    params![storage_uuid.inner(), "text/plain", data,],
-                )?;
-                self.0.execute(
-                    "INSERT INTO DocumentHasStorage (document_uuid, metadata_uuid, is_data) VALUES (?1, ?2, ?3)",
-                    params![uuid.inner(), storage_uuid.inner(), true],
-                )?;
+                let storage_uuid = MetadataUuid::new_storage_data(data.as_bytes());
+                diesel::insert_into(schema::Metadata::table)
+                    .values((
+                        schema::Metadata::uuid.eq(&storage_uuid),
+                        schema::Metadata::name.eq("text/plain"),
+                        schema::Metadata::data.eq(data.as_bytes()),
+                    ))
+                    .execute(&self.inner)?;
+                diesel::insert_into(schema::DocumentHasStorage::table)
+                    .values((
+                        schema::DocumentHasStorage::document_uuid.eq(uuid),
+                        schema::DocumentHasStorage::metadata_uuid.eq(storage_uuid),
+                        schema::DocumentHasStorage::is_data.eq(true),
+                    ))
+                    .execute(&self.inner)?;
                 Ok(storage_uuid)
             }
             StorageType::Local(ref path) => {
-                let storage_uuid = MetadataUuid(Uuid::new_v5(
-                    &Uuid::NAMESPACE_URL,
-                    path.to_str().unwrap().as_bytes(),
-                ));
-                self.0.execute(
-                    "INSERT INTO Metadata (uuid, name, data) VALUES (?1, ?2, ?3)",
-                    params![
-                        storage_uuid.inner(),
-                        mime_type, /* xdg-mime query filetype $FILE */
-                        &path.to_str().unwrap(),
-                    ],
-                )?;
-                self.0.execute(
-                    "INSERT INTO DocumentHasStorage (document_uuid, metadata_uuid, is_data) VALUES (?1, ?2, ?3)",
-                    params![uuid.inner(), storage_uuid.inner(), false],
-                )?;
+                let storage_uuid =
+                    MetadataUuid::new_filesystem_path(path.to_str().unwrap().as_bytes());
+                diesel::insert_into(schema::Metadata::table)
+                    .values((
+                        schema::Metadata::uuid.eq(&storage_uuid),
+                        schema::Metadata::name.eq(&mime_type), /* xdg-mime query filetype $FILE */
+                        schema::Metadata::data.eq(&path.to_str().unwrap().as_bytes()),
+                    ))
+                    .execute(&self.inner)?;
+                diesel::insert_into(schema::DocumentHasStorage::table)
+                    .values((
+                        schema::DocumentHasStorage::document_uuid.eq(uuid),
+                        schema::DocumentHasStorage::metadata_uuid.eq(storage_uuid),
+                        schema::DocumentHasStorage::is_data.eq(false),
+                    ))
+                    .execute(&self.inner)?;
 
                 Ok(storage_uuid)
             }
@@ -325,7 +462,11 @@ impl DatabaseConnection {
 }
 
 pub fn create_connection() -> Result<DatabaseConnection> {
-    let path = &Path::new("./bibliothecula.db");
+    let path = &"./bibliothecula.db";
+    let database_url = std::env::var("DATABASE_URL").unwrap_or(path.to_string());
+    let conn = SqliteConnection::establish(&database_url)
+        .expect(&format!("Error connecting to {}", database_url));
+    /*
     let set_mode = !path.exists();
     let conn = Connection::open(path).unwrap();
     let ret = DatabaseConnection(conn);
@@ -375,6 +516,7 @@ pub fn create_connection() -> Result<DatabaseConnection> {
             ret.insert_tag("bibliothecula", &mc_uuid)?;
         }
     }
+        */
 
     {
         /*
@@ -392,5 +534,5 @@ pub fn create_connection() -> Result<DatabaseConnection> {
         */
     }
 
-    Ok(ret)
+    Ok(DatabaseConnection { inner: conn })
 }

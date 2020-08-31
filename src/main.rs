@@ -26,6 +26,10 @@ extern crate gio;
 extern crate glib;
 extern crate gtk;
 extern crate pango;
+#[macro_use]
+extern crate diesel;
+#[macro_use]
+extern crate error_chain;
 
 use gio::prelude::*;
 use gtk::prelude::*;
@@ -37,6 +41,8 @@ use std::convert::TryInto;
 use std::rc::Rc;
 
 pub mod about;
+pub mod errors;
+pub use errors::*;
 mod app;
 mod models;
 mod undo;
