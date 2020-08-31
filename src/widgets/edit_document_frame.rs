@@ -21,25 +21,22 @@
 
 use super::*;
 use crate::models::Document;
-use std::cell::Cell;
 use std::cell::RefCell;
 
 pub struct EditDocumentFrame {
     builder: gtk::Builder,
-    parent_builder: Rc<gtk::Builder>,
-    is_dirty: RefCell<bool>,
     original_document: Rc<Option<Document>>,
     file_entry_builders: RefCell<Vec<gtk::Builder>>,
     connection: Rc<DatabaseConnection>,
 }
 
 impl EditDocumentFrame {
-    pub fn new(connection: Rc<DatabaseConnection>, parent_builder: Rc<gtk::Builder>) -> Self {
+    pub fn new(connection: Rc<DatabaseConnection>) -> Self {
         let widget_src = include_str!("./EditDocumentFrame.glade");
         let builder = gtk::Builder::from_string(widget_src);
 
         let add_file_button: gtk::Button = builder.get_object("add-file-button").unwrap();
-        add_file_button.connect_clicked(clone!(@strong builder as parent_builder, @strong connection as connection => move |_| {
+        add_file_button.connect_clicked(clone!(@strong connection as connection => move |_| {
             let widget_src = include_str!("./AddFileAssistant.glade");
             let builder = gtk::Builder::from_string(widget_src);
             let assistant: gtk::Assistant = builder.get_object("add-file-assistant").unwrap();
@@ -77,8 +74,7 @@ impl EditDocumentFrame {
             let author_cloud: gtk::IconView = builder.get_object("author_cloud").unwrap();
             let author_open_item: gtk::MenuItem = builder.get_object("author_open_item").unwrap();
             author_open_item.connect_activate(clone!(@strong builder as builder => move |_| {
-                let t: gtk::CellRendererText =
-                    builder.get_object("author_name_cell").unwrap();
+                //let t: gtk::CellRendererText = builder.get_object("author_name_cell").unwrap();
                 //println!("{}", t.get_property_text().unwrap());
                 let uc: gtk::CellRendererText =
                     builder.get_object("author_uuid_cell").unwrap();
@@ -90,8 +86,7 @@ impl EditDocumentFrame {
             let author_remove_item: gtk::MenuItem =
                 builder.get_object("author_remove_item").unwrap();
             author_remove_item.connect_activate(clone!(@strong builder as builder, @strong connection as connection => move |_| {
-                let t: gtk::CellRendererText =
-                    builder.get_object("author_name_cell").unwrap();
+                //let t: gtk::CellRendererText = builder.get_object("author_name_cell").unwrap();
                 //println!("{}", t.get_property_text().unwrap());
                 let uc: gtk::CellRendererText =
                     builder.get_object("author_uuid_cell").unwrap();
@@ -208,8 +203,7 @@ impl EditDocumentFrame {
         });
         let tag_open_item: gtk::MenuItem = builder.get_object("tag_open_item").unwrap();
         tag_open_item.connect_activate(clone!(@strong builder as builder => move |_| {
-            let t: gtk::CellRendererText =
-                builder.get_object("tag_name_cell").unwrap();
+            //let t: gtk::CellRendererText = builder.get_object("tag_name_cell").unwrap();
             //println!("{}", t.get_property_text().unwrap());
             let uc: gtk::CellRendererText =
                 builder.get_object("tag_uuid_cell").unwrap();
@@ -220,8 +214,7 @@ impl EditDocumentFrame {
         ));
         let tag_remove_item: gtk::MenuItem = builder.get_object("tag_remove_item").unwrap();
         tag_remove_item.connect_activate(clone!(@strong builder as builder, @strong connection as connection => move |_| {
-            let t: gtk::CellRendererText =
-                builder.get_object("tag_name_cell").unwrap();
+            //let t: gtk::CellRendererText = builder.get_object("tag_name_cell").unwrap();
             //println!("{}", t.get_property_text().unwrap());
             let uc: gtk::CellRendererText =
                 builder.get_object("tag_uuid_cell").unwrap();
@@ -254,19 +247,17 @@ impl EditDocumentFrame {
         let ret = EditDocumentFrame {
             builder,
             connection,
-            parent_builder,
             file_entry_builders: RefCell::new(vec![]),
-            is_dirty: RefCell::new(false),
             original_document: Rc::new(None),
         };
         ret.frame().show_all();
         ret
     }
 
-    pub fn init_as_tab(&self) {
+    pub fn init_as_tab(&self, parent: &Notebook) {
         /* Initialise parent Notebook stuff */
-        let notebook = self
-            .parent_builder
+        let notebook = parent
+            .builder
             .get_object::<gtk::Notebook>("global-notebook")
             .expect("Couldn't get global-notebook");
         let tab = self.frame();

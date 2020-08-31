@@ -45,17 +45,16 @@ pub mod errors;
 pub use errors::*;
 mod app;
 mod models;
-mod undo;
+//mod undo;
 mod widgets;
 
 use models::DatabaseConnection;
-use widgets::{EditDocumentFrame, Notebook};
+use widgets::Notebook;
 
 fn main() {
-    let conn = Rc::new(models::create_connection().unwrap());
     let application = crate::app::Application::new();
     application.connect_activate(move |app| {
-        crate::app::Application::build_ui(app.upcast_ref::<gtk::Application>(), conn.clone());
+        app.build_ui();
     });
 
     application.run(&[]);

@@ -23,83 +23,28 @@ use super::*;
 use gio::ApplicationFlags;
 use glib::subclass;
 use glib::translate::*;
-use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use once_cell::unsync::OnceCell;
 
-impl Application {
-    pub fn build_ui(application: &gtk::Application, conn: Rc<DatabaseConnection>) {
-        let glade_src = include_str!("./bibliothecula.glade");
-        let builder = Rc::new(gtk::Builder::from_string(glade_src));
-        builder.set_application(application);
-        let window: gtk::Window = builder
-            .get_object("main-window")
-            .expect("Couldn't get window");
-        window.set_application(Some(application));
-        window.set_title("bibliothecula");
-        let about_menu_item: gtk::MenuItem = builder
-            .get_object("about-menu-item")
-            .expect("Couldn't get about-menu-item");
-        about_menu_item.connect_activate(clone!(@strong builder as builder => move |_| {
-            let app = builder.get_application().unwrap();
-            let about = crate::about::AboutBibliothecula::new(&app);
-            about.show_all();
-        }));
-
-        let doc_list_store: gtk::ListStore = builder
-            .get_object("main-tree-view-list-store")
-            .expect("Couldn't get main-tree-view-list-store");
-        for d in conn.all().into_iter() {
-            doc_list_store.insert_with_values(
-                None,
-                &[0, 1, 2, 3, 4],
-                &[
-                    &d.title.as_str(),
-                    &conn
-                        .get_authors(&d.uuid)
-                        .into_iter()
-                        .map(|t| t.1)
-                        .collect::<Vec<String>>()
-                        .join(", ")
-                        .as_str(),
-                    &conn.get_files_no(&d.uuid).try_into().unwrap_or(0),
-                    &conn
-                        .get_tags(&d.uuid)
-                        .into_iter()
-                        .map(|t| t.1)
-                        .collect::<Vec<String>>()
-                        .join(", ")
-                        .as_str(),
-                    &d.uuid.to_string().as_str(),
-                ],
-            );
-        }
-        let notebook = Notebook::new(builder.clone(), conn.clone());
-        let edit_document_widget = EditDocumentFrame::new(conn.clone(), builder.clone())
-            .with_document(models::Document::new("Magna Carta".to_string()).uuid);
-        let _idx = notebook.create_tab(
-            edit_document_widget.title_entry().get_text().as_str(),
-            edit_document_widget.frame().upcast(),
-            false,
-        );
-        window.set_position(gtk::WindowPosition::Center);
-        window.set_default_size(640, 480);
-        window.show_all();
+impl<'g> From<&'g gtk::Application> for &'g Application {
+    fn from(val: &'g gtk::Application) -> Self {
+        val.downcast_ref::<Application>()
+            .expect("Created Application is of wrong type")
     }
+}
 
-    fn append_column(column: &gtk::TreeViewColumn, tree: &gtk::TreeView, id: i32) {
-        let cell = gtk::CellRendererText::new();
-
-        column.pack_start(&cell, true);
-        // Association of the view's column with the model's `id` column.
-        column.add_attribute(&cell, "text", id);
-        tree.append_column(column);
+impl Application {
+    pub fn build_ui(&self) {
+        let notebook = Notebook::new(self.clone());
+        self.get_private().notebook.set(notebook).unwrap();
     }
 }
 
 #[derive(Debug)]
 pub struct ApplicationPrivate {
-    //about: OnceCell<crate::about::AboutBibliothecula>,
+    pub builder: OnceCell<Rc<gtk::Builder>>,
+    pub connection: OnceCell<Rc<DatabaseConnection>>,
+    pub notebook: OnceCell<widgets::Notebook>,
 }
 
 impl ObjectSubclass for ApplicationPrivate {
@@ -112,7 +57,9 @@ impl ObjectSubclass for ApplicationPrivate {
 
     fn new() -> Self {
         Self {
-            //about: OnceCell::new(),
+            builder: OnceCell::new(),
+            connection: OnceCell::new(),
+            notebook: OnceCell::new(),
         }
     }
 }
@@ -129,16 +76,25 @@ impl ApplicationImpl for ApplicationPrivate {
     // `gio::Application::activate` is what gets called when the
     // application is launched by the desktop environment and
     // aksed to present itself.
-    fn activate(&self, _app: &gio::Application) {
-        /*
-        let about = self
-            .about
-            .get()
-            .expect("Should always be initiliazed in gio_application_startup");
-        about.show_all();
-        about.hide();
-        //    about.present();
-        //    */
+    fn activate(&self, app: &gio::Application) {
+        let app = app.downcast_ref::<gtk::Application>().unwrap();
+        let builder = self.builder.get().unwrap();
+        let window: gtk::Window = builder
+            .get_object("main-window")
+            .expect("Couldn't get window");
+        window.set_application(Some(app));
+        window.set_title("bibliothecula");
+        let about_menu_item: gtk::MenuItem = builder
+            .get_object("about-menu-item")
+            .expect("Couldn't get about-menu-item");
+        about_menu_item.connect_activate(clone!(@strong builder as builder => move |_| {
+            let app = builder.get_application().unwrap();
+            let about = crate::about::AboutBibliothecula::new(&app);
+            about.show_all();
+        }));
+        window.set_position(gtk::WindowPosition::Center);
+        window.set_default_size(640, 480);
+        window.show_all();
     }
 
     // `gio::Application` is bit special. It does not get initialized
@@ -150,14 +106,13 @@ impl ApplicationImpl for ApplicationPrivate {
     // here. Widgets can't be created before `startup` has been called.
     fn startup(&self, app: &gio::Application) {
         self.parent_startup(app);
-
-        /*
         let app = app.downcast_ref::<gtk::Application>().unwrap();
-        let about = crate::about::AboutBibliothecula::new(&app);
-        self.about
-            .set(about)
+        let glade_src = include_str!("./bibliothecula.glade");
+        let builder = Rc::new(gtk::Builder::from_string(glade_src));
+        builder.set_application(app);
+        self.builder
+            .set(builder)
             .expect("Failed to initialize application about window");
-        */
     }
 }
 
@@ -175,9 +130,23 @@ glib_wrapper! {
     }
 }
 
+impl ApplicationPrivate {
+    pub fn connection(&self) -> Rc<DatabaseConnection> {
+        self.connection.get().unwrap().clone()
+    }
+
+    pub fn builder(&self) -> Rc<gtk::Builder> {
+        self.builder.get().unwrap().clone()
+    }
+
+    pub fn builder_ref(&self) -> &gtk::Builder {
+        self.builder.get().unwrap().as_ref()
+    }
+}
+
 impl Application {
     pub fn new() -> Self {
-        glib::Object::new(
+        let ret = glib::Object::new(
             Self::static_type(),
             &[
                 ("application-id", &"org.epilys.bibliothecula"),
@@ -186,6 +155,29 @@ impl Application {
         )
         .expect("Failed to create App")
         .downcast()
-        .expect("Created app is of wrong type")
+        .expect("Created app is of wrong type");
+        let connection = DatabaseConnection::create_connection(&ret).unwrap();
+        ret.get_private()
+            .connection
+            .set(Rc::new(connection))
+            .expect("Failed to initialize application db connection");
+        ret
+    }
+
+    pub fn get_private(&self) -> &ApplicationPrivate {
+        ApplicationPrivate::from_instance(self)
+    }
+
+    pub fn get_gtk_app(&self) -> &gtk::Application {
+        self.upcast_ref::<gtk::Application>()
+    }
+
+    pub fn set_title(&self, new_title: &str) {
+        let window: gtk::Window = self
+            .get_private()
+            .builder_ref()
+            .get_object("main-window")
+            .expect("Couldn't get window");
+        window.set_title(new_title);
     }
 }

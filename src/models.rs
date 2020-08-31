@@ -31,6 +31,7 @@ use std::convert::TryFrom;
 use std::path::PathBuf;
 use uuid::Uuid;
 
+#[allow(non_snake_case)]
 pub mod schema;
 sql_function! {
     fn length(x: Nullable<Binary>) -> BigInt;
@@ -144,7 +145,7 @@ pub enum StorageType {
 }
 
 use schema::Document as SchemaDocument;
-#[derive(Debug, Queryable, Insertable)]
+#[derive(Debug, QueryableByName, Queryable, Insertable)]
 #[table_name = "SchemaDocument"]
 pub struct Document {
     pub uuid: DocumentUuid,
@@ -154,7 +155,7 @@ pub struct Document {
 }
 
 use schema::Metadata as SchemaMetadata;
-#[derive(Debug, Insertable, Queryable)]
+#[derive(Debug, QueryableByName, Insertable, Queryable)]
 #[table_name = "SchemaMetadata"]
 pub struct Metadata {
     pub uuid: MetadataUuid,
@@ -177,11 +178,35 @@ impl Document {
 
 pub struct DatabaseConnection {
     inner: SqliteConnection,
+    //app: crate::app::Application,
+}
+
+impl core::fmt::Debug for DatabaseConnection {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", "DatabaseConnection")
+    }
 }
 
 impl DatabaseConnection {
-    pub fn all(&self) -> Vec<Document> {
-        schema::Document::table.load(&self.inner).unwrap()
+    pub fn search(&self, text: &str) -> Result<Vec<Document>> {
+        let tokens = text.split_whitespace().collect::<Vec<&str>>();
+        if tokens.is_empty() {
+            return self.all();
+        }
+        /*
+        schema::Document::table
+            .filter(schema::Document::title.eq_any(&tokens))
+            .load(&self.inner)
+            .unwrap();
+        */
+        let query = format!("SELECT DISTINCT d.* FROM Document as d, Metadata as m, DocumentHasTag as dht WHERE d.title LIKE '%{}%' OR (m.uuid = dht.metadata_uuid AND d.uuid = dht.document_uuid AND m.data IN ('{}'));", text, tokens.join("', '"));
+        Ok(diesel::sql_query(query).load(&self.inner)?)
+    }
+
+    pub fn all(&self) -> Result<Vec<Document>> {
+        schema::Document::table
+            .load(&self.inner)
+            .map_err(|err| err.into())
     }
 
     pub fn get(&self, uuid: &DocumentUuid) -> Document {
@@ -322,6 +347,7 @@ impl DatabaseConnection {
         Ok(mc.uuid)
     }
 
+    /*
     pub fn insert_metadata(
         &self,
         name: Option<&str>,
@@ -343,6 +369,7 @@ impl DatabaseConnection {
             .execute(&self.inner)?;
         Ok(metadata_uuid)
     }
+    */
 
     pub fn insert_tag(&self, data: &str, uuid: &DocumentUuid) -> Result<MetadataUuid> {
         let metadata_uuid = MetadataUuid::new_tag(data);
@@ -459,80 +486,16 @@ impl DatabaseConnection {
             }
         }
     }
-}
 
-pub fn create_connection() -> Result<DatabaseConnection> {
-    let path = &"./bibliothecula.db";
-    let database_url = std::env::var("DATABASE_URL").unwrap_or(path.to_string());
-    let conn = SqliteConnection::establish(&database_url)
-        .expect(&format!("Error connecting to {}", database_url));
-    /*
-    let set_mode = !path.exists();
-    let conn = Connection::open(path).unwrap();
-    let ret = DatabaseConnection(conn);
-    if set_mode {
-        use std::os::unix::fs::PermissionsExt;
-        let file = std::fs::File::open(&path).unwrap();
-        let metadata = file.metadata().unwrap();
-        let mut permissions = metadata.permissions();
+    pub fn create_connection(_app: &crate::app::Application) -> Result<DatabaseConnection> {
+        let path = &"./bibliothecula.db";
+        let database_url = std::env::var("DATABASE_URL").unwrap_or(path.to_string());
+        let conn = SqliteConnection::establish(&database_url)
+            .expect(&format!("Error connecting to {}", database_url));
 
-        permissions.set_mode(0o600); // Read/write for owner only.
-        file.set_permissions(permissions).unwrap();
-        ret.0.execute_batch(include_str!("./init.sql"))?;
-        let mc_uuid = ret.insert_document("Magna Carta")?;
-        /* insert embedded text file */
-        let embedded_text_file =
-            StorageType::InDatabase(include_str!("./magna_carta.txt").to_string());
-        ret.insert_storage(embedded_text_file, "text/plain", &mc_uuid)?;
-        /* insert referenced txt file */
-        ret.insert_storage(
-            StorageType::Local(PathBuf::from("./src/magna_carta.txt")),
-            "text/plain",
-            &mc_uuid,
-        )?;
-        /* insert author metadata */
-        ret.insert_metadata(Some("author"), b"Anonymous", true, &mc_uuid)?;
-        /* insert tag metadata */
-        ret.insert_tag("demo", &mc_uuid)?;
-        ret.insert_tag("history", &mc_uuid)?;
-        ret.insert_tag("public-domain", &mc_uuid)?;
-        {
-            let mc_uuid = ret.insert_document("init.sql")?;
-            /* insert embedded text file */
-            let embedded_text_file =
-                StorageType::InDatabase(include_str!("./init.sql").to_string());
-            ret.insert_storage(embedded_text_file, "text/plain", &mc_uuid)?;
-            /* insert referenced txt file */
-            ret.insert_storage(
-                StorageType::Local(PathBuf::from("./src/init.sql")),
-                "text/plain",
-                &mc_uuid,
-            )?;
-            /* insert author metadata */
-            ret.insert_metadata(Some("author"), b"Manos Pitsidianakis", true, &mc_uuid)?;
-            /* insert tag metadata */
-            ret.insert_tag("demo", &mc_uuid)?;
-            ret.insert_tag("sql", &mc_uuid)?;
-            ret.insert_tag("bibliothecula", &mc_uuid)?;
-        }
+        Ok(DatabaseConnection {
+            inner: conn,
+            //app: app.clone(),
+        })
     }
-        */
-
-    {
-        /*
-        let mut stmt = ret.0.prepare("SELECT uuid, title FROM Document")?;
-        let doc_iter = stmt.query_map(params![], |row| {
-            Ok(Document {
-                uuid: row.get(0)?,
-                title: row.get(1)?,
-            })
-        })?;
-
-        for doc in doc_iter {
-            println!("Found doc {:?}", doc.unwrap());
-        }
-        */
-    }
-
-    Ok(DatabaseConnection { inner: conn })
 }

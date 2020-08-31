@@ -20,7 +20,7 @@
  */
 
 use gdk_pixbuf::Pixbuf;
-use gio::{ActionExt, ApplicationFlags, Cancellable, MemoryInputStream, SimpleAction};
+use gio::{Cancellable, MemoryInputStream};
 use glib::subclass;
 use glib::translate::*;
 use glib::Bytes;
@@ -28,22 +28,6 @@ use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 
 static BAT: &[u8] = include_bytes!("../logo_t.png");
-
-/*
- *       gtk! {
-            <Dialog::new_with_buttons(
-                Some("About The Todo List"),
-                None as Option<&Window>,
-                DialogFlags::MODAL,
-                &[("Ok", ResponseType::Ok)]
-            )>
-                <Box spacing=10 orientation=Orientation::Vertical>
-                    <Image pixbuf=Some(self.dog.clone())/>
-                    <Label markup="<big><b>A Very Nice Todo List</b></big>"/>
-                    <Label markup="made with <a href=\"http://vgtk.rs/\">vgtk</a> by me"/>
-                </Box>
-            </Dialog>
-*/
 
 // This is the private part of our `AboutBibliothecula` object.
 // Its where state and widgets are stored when they don't
