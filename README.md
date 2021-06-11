@@ -5,9 +5,10 @@
 > - small library
 > - small collection of books
 
-Organise documents with tags and other metadata in multiple alternate formats.
+Organise documents with tags and other metadata with the option of storing multiple files per document.
 
-![Main screen](./screenshot-1.png)
-![Document editing](./screenshot-2.png)
-![Adding a file](./screenshot-3.png)
-![Tags](./screenshot-4.png)
+<hr />
+<p align="center">
+<img src="./logo_t.png" alt="Logo" style="width:200px;">
+</p>
+<hr />
