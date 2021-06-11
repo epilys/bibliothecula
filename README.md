@@ -9,6 +9,6 @@ Organise documents with tags and other metadata with the option of storing multi
 
 <hr />
 <p align="center">
-<img src="./logo_t.png" alt="Logo" style="width:200px;">
+<img src="./logo_t.png" alt="Logo" width="200">
 </p>
 <hr />
