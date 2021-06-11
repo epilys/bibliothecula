@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+{% load help_tags %}
+{% load cache %}
+{% block title %}Database overview{% endblock %}
+{% block style %}
+    <style>
+        tr.total {
+            font-weight: 800;
+        }
+
+        .statement_kind_header {
+            display: inline-block;
+            font-size: 1.2rem;
+            margin: .5rem auto;
+        }
+        span.line:before {
+            position: relative;
+            z-index: 2;
+            line-height: inherit;
+            font-size: inherit;
+            color: #37a2cc;
+            user-select: all;
+            left: -16px;
+            counter-increment: line;
+            content: counter(line,decimal-leading-zero) "│";
+            background: lightgray;
+        }
+
+        span.line {
+            width: 100%;
+            white-space: break-spaces;
+            word-break: normal;
+            padding-left: 13px;
+            word-spacing: -2px;
+            letter-spacing: 0px;
+            background-position-x: left;
+            background-repeat: repeat-y;
+            background-origin: padding-box;
+            background-size: 1ch 2.1ex;
+            background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8' standalone='no'%3F%3E%3Csvg xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:cc='http://creativecommons.org/ns%23' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23' xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' id='svg8' version='1.1' viewBox='0 0 493 1000' height='1000' width='493'%3E%3Cdefs id='defs2'%3E%3Cmarker style='overflow:visible;' id='marker8563' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.6) rotate(180) translate(0,0)' d='M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z ' style='fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:%23000000;stroke-opacity:1;fill:%23000000;fill-opacity:1' id='path8561' /%3E%3C/marker%3E%3Cmarker style='overflow:visible;' id='marker8493' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.6) rotate(180) translate(0,0)' d='M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z ' style='fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:%23000000;stroke-opacity:1;fill:%23000000;fill-opacity:1' id='path8491' /%3E%3C/marker%3E%3Cmarker style='overflow:visible;' id='Arrow1Mend' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.4) rotate(180) translate(10,0)' style='fill-rule:evenodd;stroke:%23000000;stroke-width:1pt;stroke-opacity:1;fill:%23000000;fill-opacity:1' d='M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z ' id='path837' /%3E%3C/marker%3E%3Cmarker style='overflow:visible;' id='Arrow1Lend' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.8) rotate(180) translate(12.5,0)' style='fill-rule:evenodd;stroke:%23000000;stroke-width:1pt;stroke-opacity:1;fill:%23000000;fill-opacity:1' d='M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z ' id='path831' /%3E%3C/marker%3E%3Cmarker style='overflow:visible;' id='marker7176' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.6) rotate(180) translate(0,0)' d='M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z ' style='fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:%23000000;stroke-opacity:1;fill:%23000000;fill-opacity:1' id='path7174' /%3E%3C/marker%3E%3Cmarker style='overflow:visible;' id='marker7118' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.2) rotate(180) translate(6,0)' style='fill-rule:evenodd;stroke:%23000000;stroke-width:1pt;stroke-opacity:1;fill:%23000000;fill-opacity:1' d='M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z ' id='path7116' /%3E%3C/marker%3E%3Cmarker style='overflow:visible' id='Arrow2Mend' refX='0' refY='0' orient='auto'%3E%3Cpath transform='scale(-0.6)' d='M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z' style='fill:%23000000;fill-opacity:1;fill-rule:evenodd;stroke:%23000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1' id='path855' /%3E%3C/marker%3E%3Cmarker style='overflow:visible' id='Arrow1Send' refX='0' refY='0' orient='auto'%3E%3Cpath transform='matrix(-0.2,0,0,-0.2,-1.2,0)' style='fill:%23000000;fill-opacity:1;fill-rule:evenodd;stroke:%23000000;stroke-width:1.00000003pt;stroke-opacity:1' d='M 0,0 5,-5 -12.5,0 5,5 Z' id='path843' /%3E%3C/marker%3E%3Cmarker style='overflow:visible' id='Arrow2Lend' refX='0' refY='0' orient='auto'%3E%3Cpath transform='matrix(-1.1,0,0,-1.1,-1.1,0)' d='M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z' style='fill:%23000000;fill-opacity:1;fill-rule:evenodd;stroke:%23000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1' id='path849' /%3E%3C/marker%3E%3Cmarker style='overflow:visible' id='Arrow2Mend-2' refX='0' refY='0' orient='auto'%3E%3Cpath transform='scale(-0.6)' d='M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z' style='fill:%23000000;fill-opacity:1;fill-rule:evenodd;stroke:%23000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1' id='path855-5' /%3E%3C/marker%3E%3C/defs%3E%3Cmetadata id='metadata5'%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage' /%3E%3Cdc:title%3E%3C/dc:title%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cg transform='translate(-60.565463,-85.803442)' id='layer1'%3E%3Cpath id='path8645' d='m 149.45889,444.89991 c 0,0 0.55311,83.3431 9.22935,148.0181 6.16811,45.97876 31.24673,89.1207 69.56254,113.06808 48.74191,30.4637 140.86924,16.89653 175.76654,18.18274 0.72489,38.24317 2.02031,51.51778 2.02031,51.51778 l 70.71067,-74.75129 -73.74112,-73.74114 c 0,0 0.0525,17.12006 -2.02031,56.56855 -94.53978,7.66665 -112.72802,6.23327 -164.65486,-25.25381 -46.41118,-28.14253 -39.39596,-213.609 -39.39596,-213.609 z' style='fill:%230c3685;fill-opacity:1;stroke:%230c3685;stroke-width:71.3007874;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' /%3E%3C/g%3E%3C/svg%3E%0A");
+        }
+        div.wrapper {
+            display: flex;
+            place-content: center;
+            gap: 1rem;
+        }
+
+        div.wrapper > table {
+            width: max-content;
+        }
+
+        div.wrapper > svg {
+            min-width: 288pt;
+        }
+
+        div.triggers ol li + li {
+            margin-top:1rem;
+            border-top: 2px outset black;
+            padding-top: 1rem;
+        }
+
+        td.keywords {
+            text-align: right;
+            max-width: 42ch;
+            min-width: auto;
+            padding: .5rem 1rem;
+        }
+
+        td.keywords div {
+            display: flex;
+            flex-flow: column;
+            row-gap: 4px;
+            column-gap: 3px;
+            align-items: end;
+        }
+
+        td.keywords span {
+            border: 1px solid gray;
+            background: white;
+            padding: 2px 5px;
+            display: inline-block;
+            height: min-content;
+            width: max-content;
+        }
+
+        td.keywords span + span {
+            margin-left: 2px;
+        }
+
+        td.doc {
+            max-width: 42ch;
+            min-width: auto;
+            padding: .5rem 1rem;
+            text-align: justify;
+            text-justify: inter-word;
+        }
+
+
+        td.sql {
+            text-align: left;
+            width: 72ch;
+            max-width: 72ch;
+            min-width: auto;
+        }
+
+        code.sql {
+            font-family: monospace;
+            background: lightgray;
+            border:1px inset darkgray;
+            border-radius: 5px;
+            padding: .5rem 1rem;
+            user-select: all;
+            width: 100%;
+            height: 100%;
+            word-wrap: anywhere;
+            display: flex;
+            flex-direction: column;
+            counter-reset: line;
+        }
+
+        .keyword-1 {
+            color: var(--green-color);
+        }
+        .keyword-2 {
+            color: var(--red-color);
+        }
+        .keyword-4 {
+            color: var(--orange-color);
+        }
+        .keyword-8 {
+            color: var(--yellow-color);
+        }
+        .keyword-16 {
+            color: var(--purple-color);
+        }
+        .keyword-32 {
+            color: var(--grey-color);
+        }
+        .keyword-64 {
+            color: var(--blue-color);
+        }
+
+        ol li h3 {
+            font-weight: bold;
+            color: #217ac0;
+        }
+
+        caption {
+            padding: 10px;
+            font-size: 1.2rem;
+        }
+
+        .blue {
+            font-weight: bold;
+            color: #217ac0;
+        }
+
+        h2{
+            position: -webkit-sticky;
+            position: sticky;
+            top: -1px;
+            background: white;
+            width: max-content;
+        }
+
+        @media (min-width:1200px) {
+            aside {
+                position: fixed;
+                left: 2vw;
+                z-index: 4;
+            }
+        }
+
+        #toc {
+            background: #f9f9f9 none repeat scroll 0 0;
+            border: 1px solid #aaa;
+            display: block;
+            padding: 1rem;
+            width: max-content;
+            max-width: max-content;
+        }
+
+        #toc summary {
+            font-weight: 700;
+            text-align: center;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        #toc ul {
+            padding-left: 0.3rem;
+        }
+
+        #toc details > ul {
+            padding-left: 1rem;
+        }
+        #toc li {
+            list-style: outside;
+            padding-left: 0.3rem;
+            list-style-type: square;
+        }
+    </style>
+{% endblock %}
+{% block breadcrumbs %}
+    <ul>
+        <li><span aria-current="page">database overview</span></li>
+    </ul>
+{% endblock %}
+{% block content %}
+    <aside>
+        <nav id="toc">
+            <details>
+                <summary>Contents</summary>
+                <ul>
+                    <li><a href="#overview">overview</a>
+                        <ul>
+                            <li><a href="#triggers">database triggers</a></li>
+                            <li><a href="#sql-schema-reference">SQL schema reference</a></li>
+                            <li><a href="#sql-statements-reference">SQL statements reference</a></li>
+                            <li><a href="#table-sizes">Analytical table sizes</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </details>
+        </nav>
+    </aside>
+
+    <h1 id="overview">{%section_url "overview" %}database overview</h1>
+    <hr/>
+    <div class="wrapper">
+        <table>
+            <caption></caption>
+            <colgroup>
+                <col span="1">
+                <col span="1">
+            </colgroup>
+            <thead>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>total size</td>
+                    <td>{{ total_size|filesizeformat }}</td>
+                </tr>
+                <tr>
+                    <td>total tags</td>
+                    <td>{{ total_tags }}</td>
+                </tr>
+                <tr>
+                    <td>total documents</td>
+                    <td>{{ total_documents }}</td>
+                </tr>
+                <tr>
+                    <td>has full-text-search</td>
+                    <td>{{ fts5_table_exists|yesno:"yes,no,unknown" }}{% if fts5_table_exists %}, {{ fts5_indexed_documents_no }} indexed document{{ fts5_indexed_documents_no|pluralize }}{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>top 5 tags</td>
+                    <td style="padding:0;">
+                        <table style="width: 100%;">
+                            <tbody>
+                                {% for t in top_tags %}
+                                    <tr>
+                                        <td><a class="item-tag" rel="tag" href="{% url 'view_collection' %}?tags={{ t.0|urlencode }}">{{ t.0 }} <span>{{ t.1 }}</span></a></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        {% cache 300 treesizes %}
+            {% autoescape off %}
+                {{ treemap|safe }}
+            {% endautoescape %}
+        {% endcache %}
+    </div>
+    <div class="triggers">
+        <h2 id="triggers">{% section_url "triggers" %}database triggers</h2>
+        <form id="drop-trigger-form"></form>
+        <ol>
+            {% for trigger in triggers %}
+                <li><div class="flex-horizontal"><h3>{{ trigger.name}}</h3>
+                    <button form="drop-trigger-form" formaction="{% url 'database_drop_trigger' trigger.name %}" formmethod="get" type="submit">delete trigger</button></div>
+                    <p>Trigger on table &ldquo;<var>{{trigger.table}}</var>&rdquo;</p>
+                    <code class="sql">{{trigger.sql.html|safe|linebreaksbr}}</code>
+                </li>
+            {% empty %}
+                <li>No triggers.</li>
+            {% endfor %}
+        </ol>
+    </div>
+    <div class="wrapper">
+        <div>
+            <h2 id="sql-schema-reference">{% section_url "sql-schema-reference" %}SQL schema reference</h2>
+            <table style="width: 100%;">
+                <caption>The bibliothecula schema.</caption>
+                <thead>
+                    <tr>
+                        <th>name</th>
+                        <th>value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in schema %}
+                        <tr>
+                            <th class="blue">{{ s.get_id }}</th>
+                            <td class="sql"><code class="sql">{{ s.html|safe|linebreaksbr }}</code></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="wrapper">
+        <div>
+            <h2 id="sql-statements-reference">{% section_url "sql-statements-reference" %}SQL statements reference</h2>
+            <form id="run-query-form"></form>
+            <table style="width: 100%;">
+                <caption>A list of utility SQL statements for use with the bibliothecula schema.</caption>
+                <colgroup>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>topics</th>
+                        <th>name</th>
+                        <th>documentation</th>
+                        <th>value</th>
+                        <th>options</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for k, c in statements %}
+                        <tr>
+                            <th id="{{k}}" colspan="5" scope="colgroup"><span class="statement_kind_header section-header">{%section_url k %}{{ c.title }}</span></th>
+                        </tr>
+                        {% if not forloop.first %}
+                            <tr>
+                                <th>topics</th>
+                                <th>name</th>
+                                <th>documentation</th>
+                                <th>value</th>
+                                <th>options</th>
+                            </tr>
+                        {% endif %}
+                        {% for s in c.statements %}
+                            <tr>
+                                <td class="keywords">{% spaceless %}
+                                    <div>
+                                        {% for k in s.keywords %}
+                                            <span class="keyword-{{ k.0.value }}">{{ k.1 }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endspaceless %}
+                                </td>
+                                <th class="blue">{{ s.get_id }}</th>
+                                <td class="doc">{{ s.doc|safe}}</td>
+                                <td class="sql"><code class="sql">{{ s.html|safe|linebreaksbr }}</code></td>
+                                {% if s.callable_ %}
+                                    <td><button form="run-query-form" formaction="{% url 'database_run_query' s.get_id %}" formmethod="get" type="submit">run statement</button></td>
+                                {% else %}
+                                    <td><button disabled style="color: rgba(0,0,0,0);">run statement</button></td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <h2 id="table-sizes">{% section_url "table-sizes" %}Analytical table sizes</h2>
+    <div class="wrapper">
+        <table>
+            <caption>Size of each table and index.</caption>
+            <thead>
+                <tr>
+                    <th colspan="2">Tables</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tbl in tables %}
+                    <tr>
+                        <td><var>{{ tbl.0 }}</var></td>
+                        <td>{{ tbl.1|filesizeformat }}</td>
+                    </tr>
+                {% endfor %}
+                    <tr class="total">
+                        <th scope="row">tables totals</th>
+                        <td>{{ tables_sum|filesizeformat }}</td>
+                    </tr>
+            </tbody>
+            <tbody>
+                <tr>
+                    <th colspan="2">Indices</th>
+                </tr>
+                {% for idx in indexes %}
+                    <tr>
+                        <td><var>{{ idx.0 }}</var></td>
+                        <td>{{ idx.1|filesizeformat }}</td>
+                    </tr>
+                {% endfor %}
+                    <tr class="total">
+                        <th scope="row">indices totals</th>
+                        <td>{{ indexes_sum|filesizeformat }}</td>
+                    </tr>
+            </tbody>
+            <tfoot>
+                    <tr class="total">
+                        <th scope="row">all</th>
+                        <td>{{ total_size|filesizeformat }}</td>
+                    </tr>
+            </tfoot>
+        </table>
+    </div>
+{% endblock %}

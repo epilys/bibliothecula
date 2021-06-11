@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}View collection{% endblock %}
+{% block content %}
+    <div id="collection-wrapper">
+        <div id="query-forms">
+            <form method="POST" id="search_form">
+                {% csrf_token %}
+                {% for field in search_form %}
+                    {{ field.errors }}
+                    {{ field.label_tag }}
+                    {{ field }}
+                {% endfor %}
+                <button class="reset-icon close-icon" form="search_form" type="reset">&#10006;</button>
+                <input type="submit" value="submit">
+            </form>
+            <hr class="horizontal" />
+            <form method="POST" id="full_text_search_form">
+                {% csrf_token %}
+                {% for field in full_text_search_form %}
+                    {{ field.errors }}
+                    {{ field.label_tag }}
+                    {{ field }}
+                {% endfor %}
+                <button class="reset-icon close-icon" form="full_text_search_form" type="reset">&#10006;</button>
+                <input type="submit" value="submit" name="full-text-query">
+            </form>
+        </div>
+        <div class="tagcloud scrollbox" id="tags">
+          {% if has_selected_tags %}
+          <form method="POST" id="reset_tags">
+                {% csrf_token %}
+          </form>
+          <input title="reset tags" class="close-icon reset-tags-icon" value="&#10006;" name="reset-tags" form="reset_tags" type="submit">
+          {% endif %}
+            {% if all_tags %}
+                <ul>
+                    {% for tag in all_tags %}
+                        <li><a class="{% if tag.active %}active {% endif %}item-tag metadata" rel="tag" href="{% url 'view_collection' %}?{{ tag.url }}">{{ tag.data }} <span>{{ tag.document_len }}</span></a><div class="uuid">{{ tag.uuid }}</div></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div id="results_meta">
+            <p>Showing {{ collection|length }}/{{total_documents}} results.</p>
+            <hr class="horizontal" />
+            <form method="POST">
+                {% csrf_token %}
+                {% for field in sort_form %}
+                    {{ field.errors }}
+                    {{ field.label_tag }}
+                    {{ field }}
+                {% endfor %}
+                <input type="submit" value="change" name="change-sort">
+            </form>
+            <hr class="horizontal" />
+            <form method="POST">
+                {% csrf_token %}
+                {% for field in type_form %}
+                    {{ field.errors }}
+                    {{ field.label_tag }}
+                    {{ field }}
+                {% endfor %}
+                <input type="submit" value="change" name="change-type">
+            </form>
+            <hr class="horizontal" />
+            <form method="POST">
+                {% csrf_token %}
+                {% for field in layout_form %}
+                    {{ field.errors }}
+                    {{ field.label_tag }}
+                    {{ field }}
+                {% endfor %}
+                <input type="submit" value="change" name="change-layout">
+            </form>
+            <hr class="horizontal" />
+            <form method="POST">
+                {% csrf_token %}
+                {% for field in combination_form %}
+                    {{ field.errors }}
+                    {{ field.label_tag }}
+                    {{ field }}
+                {% endfor %}
+                <input type="submit" value="change" name="change-combination">
+            </form>
+        </div>
+        <hr />
+        <div id="results">
+            {% block results %}
+            {% endblock %}
+        </div>
+    </div>
+{% endblock %}

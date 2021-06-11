@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{document}}{% endblock %}
+{% block style %}
+    <style>
+        div.help::after {
+            content: attr(data-help-text);
+            width: max-content;
+            margin-top: calc(1.5rem/2);
+            position: absolute;
+            right: 1rem;
+            color: gray;
+        }
+
+        div.help {
+            position: relative;
+            width: 0;
+        }
+
+        input:placeholder-shown + div.help {
+            display: none;
+        }
+
+        .uuid-header{
+            display: inline-block;
+            border: 1px solid black;
+            border-radius: 2px;
+            font-size: 50%;
+            padding: .1rem .5rem;
+            background: var(--blue-color);
+            color: #fff;
+            font-weight: initial;
+            font-family: monospace;
+            user-select: all;
+            margin: 0 1rem;
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <h1>{% if metadata %}Edit{{metadata.filename }}{% else %}Create text file{% endif %} - {{ document.title }}<span class="uuid-header">{{ document.uuid }}</span></h1>
+    <form method="post">
+        {% csrf_token %}
+        <fieldset>
+            <legend>new text file</legend>
+            {% for field in form %}
+                {{ field.errors }}
+                {{ field.label_tag }}
+                {% if field.help_text %}
+                    <div style="display: flex;flex-direction: row;">
+                        {{ field }}
+                        <div class="help" data-help-text="{{ field.help_text|safe }}"></div>
+                    </div>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+            {% endfor %}
+            <input type="submit" value="save">
+        </fieldset>
+    </form>
+    <datalist id="{{ form.datalist_id }}">
+        {% for opt in form.datalist_options %}
+            <option value="{{ opt }}">
+        {% endfor %}
+    </datalist>
+{% endblock %}

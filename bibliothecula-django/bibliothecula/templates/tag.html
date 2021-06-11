@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% spaceless %}
+    {% block title %}{% if tag %}
+        View tag {{tag}}
+    {% else %}
+        View tags
+    {% endif %}{% endblock %}{% endspaceless %}
+{% block style %}
+    <style>
+        div.wrapper {
+            display: flex;
+        }
+    </style>
+{% endblock %}
+{% block breadcrumbs %}
+    <ul>
+        <li><a href="{% url 'view_tag' %}">view tags</a></li>
+        {% block crumbs %}
+            {% if tag %}<li><span aria-current="page">{{ tag }}</span></li>{% endif %}
+        {% endblock %}
+    </ul>
+{% endblock %}
+{% block content %}
+    {% if tag %}
+        <h1>view tags related to {{ tag }}</h1>
+        <a href="{% url 'view_tag_d3' tag %}">Go to interactive visualization</a>
+    {% else %}
+        <h1>view all tags</h1>
+        <a href="{% url 'view_tag_d3' %}">Go to interactive visualization</a>
+    {% endif %}
+    <hr/>
+    {% autoescape off %}
+        {{ network|safe }}
+    {% endautoescape %}
+{% endblock %}

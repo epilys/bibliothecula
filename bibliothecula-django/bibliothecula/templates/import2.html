@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load help_tags %}
+{% block title %}{{ title }}{% endblock %}
+{% block style %}
+    <style>
+        form {
+            flex-direction:column;
+        }
+
+        form div {
+            display:flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        table {
+            min-width: 40vw;
+            width: auto;
+            table-layout: fixed;
+            text-align: right;
+        }
+        table tbody th {
+            width: min-content;
+        }
+        table tbody input[type="checkbox"] {
+            width: auto;
+            float: left;
+        }
+        table tbody select {
+            width: auto;
+            float: left;
+        }
+        table tbody textarea {
+            width: 40ex;
+            min-width: 100%;
+            max-width: 100%;
+            resize: vertical;
+        }
+        table tbody input {
+            width: 100%;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <h1>{{ title }}</h1>
+    <hr/>
+    <div class="wrapper">
+        <form method="post">{% csrf_token %}
+            {{ formset.management_form }}
+            <div style="">
+                {% for form in formset %}
+                    {% with thumbnail=thumbnails|return_item:forloop.counter0 %}
+                        {% if thumbnail %}
+                            <div><img alt="{{ title }} thumbnail" class="thumbnail" src="{{ thumbnail }}"/></div>
+                        {% else %}
+                            <div><svg class="missing-thumbnail thumbnail" width="100%" height="100%" viewBox="0 0 329.78 406.01" preserveAspectRatio="none"><use href="#missingthumb"></use></svg></div>
+                        {% endif %}
+                    {% endwith %}
+                    <div>
+                        <table>
+                            {{ form }}
+                        </table>
+                    </div>
+                    <div>
+                        <div style="display: flex; flex-direction: column; gap: .5rem; align-items: stretch; height: 100%;">
+                            <input type="submit" value="add author" name="add-author-{{ forloop.counter0 }}" disabled="disabled">
+                            <input type="submit" value="add tag" name="add-tag-{{ forloop.counter0 }}" disabled="disabled">
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <input type="submit" value="Insert documents" name="submit">
+        </form>
+
+        <form style="display: inline;" method="GET" action="{% url 'import_documents' %}">
+            <button type="submit">cancel and go back to upload</button>
+        </form>
+    </div>
+{% endblock %}

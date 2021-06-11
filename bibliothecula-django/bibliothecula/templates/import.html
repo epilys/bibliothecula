@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block style %}
+    <style>
+    </style>
+{% endblock %}
+{% block content %}
+    <h1>{{ title }}</h1>
+    <hr/>
+    <div class="wrapper">
+        <form enctype="multipart/form-data" method="post">{% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="go to next step">
+        </form>
+    </div>
+{% endblock %}
+

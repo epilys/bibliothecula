@@ -1,0 +1,235 @@
+{% extends "collection_base.html" %}
+{% load help_tags %}
+{% block style %}
+    <style>
+        .other-metadata,
+        .other-metadata {
+          padding: 0;
+        }
+
+        .other-metadata > table {
+          width: 100%;
+          height: 100%;
+          border: 0;
+        }
+        .other-metadata > table td:first-child,
+        .other-metadata > table th:first-child{
+          border-left: 0;
+        }
+        .other-metadata > table td:last-child,
+        .other-metadata > table th:last-child {
+          border-right: 0;
+        }
+        .other-metadata > table tr:first-child > td,
+        .other-metadata > table tr:first-child > th {
+          border-top: 0;
+        }
+        .other-metadata > table tr:last-child > td,
+        .other-metadata > table tr:last-child > th {
+          border-bottom: 0;
+        }
+
+        table#results-table {
+          display: grid;
+          border-collapse: collapse;
+          min-width: 100%;
+          grid-template-columns: 
+            auto minmax(auto,1fr) minmax(auto, 1fr) minmax(auto, 1fr) minmax(auto, 1fr) auto;
+        }
+
+        table#results-table > caption,
+        table#results-table > thead,
+        table#results-table > tbody,
+        table#results-table > thead > tr,
+        table#results-table > tbody > tr {
+          display: contents;
+        }
+
+        table#results-table > tbody > th,
+        table#results-table > tbody > td {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        table#results-table > tbody > th {
+          position: sticky;
+          top: 0;
+          text-align: left;
+        }
+
+        td.snippets {
+          overflow: initial;
+          text-overflow: initial;
+          white-space: initial;
+        }
+
+        table#results-table > tbody > th:last-child {
+          border: 0;
+        }
+        td > p {
+          padding: 0rem .8rem;
+          margin: 0;
+
+        }
+
+        td.snippets > p {
+          font-style: oblique;
+          text-align: justify;
+          hyphens: auto;
+          text-justify: inter-word;
+        }
+
+        td.snippets > p > b {
+          font-style: initial;
+        }
+
+        th.snippets:empty,
+        td.snippets:empty {
+          padding: 0;
+          width: 0;
+          border:0;
+        }
+
+        div.wrapper {
+            width: 100%;
+            margin:  0 auto;
+        }
+
+        div.document-thumbnail{
+            min-width: 15px;
+            border: 1px solid black;
+            max-width: 118px;
+            height: 150px;
+            padding: 1rem;
+            box-sizing: border-box;
+            word-wrap: break-word;
+            white-space: initial;
+            overflow: hidden;
+            font-size: 1.3rem;
+            background-color: white;
+        }
+
+        div.document-thumbnail:hover{
+            text-overflow: initial;
+            overflow: initial;
+            min-height: max-content;
+            height: auto;
+            position: absolute;
+        }
+
+        div.tagcloud {
+            max-width: 80vw;
+            margin: 0 auto;
+        }
+
+        figure {
+            margin: 0;
+            padding:0;
+            display: flex;
+            flex-flow: column;
+            height: 100%;
+        }
+        figcaption {
+            color: white;
+            position: relative;
+            display: block;
+            left: 0;
+            background-color: #000000ab;
+            top: 0;
+            margin-top: -125%;
+            text-shadow: 1px 1px black;
+        }
+
+        tr td {
+            text-align: initial;
+        }
+        /* Date columns */
+        tr td:nth-child(3), tr td:nth-child(4) {
+            min-width:max-content;
+        }
+        /* Tag column max width */
+        tr td:nth-child(7){
+            max-width:18rem;
+        }
+    </style>
+{% endblock %}
+{% block results %}
+    {% if collection %}
+        <div class="wrapper">
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <td colspan="1"></td>
+                        <th scope="col">title</th>
+                        <th scope="col">created at</th>
+                        <th scope="col">last modified</th>
+                        <th scope="col">other metadata</th>
+                        <th scope="col" class="snippets">{% if snippets %} {% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in collection %}
+                        <tr>
+                            {% with thumbnail=doc.get_thumbnail %}
+                                {% if thumbnail %}
+                                    <td><a href="{{ doc.get_absolute_url }}"><img src="{{ thumbnail.0 }}" alt="{{ doc }}" /></a></td>
+                                {% else %}
+                                    <td><a href="{{ doc.get_absolute_url }}"><svg class="missing-thumbnail" width="100%" height="100%" viewBox="0 0 329.78 406.01" preserveAspectRatio="none"><use href="#missingthumb"></use></svg></a></td>
+                                {% endif %}
+                            {% endwith %}
+                            <th scope="row" class="other-metadata">
+                                <table>
+                                    <tbody>
+                                      <tr>
+                                        <td>
+                                          <div class="lineclamp lineclamp-5"><a href="{{ doc.get_absolute_url }}">{{ doc }}</a></div>
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <td>
+                                            <div class="lineclamp lineclamp-2">{{ doc.authors }}</div>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                </table>
+                            </th>
+                            <td>{{ doc.created }}</td>
+                            <td>{{ doc.last_modified }}</td>
+                            <td class="other-metadata">{% spaceless %}
+                                <table>
+                                    <tbody>
+                                        <tr><th>uuid</th>
+                                            <td><code>{{ doc.uuid }}</code></td>
+                                        </tr>
+                                        <tr><th>type</th>
+                                            <td>{{ doc.type_|default_if_none:"" }}</td>
+                                        </tr>
+                                        <tr><th>tags</th>
+                                            <td><div class="lineclamp lineclamp-2">{{ doc.tags }}</div></td>
+                                        </tr>
+                                        <tr><th>files</th>
+                                            <td>{{ doc.file_format_list }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            {% endspaceless %}
+                            </td>
+                            {% spaceless %}
+                            <td class="snippets">
+                              {% with snippet=snippets|return_item:doc.uuid %}
+                              {% if snippet %}
+                              <p>{{ snippet|safe }}</p>
+                              {% endif %}
+                              {% endwith %}
+                            </td>
+                            {% endspaceless %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No documents are available.</p>
+    {% endif %}
+{% endblock %}

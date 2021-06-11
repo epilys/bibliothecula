@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+{% block title %}{{document}}{% endblock %}
+{% block style %}
+    <style>
+        @media (min-width: 950px) {
+            main {
+                display: grid;
+                grid-gap: 1rem;
+                grid-template-areas: "title title title title"
+                "thumbnail-metadata text-metadata tags tags"
+                "thumbnail-metadata text-metadata files files"
+                "backrefs backrefs forms forms";
+                grid-template-columns: auto 1fr 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 950px) {
+            main {
+                display: grid;
+                grid-gap: 1rem;
+                grid-template-areas: "title title"
+                "thumbnail-metadata text-metadata"
+                "tags tags"
+                "backrefs backrefs"
+                "files files"
+                "forms forms";
+                grid-template-columns: auto 1fr 1fr 1fr;
+            }
+        }
+
+        h1.title{
+            grid-area: title;
+            min-width: min-content;
+        }
+
+        .files > div:first-child {
+            display: flex;
+            gap: 1rem;
+            place-items: end;
+        }
+        .files > div:first-child > h2 {
+            margin-bottom: 0;
+        }
+
+        .filename {
+            max-width: 72ch;
+            word-break: break-all;
+            align-self: last baseline;
+            border-left: 2px solid #b2b2b2;
+            padding-left: 5px;
+        }
+
+        .filelist > li {
+            background: #eee;
+            outline: 2px solid black;
+            padding: .5rem;
+            display: flex;
+            gap: 1rem;
+            flex-flow: row;
+            align-items: center;
+        }
+
+        .filelist > li + li {
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 950px) {
+            .filelist > li {
+                flex-flow: column;
+            }
+        }
+
+        .filelist > li > div:first-child {
+            display: flex;
+            justify-content: space-evenly;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .filelist > li > div.content-type {
+            white-space: pre;
+            width: min-content;
+        }
+
+        .filelist > li > button {
+            width: min-content;
+            white-space: pre;
+        }
+
+        div.thumbnail-metadata {
+            grid-area: thumbnail-metadata;
+            min-width: min-content;
+            place-items: center;
+            display: flex;
+            row-gap: 1rem;
+            flex-direction: column;
+            width: 100px;
+        }
+        div.text-metadata {
+            grid-area: text-metadata;
+            min-width: min-content;
+        }
+        div.tags {
+            grid-area: tags;
+            min-width: 0;
+        }
+        div.files {
+            grid-area: files;
+            min-width: min-content;
+        }
+
+        div.files > h2, div.tags > h2, div.forms > h2 {
+            margin-top: 0;
+        }
+
+        div.forms {
+            grid-area: forms;
+            min-width: min-content;
+        }
+
+        div.forms label {
+            width: 20ch;
+        }
+
+        #id__file {
+            max-width: 41ch;
+        }
+
+        div.backrefs {
+            grid-area: backrefs;
+        }
+
+        figure.thumbnail {
+            display: flex;
+            flex-direction: column;
+            max-width: 100px;
+            margin-top:0;
+        }
+
+        figure.thumbnail figcaption {
+            font-size: 0.8rem;
+            white-space: break-spaces;
+            word-break: break-all;
+            width: max-content;
+            margin-top:150px;
+            place-self: center;
+        }
+
+        .metadata_value {
+            text-decoration: underline dotted;
+            text-underline-offset: 2px;
+        }
+
+        .file-forms > div + div {
+            margin-top: 1rem;
+        }
+
+    </style>
+{% endblock %}
+{% block content %}
+    <h1 class="title">{{ document.title }}</h1>
+    <div class="thumbnail-metadata">
+        {% with thumbnail=document.get_thumbnail_html %}
+            {% if thumbnail %}
+                <figure class="thumbnail">
+                    {{ thumbnail.0 }}
+                    <figcaption class="uuid"><code>{{ thumbnail.1}}</code></figcaption>
+                </figure>
+            {% else %}
+                <svg class="missing-thumbnail" width="100%" height="100%" viewBox="0 0 329.78 406.01" preserveAspectRatio="none"><use href="#missingthumb"></use></svg>
+            {% endif %}
+        {% endwith %}
+    </div>
+    <div class="text-metadata" itemscope itemtype="http://schema.org/Book" itemid="{{ document.uuid }}">
+      <data itemprop="keywords" value="{% for tag in document.tags_list %}{{ tag.metadata.data}}{% if not forloop.last %},{% endif%}{% endfor %}" hidden>{% for tag in document.tags_list %}{{ tag.metadata.data}}{% if not forloop.last %},{% endif%}{% endfor %}</data>
+      <data itemprop="thumbnailUrl" value="{{ document.get_thumbnail.0 }}" hidden>{{ document.get_thumbnail.0 }}</data>
+        <table>
+            <caption></caption>
+            <colgroup>
+                <col span="1">
+                <col span="1">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th scope="col">name</th>
+                    <th scope="col">value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>title</strong></td>
+                    <td itemprop="name">{{ document.title }}</td>
+                </tr>
+                <tr>
+                  <td><strong>uuid</strong></td>
+                    <td><code itemprop="identifier">{{ document.uuid }}</code></td>
+                </tr>
+                <tr>
+                    <td><strong>created at</strong></td>
+                    <td>{{ document.created }}</td>
+                </tr>
+                <tr>
+                    <td><strong>last modified</strong></td>
+                    <td>{{ document.last_modified }}</td>
+                </tr>
+                {% for d in document.text_metadata.all %}
+                    {% if d.metadata.name == 'tag' %}
+                    {% else %}
+                        <tr>
+                            {% spaceless %}
+                                <td><strong>{{ d.metadata.name }}</strong></td>
+                                {% if d.metadata.name == 'url' %}
+                                    <td><a class="metadata metadata_value" href="{{ d.metadata.data }}" rel="external noreferrer" itemprop="url">{{ d.metadata.data }}</a>
+                                {% elif d.metadata.name == 'author' %}
+                                    <td><span class="metadata metadata_value" itemprop="author" itemscope itemtype="https://schema.org/Person">{{ d.metadata.data }}</span>
+                                {% elif d.metadata.name == 'date' %}
+                                    <td><span class="metadata metadata_value" itemprop="datePublished">{{ d.metadata.data }}</span>
+                                {% else %}
+                                    <td><span class="metadata metadata_value">{{ d.metadata.data }}</span>
+                                {% endif %}
+                                <div class="uuid">{{ d.metadata.uuid }}</div></td>
+                            {% endspaceless %}
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="tags tagcloud">
+        <h2>tags</h2>
+        <hr />
+        <ul>
+            {% for tag in document.tags_list %}
+                <li><a class="item-tag metadata" rel="tag" href="{% url 'view_collection' %}?tags={{ tag.metadata.data|urlencode }}">{{ tag.metadata.data }} <span>{{ tag.metadata.document_len }}</span></a><div class="uuid">{{ tag.metadata.uuid }}</div></li>
+            {% empty %}
+                <li>None.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="files">
+        {% spaceless %}
+            <div>
+                <h2>files</h2>
+                <div>
+                    {% with document.storage_size as size %}
+                        embedded size: {{ size.embedded|filesizeformat}}, linked files size: {{ size.linked|filesizeformat}}
+                    {% endwith %}
+        {% endspaceless %}
+    </div>
+    </div>
+    <hr />
+    {% if document.files %}
+        <form method="post" id="set-thumbnail-form" action="{% url 'set_document_thumbnail' uuid=document.uuid %}">
+            {% csrf_token %}
+        </form>
+    {% endif %}
+    <ul class="filelist">
+        {% for s in document.files %}
+            {% spaceless %}
+                <li title="{{s.metadata.uuid}}">
+                    {% with content_type=s.metadata.try_get_content_type %}
+                        <div>
+                            {% if content_type %}
+                                📎
+                            {% else %}
+                                🔗
+                            {% endif %}
+                            <div class="filename">
+                                {% if content_type %}
+                                    <a class="metadata" href="{% url 'view_document_storage' uuid=document.uuid metadata_uuid=s.metadata.uuid %}">{{ content_type.filename }}</a>
+                                {% else %}
+                                    <a class="metadata" href="{{ s.metadata.contents_as_fileurl}}">{{ s.metadata.contents_as_str}}</a>
+                                {% endif %}
+                                <div class="uuid">{{ s.metadata.uuid }}</div>
+                            </div>
+                        </div>
+
+                        {% if content_type %}
+                            <div class="content-type">[<code>{{ content_type.content_type }}</code> {{ content_type.size|filesizeformat}}]</div>
+                            {% if content_type.content_type in THUMBNAIL_MIMES %}
+                                <button type="submit" form="set-thumbnail-form" formaction="{% url 'set_document_thumbnail_2' uuid=document.uuid metadata_uuid=s.metadata.uuid %}">Set thumbnail</button>
+                            {% endif %}
+                        {% endif %}
+                    {% endwith %}
+                </li>
+            {% endspaceless %}
+        {% empty %}
+            <li>No files.</li>
+        {% endfor %}
+    </ul>
+    </div>
+    <div class="forms">
+        <h2>add storage</h2>
+        <hr />
+        <div class="file-forms">
+            <div>
+                <form method="post" action="/document/{{document.uuid}}/add-storage/">
+                    {% csrf_token %}
+                    {% for field in add_link_form %}
+                        {{ field.errors }}
+                        {{ field.label_tag }}
+                        {{ field }}
+                    {% endfor %}
+                    <input type="submit" value="add" name="{{LINK_SUBMIT_VALUE}}">
+                </form>
+            </div>
+            <div>
+                <form enctype="multipart/form-data" method="post" action="/document/{{document.uuid}}/add-storage/">
+                    {% csrf_token %}
+                    {% for field in add_embedded_form  %}
+                        {{ field.errors }}
+                        {{ field.label_tag }}
+                        {{ field }}
+                    {% endfor %}
+                    <input type="submit" value="upload" name="{{EMBEDDED_SUBMIT_VALUE}}">
+                </form>
+            </div>
+        </div>
+    </div>
+    {% if backrefs %}
+        <div class="backrefs">
+            <h2>backrefs</h2>
+            <hr>
+            <ol>
+                {% for r in backrefs %}
+                    <li><a href="{{ r.0.get_absolute_url }}">{{r.0}}</a> - <a href="{% url 'view_document_storage' r.0.uuid r.1.uuid %}">{{r.1}}</a></li>
+                {% endfor%}
+            </ol>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends "collection_base.html" %}
+{% load help_tags %}
+{% block style %}
+    <style>
+        div.wrapper {
+            display: grid;
+            width: 100%;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 5px;
+            margin: 0 auto;
+        }
+
+        div.wrapper > div p {
+          margin: 0;
+          padding: 0;
+        }
+
+        div.wrapper > div p a  {
+          color: initial;
+          text-decoration: none;
+          max-width: 90%;
+          display: inline-block;
+          text-align: justify;
+          text-justify: inter-word;
+          hyphens: auto;
+        }
+
+        div.wrapper > div p a  {
+          font-style: oblique;
+        }
+
+        div.wrapper > div p b {
+          font-style: initial;
+        }
+
+        div.snippet {
+          margin-bottom: .5rem;
+          font-size: .8rem;
+        }
+
+
+        figure.document-thumbnail {
+          min-width: 15px;
+          border: 1px solid black;
+          max-width: 118px;
+          padding: .4rem;
+          box-sizing: border-box;
+          background-color: white;
+          display: grid;
+          grid-template-rows: max-content min-content;
+          max-height: 170px;
+          overflow: hidden;
+        }
+
+        div.tagcloud {
+          max-width: 80vw;
+          margin: 0 auto;
+        }
+
+        figure {
+          display: flex;
+          flex-flow: column;
+          height: 100%;
+          margin: 0;
+          min-height:150px;
+          padding:0;
+          position: relative;
+        }
+
+        figure > img {
+          display: inline-block;
+          height: auto;
+          width: 100%;
+        }
+
+        figcaption {
+          background-color: #000000ab;
+          bottom:0;
+          color: white;
+          hyphens: auto;
+          max-height: 7rem;
+          overflow: hidden;
+          position:absolute;
+          text-overflow: ellipsis;
+          text-shadow: 1px 1px black;
+          white-space: pre-line;
+          width: 100%;
+          word-break: normal;
+          word-wrap: anywhere;
+          padding: .5rem;
+          border: 1px inset white;
+          border-top: none;
+          box-sizing: border-box;
+        }
+        figcaption > hr {
+          margin: 1px 0;
+          height: 1px;
+          max-height: 1px;
+        }
+        figcaption > div {
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 3;
+          display: -webkit-box;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          word-break: normal;
+          white-space: pre-line;
+          word-wrap: anywhere;
+          box-sizing: border-box;
+          font-size: .9rem;
+        }
+        figcaption > div.authors {
+          font-size: .8rem;
+          -webkit-line-clamp: 1;
+        }
+
+        figure:hover figcaption {
+          background: black;
+          position: absolute;
+          bottom:0;
+          outline: 3px inset white;
+          display: block;
+          box-sizing: border-box;
+          overflow: initial;
+          height: max-content;
+          z-index: 2;
+          max-height: initial;
+        }
+        figure:hover figcaption > div {
+          -webkit-box-orient: initial;
+          -webkit-line-clamp: initial;
+          display: block;
+          overflow: initial;
+          height: max-content;
+          z-index: 2;
+          max-height: initial;
+          box-sizing: border-box;
+        }
+    </style>
+{% endblock %}
+{% block results %}
+    {% if collection %}
+        <div class="wrapper">
+            {% for doc in collection %}
+                {% spaceless %}
+                    {% with thumbnail=doc.get_thumbnail %}
+                    <div>
+                        <a href="{{ doc.get_absolute_url }}">
+                            <figure class="document-thumbnail">
+                                {% if thumbnail %}
+                                    <img src="{{ thumbnail.0 }}" alt="{{ doc }}" />
+                                {% else %}
+                                    <svg class="missing-thumbnail" width="100%" height="100%" viewBox="0 0 329.78 406.01" preserveAspectRatio="none"><use href="#missingthumb"></use></svg>
+                                {% endif %}
+                                <figcaption>
+                                    <div>{{ doc }}</div>
+                                    <hr />
+                                    <div class="authors">{{ doc.authors }}</div>
+                                </figcaption>
+                            </figure>
+                              </a>
+                              {% with snippet=snippets|return_item:doc.uuid %}
+                              {% if snippet %}
+                            <div class="snippet lineclamp lineclamp-5">
+                              <p>
+                              <a href="{{ doc.get_absolute_url }}">
+                              {{ snippet|safe }}
+                              </a>
+                              </p>
+                            </div>
+                              {% endif %}
+                              {% endwith %}
+                        </div>
+                    {% endwith %}
+                {% endspaceless %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No documents are available.</p>
+    {% endif %}
+{% endblock %}

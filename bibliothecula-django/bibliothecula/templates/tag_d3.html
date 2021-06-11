@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% spaceless %}
+    {% block title %}{% if tag %}
+        View tag {{tag}}
+    {% else %}
+        View tags
+    {% endif %}{% endblock %}{% endspaceless %}
+{% block style %}
+    <style>
+
+        .links line {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+
+        .nodes circle {
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+
+        text {
+            font-family: sans-serif;
+            font-size: 5px;
+        }
+
+        div#d3-box{
+            border: 1px solid black;
+        }
+
+    </style>
+    <script src="/static/d3.v6.min.js"></script>
+    <script>
+        // Necessary for the anchor links on each node: the view's url might change so it has to be dynamic
+        const TAG_D3_URL = "{% url 'view_tag_d3' %}";
+    </script>
+    <script src="/static/graph.js"></script>
+    <style>
+        div.wrapper {
+            display: flex;
+        }
+    </style>
+    {{node_data|json_script:"node-data"}}
+{% endblock %}
+{% block breadcrumbs %}
+    <ul>
+        <li><a href="{% url 'view_tag_d3' %}">view tags</a></li>
+        {% block crumbs %}
+            {% if tag %}<li><span aria-current="page">{{ tag }}</span></li>{% endif %}
+        {% endblock %}
+    </ul>
+{% endblock %}
+{% block content %}
+    {% if tag %}
+        <h1>view tags related to {{ tag }}</h1>
+        <a href="{% url 'view_tag' tag %}">Go to plain visualization</a>
+    {% else %}
+        <h1>view all tags</h1>
+        <a href="{% url 'view_tag' %}">Go to plain visualization</a>
+    {% endif %}
+    <hr/>
+    <div id="d3-box"></div>
+{% endblock %}

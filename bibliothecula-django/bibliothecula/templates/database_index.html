@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load help_tags %}
+{% load cache %}
+{% block title %}index actions{% endblock %}
+{% block style %}
+    <style>
+        div.action-list {
+            width: min-content;
+            border: 1px solid var(--black-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        div.action-list > form {
+            margin: 10px;
+        }
+
+        p.stats {
+            font-size: 14px;
+            font-weight: 700;
+            display: block;
+            padding: 10px 12px;
+            margin: 0 0 10px 0;
+            border: 1px solid #747474;
+            border-radius: 4px;
+            background-color: #fff;
+            background-position: 5px 12px;
+        }
+    </style>
+{% endblock %}
+{% block breadcrumbs %}
+    <ul>
+        <li><a href="{% url 'database_overview' %}">database overview</a></li>
+        <li><span aria-current="page">index actions</span></li>
+    </ul>
+{% endblock %}
+{% block content %}
+    <h1>{%section_url "" %}index actions</h1>
+    {% cache 900 index_stats %}
+        {% with index_stats_fn as stats %}
+            {% if stats %}
+                <p class="stats">{{ stats.no }} indexed document{{ stats.no|pluralize }}. {{ stats.size }}</p>
+                {% if stats.check %}
+                    <p class="errornote">Integrity check returned error: {{ stats.check }}</p>
+                {% endif %}
+            {% else %}
+                <p>No FTS table. Create?</p>
+            {% endif %}
+        {% endwith %}
+    {% endcache %}
+    <div class="action-list">
+        <p style="text-align: center;">{{ active_tasks }} active task{{active_tasks|pluralize}}</p>
+        <form id="stop-tasks" method="POST" action="{% url 'database_index' %}">
+            {% csrf_token %}
+            <input type="submit" value="stop tasks" name="stop">
+        </form>
+        <form id="start-tasks" method="POST" action="{% url 'database_index' %}">
+            {% csrf_token %}
+            <input type="submit" value="start tasks" name="start">
+        </form>
+        <hr />
+        <form id="build-index" method="POST" action="{% url 'database_index' %}">
+            {% csrf_token %}
+            <input type="submit" value="build index" name="build-index">
+        </form>
+        <hr />
+        <form id="optimize-index" method="POST" action="{% url 'database_index' %}">
+            {% csrf_token %}
+            <input type="submit" value="optimize index" name="optimize-index">
+        </form>
+        <hr />
+        <form id="clear-index" method="POST" action="{% url 'database_index' %}">
+            {% csrf_token %}
+            <input type="submit" value="clear index" name="clear-index">
+        </form>
+    </div>
+{% endblock %}

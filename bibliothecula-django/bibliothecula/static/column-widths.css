@@ -1,0 +1,51 @@
+th.field-title,td.field-title {
+  max-width: 12rem;
+  width: 10rem;
+  word-break: break-words;
+  hyphens:auto;
+}
+td.field-authors {
+  max-width: 8rem;
+  width: 5rem;
+  word-break: break-words;
+}
+td.field-uuid {
+  max-width: 10rem;
+  width: 10rem;
+  word-break: break-all;
+  hyphens: none;
+}
+td.field-tags {
+  max-width: 10rem;
+  width: 8rem;
+  word-break: break-all;
+  hyphens: auto;
+}
+td.field-doi {
+  max-width: 8rem;
+  width: 5rem;
+  word-break: break-all;
+  hyphens: auto;
+}
+td.field-total_metadata, td.field-has_duplicates{
+  width: 5rem;
+}
+td.field-created, td.field-last_modified {
+  width: min-content;
+}
+th.field-document, td.field-document {
+  max-width: 15rem;
+  width: 15rem;
+  word-break: break-all;
+  white-space: normal;
+  hyphens: auto;
+}
+
+select {
+    height: 30px;
+    max-width: 60vw;
+  }
+
+  .inline-group .tabular td.original p {
+    max-width: 700px;
+  }
