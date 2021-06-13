@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="./style.css">
+    <title>Database overview</title>
+    <style>
+    body{
+    font-family: "Inter", "Amstelvar Roman", "IBM Plex Serif", serif;
+    }
+    header, footer {
+    height: 4rem;
+    }
+    main {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-flow: row;
+    }
+
+    blockquote {
+    padding: .2rem 1em 0.8rem 1rem;
+    box-shadow: -.25em.25em #9b7d00;
+    color: #363d45;
+    background: #ffcf27;
+    list-style: square;
+    max-width: 100%;
+    min-width: 54ch;
+    margin-bottom: 2rem;
+    }
+    blockquote > :last-child {
+    margin-bottom: 0;
+    }
+
+    p {
+    max-width: 66ch;
+    text-justify: inter-character;
+    text-align: justify;
+    }
+
+
+    figure + p::first-line {
+    float: left;
+    text-transform: uppercase;
+    font-weight: 500;
+    }
+    figure + p::first-letter {
+    font-size: 4rem;
+    float: left;
+    padding: 4px 2px 0px 0px;
+    }
+
+    em {
+    font-style: oblique;
+    }
+
+    main h1 {
+    text-align: center;
+    text-decoration: underline wavy var(--blue-color);
+    text-decoration-thickness: .1ex;
+    text-underline-offset: .4ex;
+    }
+
+
+    div#intro {
+    grid-column: 4 / span 6;
+    }
+
+        div#intro-text {
+              max-width: 131ch;
+    margin: 0 auto;
+    }
+        div#intro-text p {
+    max-width: 62ch;
+        }
+
+        figure.schema {
+          float: right;
+           shape-outside: polygon(60.07% 0px, 100.27% 35.33%, 99.77% 66.6%, 78.61% 99.96%, 52.34% 100.28%, -1px 79.82%, -0.14% 24.84%, 29.51% -0.4%);
+           shape-outside: polygon(63.07% 20px, 94.02% 32.96%, 95.02% 65.71%, 84.36% 89%, 30.6% 88.73%, 45px 77.75%, 11.61% 24.84%, 31.51% 7.30%);
+           shape-outside: polygon(55.02% 20px, 55.3% 8.71%, 67.45% 8.85%, 67.53% 22.7%, 75.91% 22.61%, 76.28% 35.06%, 95.56% 35.52%, 95.71% 61.23%, 91.07% 61.16%, 91.18% 71.28%, 73.74% 70.88%, 73.24% 90.66%, 57.46% 90.59%, 57.32% 72.74%, 57.42% 61.68%, 42.24% 63.27%, 25.11% 72.98%, 81px 73.06%, 13.49% 32.3%, 19.85% 31.07%, 21.09% 20.93%, 38.02% 20.52%, 38.48% 7.08%, 46.68% 7.03%, 46.94% 4.34%);
+           padding-left: 2rem;
+           shape-margin: 2rem;
+        }
+        figure.schema figcaption {
+          text-align: right;
+          font-weight: 500;
+          font-size: 0.9rem;
+          letter-spacing: 0.1rem;
+        }
+
+        img#schema-svg {
+          max-width: 40vw;
+          min-width: 30vw;
+          height: min-content;
+           padding: 1rem;
+        }
+        span.line:before {
+            position: relative;
+            z-index: 2;
+            line-height: inherit;
+            font-size: inherit;
+            color: #b4b4b4;
+            user-select: all;
+            left: -16px;
+            counter-increment: line;
+            content: counter(line,decimal-leading-zero) "│";
+            background: lightgray;
+        }
+        span.line {
+            width: 100%;
+            white-space: break-spaces;
+            word-break: normal;
+            overflow-wrap: anywhere;
+            padding-left: 13px;
+            word-spacing: -2px;
+            letter-spacing: 0px;
+            background-position-x: left;
+            background-repeat: repeat-y;
+            background-origin: padding-box;
+            background-size: 1ch 2.1ex;
+            background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8' standalone='no'%3F%3E%3Csvg xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:cc='http://creativecommons.org/ns%23' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23' xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' id='svg8' version='1.1' viewBox='0 0 493 1000' height='1000' width='493'%3E%3Cdefs id='defs2'%3E%3Cmarker style='overflow:visible;' id='marker8563' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.6) rotate(180) translate(0,0)' d='M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z ' style='fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:%23000000;stroke-opacity:1;fill:%23000000;fill-opacity:1' id='path8561' /%3E%3C/marker%3E%3Cmarker style='overflow:visible;' id='marker8493' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.6) rotate(180) translate(0,0)' d='M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z ' style='fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:%23000000;stroke-opacity:1;fill:%23000000;fill-opacity:1' id='path8491' /%3E%3C/marker%3E%3Cmarker style='overflow:visible;' id='Arrow1Mend' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.4) rotate(180) translate(10,0)' style='fill-rule:evenodd;stroke:%23000000;stroke-width:1pt;stroke-opacity:1;fill:%23000000;fill-opacity:1' d='M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z ' id='path837' /%3E%3C/marker%3E%3Cmarker style='overflow:visible;' id='Arrow1Lend' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.8) rotate(180) translate(12.5,0)' style='fill-rule:evenodd;stroke:%23000000;stroke-width:1pt;stroke-opacity:1;fill:%23000000;fill-opacity:1' d='M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z ' id='path831' /%3E%3C/marker%3E%3Cmarker style='overflow:visible;' id='marker7176' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.6) rotate(180) translate(0,0)' d='M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z ' style='fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:%23000000;stroke-opacity:1;fill:%23000000;fill-opacity:1' id='path7174' /%3E%3C/marker%3E%3Cmarker style='overflow:visible;' id='marker7118' refX='0.0' refY='0.0' orient='auto'%3E%3Cpath transform='scale(0.2) rotate(180) translate(6,0)' style='fill-rule:evenodd;stroke:%23000000;stroke-width:1pt;stroke-opacity:1;fill:%23000000;fill-opacity:1' d='M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z ' id='path7116' /%3E%3C/marker%3E%3Cmarker style='overflow:visible' id='Arrow2Mend' refX='0' refY='0' orient='auto'%3E%3Cpath transform='scale(-0.6)' d='M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z' style='fill:%23000000;fill-opacity:1;fill-rule:evenodd;stroke:%23000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1' id='path855' /%3E%3C/marker%3E%3Cmarker style='overflow:visible' id='Arrow1Send' refX='0' refY='0' orient='auto'%3E%3Cpath transform='matrix(-0.2,0,0,-0.2,-1.2,0)' style='fill:%23000000;fill-opacity:1;fill-rule:evenodd;stroke:%23000000;stroke-width:1.00000003pt;stroke-opacity:1' d='M 0,0 5,-5 -12.5,0 5,5 Z' id='path843' /%3E%3C/marker%3E%3Cmarker style='overflow:visible' id='Arrow2Lend' refX='0' refY='0' orient='auto'%3E%3Cpath transform='matrix(-1.1,0,0,-1.1,-1.1,0)' d='M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z' style='fill:%23000000;fill-opacity:1;fill-rule:evenodd;stroke:%23000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1' id='path849' /%3E%3C/marker%3E%3Cmarker style='overflow:visible' id='Arrow2Mend-2' refX='0' refY='0' orient='auto'%3E%3Cpath transform='scale(-0.6)' d='M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z' style='fill:%23000000;fill-opacity:1;fill-rule:evenodd;stroke:%23000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1' id='path855-5' /%3E%3C/marker%3E%3C/defs%3E%3Cmetadata id='metadata5'%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage' /%3E%3Cdc:title%3E%3C/dc:title%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cg transform='translate(-60.565463,-85.803442)' id='layer1'%3E%3Cpath id='path8645' d='m 149.45889,444.89991 c 0,0 0.55311,83.3431 9.22935,148.0181 6.16811,45.97876 31.24673,89.1207 69.56254,113.06808 48.74191,30.4637 140.86924,16.89653 175.76654,18.18274 0.72489,38.24317 2.02031,51.51778 2.02031,51.51778 l 70.71067,-74.75129 -73.74112,-73.74114 c 0,0 0.0525,17.12006 -2.02031,56.56855 -94.53978,7.66665 -112.72802,6.23327 -164.65486,-25.25381 -46.41118,-28.14253 -39.39596,-213.609 -39.39596,-213.609 z' style='fill:%230c3685;fill-opacity:1;stroke:%230c3685;stroke-width:71.3007874;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' /%3E%3C/g%3E%3C/svg%3E%0A");
+        }
+        div.wrapper {
+            display: flex;
+            place-content: center;
+            flex-direction: column;
+            gap: 1rem;
+            grid-column: 3 / span 8;
+            width: 100%;
+        }
+        div.wrapper > table {
+            align-self: center;
+        }
+        div.triggers ol li + li {
+            margin-top:1rem;
+            border-top: 2px outset black;
+            padding-top: 1rem;
+        }
+        td.doc {
+            text-align: left;
+            max-width: 42ch;
+            min-width: auto;
+            padding: .5rem 1rem;
+        }
+        td.sql {
+            text-align: left;
+            min-width: min-content;
+        }
+        code.sql {
+            font-family: monospace;
+            background: lightgray;
+            border:1px inset darkgray;
+            border-radius: 5px;
+            padding: .5rem 1rem;
+            user-select: all;
+            width: 72ch;
+            height: 100%;
+            word-wrap: anywhere;
+            display: flex;
+            flex-direction: column;
+            counter-reset: line;
+        }
+        .keyword-1 {
+            color: var(--green-color);
+        }
+        .keyword-2 {
+            color: var(--red-color);
+        }
+        .keyword-4 {
+            color: var(--orange-color);
+        }
+        .keyword-8 {
+            color: var(--yellow-color);
+        }
+        .keyword-16 {
+            color: var(--purple-color);
+        }
+        ol li h3 {
+            font-weight: bold;
+            color: #217ac0;
+        }
+        caption {
+            padding: 10px;
+            font-size: 1.2rem;
+        }
+        .blue {
+            font-weight: bold;
+            color: #217ac0;
+        }
+        h2{
+            position: -webkit-sticky;
+            position: sticky;
+            top: -1px;
+            background: white;
+            width: max-content;
+        }
+        @media (min-width:1200px) {
+            aside {
+                position: fixed;
+                left: 2vw;
+                z-index: 4;
+            }
+        }
+        #toc {
+            background: #f9f9f9 none repeat scroll 0 0;
+            border: 1px solid #aaa;
+            display: block;
+            padding: 0px 10px;
+            width: auto;
+            max-width: max-content;
+        }
+        #toc p {
+            font-weight: 700;
+            text-align: center;
+        }
+        #toc  ul {
+            padding-left: 0.3rem;
+        }
+        #toc > ul {
+            padding-left: 1rem;
+        }
+        #toc li {
+            list-style: outside;
+            padding-left: 0.3rem;
+            list-style-type: square;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <!--
+    <div class="header-left">
+    <div class="logo">
+    <h1>bibliothecula</h1>
+    <div class="logo-image"></div>
+    </div>
+    </div>
+      -->
+    </header>
+
+    <main>
+        <div id="intro">
+            <div>
+                <div class="logo">
+                    <h1 id="overview"><span class="name">bibliothecula</span> schema overview</h1>
+
+                    <div class="logo-image">
+                    </div>
+                </div>
+            </div>
+
+            <div id="intro-text">
+                <blockquote>
+                    <p><em>bibliothēcula</em> f (genitive <em>bibliothēculae</em>); first declension (Late Latin)</p>
+
+                    <ul>
+                        <li>small library.</li>
+
+                        <li>small collection of books.</li>
+
+                        <li>document organizer with tags and full-text-search, in a simple and clean <code>sqlite3</code> schema.</li>
+                    </ul>
+                </blockquote>
+
+                <aside>
+                    <nav id="toc">
+                        <p>Contents</p>
+
+                        <ul>
+                            <li>
+                                <a href="#overview">overview</a>
+                                <ul>
+                                    <li>
+                                        <a href="#sql-schema-reference">SQL schema reference</a>
+                                    </li>
+
+                                    <li>
+                                        <a href="#sql-statements-reference">SQL statements reference</a>
+                                    </li>
+
+                                    <li>
+                                        <a href="#sql-cli-reference">sqlite CLI reference</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <figure class="schema">
+                    <img id="schema-svg" src="schema_web_opt.svg" alt="triangle with all three sides equal">
+                    <figcaption>
+                        artist's interpretation.
+                    </figcaption>
+                </figure>
+
+                <p>Egone quaeris, inquit, quid sentiam? quos bonos viros, fortes, iustos, moderatos aut audivimus in re publica fuisse aut ipsi vidimus, qui sine ulla doctrina naturam ipsam secuti multa laudabilia fecerunt, eos melius a natura institutos fuisse, quam institui potuissent a philosophia, si ullam aliam probavissent praeter eam, quae nihil aliud in bonis haberet nisi honestum, nihil nisi turpe in malis; ceterae philosophorum disciplinae, omnino alia magis alia, sed tamen omnes, quae rem ullam virtutis expertem aut in bonis aut in malis numerent, eas non modo nihil adiuvare arbitror neque firmare, quo meliores simus, sed ipsam depravare naturam. nam nisi hoc optineatur, id solum bonum esse, quod honestum sit, nullo modo probari possit beatam vitam virtute effici. quod si ita sit, cur opera philosophiae sit danda nescio. si enim sapiens aliquis miser esse possit, ne ego istam gloriosam memorabilemque virtutem non magno aestimandam putem.</p>
+
+                <p>Dicuntur ista, Cato, magnifice, inquam, sed videsne verborum gloriam tibi cum Pyrrhone et cum Aristone, qui omnia exaequant, esse communem? de quibus cupio scire quid sentias.</p>
+
+                <p>We come now to <em>metaphysics</em>, a purely speculative science, which occupies a completely isolated position and is entirely independent of the teachings of experience. It deals with mere conceptions—not, like mathematics, with conceptions applied to intuition—and in it, reason is the pupil of itself alone. It is the oldest of the sciences, and would still survive, even if all the rest were swallowed up in the abyss of an all-destroying barbarism. But it has not yet had the good fortune to attain to the sure scientific method. This will be apparent; if we apply the tests which we proposed at the outset. We find that reason perpetually comes to a stand, when it attempts to gain _à priori_ the perception even of those laws which the most common experience confirms. We find it compelled to retrace its steps in innumerable instances, and to abandon the path on which it had entered, because this does not lead to the desired result. We find, too, that those who are engaged in metaphysical pursuits are far from being able to agree among themselves, but that, on the contrary, this science appears to furnish an arena specially adapted for the display of skill or the exercise of strength in mock-contests—a field in which no combatant ever yet succeeded in gaining an inch of ground, in which, at least, no victory was ever yet crowned with permanent possession.</p>
+
+                <p>This leads us to inquire why it is that, in metaphysics, the sure path of science has not hitherto been found. Shall we suppose that it is impossible to discover it? Why then should nature have visited our reason with restless aspirations after it, as if it were one of our weightiest concerns? Nay, more, how little cause should we have to place confidence in our reason, if it abandons us in a matter about which, most of all, we desire to know the truth—and not only so, but even allures us to the pursuit of vain phantoms, only to betray us in the end? Or, if the path has only hitherto been missed, what indications do we possess to guide us in a renewed investigation, and to enable us to hope for greater success than has fallen to the lot of our predecessors?</p>
+            </div>
+        </div>
+
+        <div class="wrapper">
+            <h2 id="sql-schema-reference">SQL schema reference</h2>
+
+            <table>
+                <caption>
+                    The <span class="name">bibliothecula</span> schema.
+                </caption>
+
+                <thead>
+                    <tr>
+                        <th>name</th>
+                        <th>value</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <th class="blue">CREATE_DOCUMENTS</th>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>TABLE</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">"Documents"<b>(</b></span><span class="line">  "uuid" <b>CHAR</b><b>(</b>32<b>)</b> <b>NOT</b> <b>NULL</b> <b>PRIMARY</b> <b>KEY</b><b>,</b></span><span class="line">  "title" <b>TEXT</b> <b>NOT</b> <b>NULL</b><b>,</b></span><span class="line">  "title_suffix" <b>TEXT</b><b>,</b></span><span class="line">  "created" <b>DATETIME</b> <b>NOT</b> <b>NULL</b> <b>DEFAULT</b><b>(</b>strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b><b>)</b><b>,</b></span><span class="line">  "last_modified" <b>DATETIME</b> <b>NOT</b> <b>NULL</b> <b>DEFAULT</b><b>(</b>strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b><b>)</b></span><span class="line">  <b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th class="blue">CREATE_TEXTMETADATA</th>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>TABLE</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">"TextMetadata"<b>(</b></span><span class="line">  "uuid" <b>CHAR</b><b>(</b>32<b>)</b> <b>NOT</b> <b>NULL</b> <b>PRIMARY</b> <b>KEY</b><b>,</b></span><span class="line">  "name" <b>TEXT</b> <b>NULL</b><b>,</b></span><span class="line">  "data" <b>TEXT</b> <b>NOT</b> <b>NULL</b><b>,</b></span><span class="line">  "created" <b>DATETIME</b> <b>NOT</b> <b>NULL</b><b>,</b></span><span class="line">  "last_modified" <b>DATETIME</b> <b>NOT</b> <b>NULL</b></span><span class="line">  <b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th class="blue">CREATE_DOCUMENTHASTEXTMETADATA</th>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>TABLE</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">"DocumentHasTextMetadata"<b>(</b></span><span class="line">  "id" <b>INTEGER</b> <b>NOT</b> <b>NULL</b> <b>PRIMARY</b> <b>KEY</b> <b>AUTOINCREMENT</b><b>,</b></span><span class="line">  "name" <b>TEXT</b> <b>NOT</b> <b>NULL</b><b>,</b></span><span class="line">  "document_uuid" <b>CHAR</b><b>(</b>32<b>)</b> <b>NOT</b> <b>NULL</b> <b>REFERENCES</b> "Documents"<b>(</b>"uuid"<b>)</b> <b>DEFERRABLE</b> <b>INITIALLY</b> <b>DEFERRED</b><b>,</b></span><span class="line">  "metadata_uuid" <b>CHAR</b><b>(</b>32<b>)</b> <b>NOT</b> <b>NULL</b> <b>REFERENCES</b> "TextMetadata"<b>(</b>"uuid"<b>)</b> <b>DEFERRABLE</b> <b>INITIALLY</b> <b>DEFERRED</b><b>,</b></span><span class="line">  "created" <b>DATETIME</b> <b>NOT</b> <b>NULL</b> <b>DEFAULT</b><b>(</b>strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b><b>)</b><b>,</b></span><span class="line">  "last_modified" <b>DATETIME</b> <b>NOT</b> <b>NULL</b> <b>DEFAULT</b><b>(</b>strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b><b>)</b></span><span class="line">  <b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th class="blue">CREATE_BINARYMETADATA</th>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>TABLE</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">"BinaryMetadata"<b>(</b></span><span class="line">  "uuid" <b>CHAR</b><b>(</b>32<b>)</b> <b>NOT</b> <b>NULL</b> <b>PRIMARY</b> <b>KEY</b><b>,</b></span><span class="line">  "name" <b>TEXT</b> <b>NULL</b><b>,</b></span><span class="line">  "data" <b>BLOB</b> <b>NOT</b> <b>NULL</b><b>,</b></span><span class="line">  "created" <b>DATETIME</b> <b>NOT</b> <b>NULL</b><b>,</b></span><span class="line">  "last_modified" <b>DATETIME</b> <b>NOT</b> <b>NULL</b></span><span class="line">  <b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th class="blue">CREATE_DOCUMENTHASBINARYMETADATA</th>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>TABLE</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">"DocumentHasBinaryMetadata"<b>(</b></span><span class="line">  "id" <b>INTEGER</b> <b>NOT</b> <b>NULL</b> <b>PRIMARY</b> <b>KEY</b> <b>AUTOINCREMENT</b><b>,</b></span><span class="line">  "name" <b>TEXT</b> <b>NOT</b> <b>NULL</b><b>,</b></span><span class="line">  "document_uuid" <b>CHAR</b><b>(</b>32<b>)</b> <b>NOT</b> <b>NULL</b> <b>REFERENCES</b> "Documents"<b>(</b>"uuid"<b>)</b> <b>DEFERRABLE</b> <b>INITIALLY</b> <b>DEFERRED</b><b>,</b></span><span class="line">  "metadata_uuid" <b>CHAR</b><b>(</b>32<b>)</b> <b>NOT</b> <b>NULL</b> <b>REFERENCES</b> "BinaryMetadata"<b>(</b>"uuid"<b>)</b> <b>DEFERRABLE</b> <b>INITIALLY</b> <b>DEFERRED</b><b>,</b></span><span class="line">  "created" <b>DATETIME</b> <b>NOT</b> <b>NULL</b> <b>DEFAULT</b><b>(</b>strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b><b>)</b><b>,</b></span><span class="line">  "last_modified" <b>DATETIME</b> <b>NOT</b> <b>NULL</b> <b>DEFAULT</b><b>(</b>strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b><b>)</b></span><span class="line">  <b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="wrapper">
+            <h2 id="sql-statements-reference">SQL statements reference</h2>
+
+            <table>
+                <caption>
+                    A list of utility SQL statements for use with the <span class="name">bibliothecula</span> schema.
+                </caption>
+
+                <colgroup>
+                    <col span="2">
+                    <col>
+                    <col>
+                    <col>
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th colspan="2">name</th>
+                        <th>documentation</th>
+                        <th>value</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td><span class="keyword-4">index</span>, <span class="keyword-32">example</span></td>
+                        <th class="blue">CREATE_BACKREF_INDEX</th>
+                        <td class="doc">Create backref index.</td>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIRTUAL</b> <b>TABLE</b> backrefs_fts <b>USING</b> fts5<b>(</b>referrer<b>,</b> target<b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-1">create table</span>, <span class="keyword-4">index</span></td>
+                        <th class="blue">CREATE_UUID_TOKENIZER</th>
+                        <td class="doc"><cite><a rel="external nofollow noreferrer" href="https://www.sqlite.org/fts3.html#querying_tokenizers">sqlite3 reference</a></cite>
+                        </td>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIRTUAL</b> <b>TABLE</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">uuidtok <b>USING</b> fts3tokenize<b>(</b>'unicode61'<b>,</b> "tokenchars=-1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"<b>,</b> "separators= "<b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-2">create view</span>
+                        </td>
+                        <th class="blue">CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS</th>
+                        <td class="doc">Auxiliary view for use in <var>document_title_authors_text_view</var> view. Returns document title and a comma separated string with all authors or NULL for all documents. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">document_title_authors<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>)</b> <b>AS</b></span><span class="line"><b>SELECT</b> <b>*</b> <b>FROM</b> document_title_without_authors</span><span class="line"><b>UNION</b> <b>SELECT</b> <b>*</b> <b>FROM</b> document_title_with_authors</span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-2">create view</span>
+                        </td>
+                        <th class="blue">CREATE_VIEW_DOCUMENT_TITLE_AUTHORS_TEXT</th>
+                        <td class="doc">Auxiliary view for use in <abbr title="Full-Text Search">FTS</abbr> create trigger. Returns document title, a comma separated string with all authors or NULL if there aren't any. and the full text blob for all documents. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">document_title_authors_text_view<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>,</b> full_text<b>,</b> metadata_uuid<b>)</b> <b>AS</b></span><span class="line"><b>SELECT</b> v.rowid <b>AS</b> uuid<b>,</b></span><span class="line">v.title <b>AS</b> title<b>,</b></span><span class="line">v.authors <b>AS</b> authors<b>,</b></span><span class="line">bm.data <b>AS</b> full_text<b>,</b></span><span class="line">bm.uuid <b>AS</b> metadata_uuid</span><span class="line"><b>FROM</b> document_title_authors <b>AS</b> v<b>,</b></span><span class="line">DocumentHasBinaryMetadata <b>AS</b> dhbm<b>,</b></span><span class="line">BinaryMetadata <b>AS</b> bm</span><span class="line"><b>WHERE</b> bm.uuid <b>=</b> dhbm.metadata_uuid</span><span class="line"><b>AND</b> v.uuid <b>=</b> dhbm.document_uuid</span><span class="line"><b>AND</b> dhbm.name <b>=</b> 'full-text'</span><span class="line"><b>ORDER</b> <b>BY</b> dhbm.last_modified</span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-2">create view</span>
+                        </td>
+                        <th class="blue">CREATE_VIEW_WITHOUT_AUTHORS</th>
+                        <td class="doc">Auxiliary view for use in <var>document_title_authors</var> view. Returns document title and NULL for all documents that have no <var>author</var> metadata. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">document_title_without_authors<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>)</b> <b>AS</b></span><span class="line"><b>SELECT</b> d.uuid <b>AS</b> uuid<b>,</b> d.title <b>AS</b> title<b>,</b> <b>NULL</b> <b>AS</b> authors</span><span class="line"><b>FROM</b> Documents <b>AS</b> d</span><span class="line"><b>WHERE</b> <b>NOT</b> <b>EXISTS</b></span><span class="line"><b>(</b><b>SELECT</b> <b>*</b> <b>FROM</b> TextMetadata <b>AS</b> t<b>,</b> DocumentHasTextMetadata <b>AS</b> dt <b>WHERE</b> t.name <b>=</b> 'author' <b>AND</b> t.uuid <b>=</b> dt.metadata_uuid <b>AND</b> dt.document_uuid <b>=</b> d.uuid<b>)</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-2">create view</span>
+                        </td>
+                        <th class="blue">CREATE_VIEW_WITH_AUTHORS</th>
+                        <td class="doc">Auxiliary view for use in <var>document_title_authors</var> view. Returns document title and a comma separated string with all authors for all documents that have <var>author</var> metadata. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">document_title_with_authors<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>)</b> <b>AS</b></span><span class="line"><b>SELECT</b> d.uuid <b>AS</b> uuid<b>,</b> d.title <b>AS</b> title<b>,</b> GROUP_CONCAT<b>(</b>authors.author<b>)</b> <b>AS</b> authors</span><span class="line"><b>FROM</b> Documents <b>AS</b> d<b>,</b></span><span class="line"><b>(</b><b>SELECT</b> d.uuid <b>AS</b> uuid<b>,</b> tm.data <b>AS</b> author <b>FROM</b> Documents <b>AS</b> d<b>,</b> TextMetadata <b>AS</b> tm<b>,</b> DocumentHasTextMetadata <b>AS</b> dhtm <b>WHERE</b> dhtm.document_uuid <b>=</b> d.uuid <b>AND</b> dhtm.metadata_uuid <b>=</b> tm.uuid <b>AND</b> tm.name <b>=</b> 'author'<b>)</b> <b>AS</b> authors</span><span class="line"><b>WHERE</b> authors.uuid <b>=</b> d.uuid</span><span class="line"><b>GROUP</b> <b>BY</b> d.uuid</span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-4">index</span>, <span class="keyword-8">create trigger</span></td>
+                        <th class="blue">FTS_CREATE_DELETE_TRIGGER</th>
+                        <td class="doc">Trigger to remove a document's full text from the full text search table when the full-text binary metadata is deleted. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createtrigger.html">sqlite3 reference for for creating triggers</a></cite></td>
+                            <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>TRIGGER</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span> <span class="line">delete_full_text_trigger </span> <span class="line"><b>AFTER</b> <b>DELETE</b> <b>ON</b> DocumentHasBinaryMetadata </span> <span class="line"><b>WHEN</b> OLD.name <b>=</b> 'full-text' </span><span class="line"><b>BEGIN</b></span> <span class="line">&emsp;&emsp;<b>DELETE</b> <b>FROM</b> document_title_authors_text_view_fts </span> <span class="line">&emsp;&emsp;<b>WHERE</b> uuid <b>=</b> OLD.document_uuid<b>;</b> </span><span class="line"><b>END</b></span></code></td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-4">index</span>, <span class="keyword-8">create trigger</span></td>
+                        <th class="blue">FTS_CREATE_INSERT_TRIGGER</th>
+                        <td class="doc">Trigger to insert full text data when a <var>DocumentHasBinaryMetadata</var> row for a full-text <var>BinaryMetadata</var> is created. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createtrigger.html">sqlite3 reference for for creating triggers</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>TRIGGER</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">insert_full_text_trigger</span><span class="line"><b>AFTER</b> <b>INSERT</b> <b>ON</b> DocumentHasBinaryMetadata</span><span class="line"><b>WHEN</b> NEW.name <b>=</b> 'full-text'</span><span class="line"><b>BEGIN</b></span><span class="line">  <b>INSERT</b> <b>INTO</b> document_title_authors_text_view_fts<b>(</b>uuid<b>,</b> title<b>,</b> authors<b>,</b> full_text<b>)</b></span><span class="line">  <b>SELECT</b> d.rowid <b>AS</b> rowid<b>,</b> d.title <b>AS</b> title<b>,</b> d.authors <b>AS</b> authors<b>,</b> d.full_text <b>AS</b> full_text</span><span class="line">  <b>FROM</b> document_title_authors_text_view <b>AS</b> d</span><span class="line">  <b>WHERE</b> d.metadata_uuid <b>=</b> NEW.metadata_uuid</span><span class="line">  <b>AND</b> d.rowid=NEW.document_uuid<b>;</b></span><span class="line"><b>END</b></span></code></td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-1">create table</span>, <span class="keyword-4">index</span></td>
+                        <th class="blue">FTS_CREATE_TABLE</th>
+                        <td class="doc">Create a full-text search index using the <em>fts5</em> module. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html">sqlite3 reference</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIRTUAL</b> <b>TABLE</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span><span class="line">document_title_authors_text_view_fts <b>USING</b> fts5<b>(</b>title<b>,</b> authors<b>,</b> full_text<b>,</b> uuid <b>UNINDEXED</b><b>)</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-4">index</span>, <span class="keyword-16">query data</span></td>
+                        <th class="blue">FTS_INTEGRITY_CHECK</th>
+                        <td class="doc">This command is used to verify that the full-text index is internally consistent. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html#the_integrity_check_command">sqlite3 reference</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>INSERT</b> <b>INTO</b> document_title_authors_text_view_fts<b>(</b>document_title_authors_text_view_fts<b>)</b> <b>VALUES</b><b>(</b>'integrity-check'<b>)</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-4">index</span>
+                        </td>
+                        <th class="blue">FTS_OPTIMIZE</th>
+                        <td class="doc">This command merges all individual b-trees that currently make up the full-text index into a single large b-tree structure. Because it reorganizes the entire <abbr title="Full-Text Search">FTS</abbr> index, the optimize command can take a long time to run. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html#the_optimize_command">sqlite3 reference</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>INSERT</b> <b>INTO</b> document_title_authors_text_view_fts<b>(</b>document_title_authors_text_view_fts<b>)</b> <b>VALUES</b><b>(</b>'optimize'<b>)</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-4">index</span>
+                        </td>
+                        <th class="blue">FTS_REBUILD</th>
+                        <td class="doc">This command first deletes the entire full-text index, then rebuilds it. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html#the_rebuild_command">sqlite3 reference</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>INSERT</b> <b>INTO</b> document_title_authors_text_view_fts<b>(</b>document_title_authors_text_view_fts<b>)</b> <b>VALUES</b><b>(</b>'rebuild'<b>)</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-4">index</span>, <span class="keyword-16">query data</span></td>
+                        <th class="blue">FTS_SEARCH</th>
+                        <td class="doc">This command queries the full-text search index for documents. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html">sqlite3 reference</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> uuid <b>FROM</b> document_title_authors_text_view_fts<b>(</b>'query text'<b>)</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-4">index</span>, <span class="keyword-16">query data</span></td>
+                        <th class="blue">FTS_SELECT_CONFIG</th>
+                        <td class="doc">This command returns the values of persistent configuration parameters. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html#appendix_b">sqlite3 reference</a></cite></td>
+                        <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> <b>*</b> <b>FROM</b> document_title_authors_text_view_fts_config</span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-16">query data</span>, <span class="keyword-32">example</span></td>
+                        <th class="blue">QUERY_BACKREFS_FROM_TEXT_FILES</th>
+                        <td class="doc">Find backreferences from plain text files.</td>
+                        <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> <b>DISTINCT</b> <b>REPLACE</b><b>(</b>tok.token<b>,</b> '-'<b>,</b> ''<b>)</b> <b>AS</b> target<b>,</b></span><span class="line">texts.uuid <b>AS</b> referrer <b>FROM</b> uuidtok <b>AS</b> tok<b>,</b></span><span class="line"><b>(</b><b>SELECT</b> uuid<b>,</b> data<b>,</b></span><span class="line">json_extract<b>(</b>name<b>,</b> '$.content_type'<b>)</b> <b>AS</b> _type</span><span class="line"><b>FROM</b> BinaryMetadata</span><span class="line"><b>WHERE</b> json_valid<b>(</b>name<b>)</b> <b>AND</b> _type <b>LIKE</b> "%text/%"<b>)</b></span><span class="line"><b>AS</b> texts</span><span class="line"><b>WHERE</b> tok.input=texts.data <b>AND</b> LENGTH<b>(</b>tok.token<b>)</b> <b>=</b> 36</span><span class="line"><b>AND</b> <b>EXISTS</b></span><span class="line"><b>(</b><b>SELECT</b> <b>*</b> <b>FROM</b> Documents <b>WHERE</b> uuid <b>=</b> <b>REPLACE</b><b>(</b>tok.token<b>,</b> '-'<b>,</b> ''<b>)</b><b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-16">query data</span>, <span class="keyword-32">example</span></td>
+                        <th class="blue">QUERY_BACKREF_CANDIDATES</th>
+                        <td class="doc">
+                        </td>
+                        <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> <b>DISTINCT</b> token <b>FROM</b> uuidtok</span><span class="line"><b>WHERE</b> input <b>=</b></span><span class="line"><b>(</b><b>SELECT</b> data <b>FROM</b> BinaryMetadata</span><span class="line"><b>WHERE</b> uuid <b>=</b> '17ee75452e574e03b0b8e4ef2bc9be25'<b>)</b></span><span class="line"><b>AND</b> LENGTH<b>(</b>token<b>)</b> <b>=</b> 36<b>;</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-16">query data</span>, <span class="keyword-32">example</span></td>
+                        <th class="blue">QUERY_TEXT_FILES</th>
+                        <td class="doc">
+                        </td>
+                        <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> uuid<b>,</b> name<b>,</b> json_extract<b>(</b>name<b>,</b> '$.content_type'<b>)</b> <b>AS</b> _type</span><span class="line"><b>FROM</b> BinaryMetadata</span><span class="line"><b>WHERE</b> json_valid<b>(</b>name<b>)</b></span><span class="line"><b>AND</b> _type <b>LIKE</b> "%text/%"<b>;</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-16">query data</span>, <span class="keyword-32">example</span></td>
+                        <th class="blue">QUERY_UUID_WITH_HYPHENS</th>
+                        <td class="doc">
+                        </td>
+                        <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> <b>*</b> <b>FROM</b> Documents</span><span class="line"><b>WHERE</b> uuid <b>=</b></span><span class="line"><b>REPLACE</b><b>(</b>'7ec63f30-5882-46ac-855d-bdcaf8f29700'<b>,</b> '-'<b>,</b> ''<b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="keyword-16">query data</span>, <span class="keyword-32">example</span></td>
+                        <th class="blue">QUERY_VALID_JSON_NAMES</th>
+                        <td class="doc">
+                        </td>
+                        <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> uuid<b>,</b> name <b>FROM</b> BinaryMetadata <b>WHERE</b> json_valid<b>(</b>name<b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="wrapper">
+            <h2 id="sql-cli-reference">sqlite CLI reference</h2>
+
+            <table>
+                <caption>
+                    A list of utility SQL statements for use with the CLI tool.
+                </caption>
+
+                <colgroup>
+                    <col span="2">
+                    <col>
+                    <col>
+                    <col>
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th colspan="2">name</th>
+                        <th>documentation</th>
+                        <th>value</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td><span class="keyword-4">index</span>, <span class="keyword-32">example</span></td>
+                        <th class="blue">CREATE_BACKREF_INDEX</th>
+                        <td class="doc">Create backref index.</td>
+                        <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIRTUAL</b> <b>TABLE</b> backrefs_fts <b>USING</b> fts5<b>(</b>referrer<b>,</b> target<b>)</b><b>;</b></span></code>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+    </footer>
+</body>
+</html>
