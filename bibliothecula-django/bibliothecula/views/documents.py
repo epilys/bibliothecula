@@ -1,5 +1,7 @@
 from . import *
 from django import db
+from django.utils.safestring import mark_safe
+import json
 
 EMBEDDED_SUBMIT_VALUE = "embedded"
 LINK_SUBMIT_VALUE = "link"
@@ -563,6 +565,25 @@ def import_documents_2(request, files=None):
     return HttpResponse(template.render(context, request))
 
 
+def text_to_html(text, _type):
+    from itertools import chain, repeat, islice
+
+    def intersperse(delimiter, seq):
+        return "".join(
+            islice(chain.from_iterable(zip(repeat(delimiter), seq)), 1, None)
+        )
+
+    def plain_text(text):
+        return intersperse("<br />", text.split(sep="\n"))
+
+    if _type is "text/html":
+        return text
+    elif _type is "text/markdown":
+        return plain_text(text)
+    else:
+        return plain_text(text)
+
+
 @staff_member_required
 def edit_plain_text_document(request, uuid, metadata_uuid=None):
     try:
@@ -570,6 +591,7 @@ def edit_plain_text_document(request, uuid, metadata_uuid=None):
     except Document.DoesNotExist:
         raise Http404("Document with this uuid does not exist.")
     has_metadata = None
+    content_html = ""
     if metadata_uuid is not None:
         try:
             has_metadata = doc.binary_metadata.all().get(metadata__uuid=metadata_uuid)
@@ -616,6 +638,7 @@ def edit_plain_text_document(request, uuid, metadata_uuid=None):
                 request, f"{has_metadata.metadata} is not a plaintext file."
             )
 
+        content_html = text_to_html(content, _type)
         form = TextStorageEdit(
             initial={
                 "uuid": has_metadata.metadata.uuid,
@@ -630,6 +653,7 @@ def edit_plain_text_document(request, uuid, metadata_uuid=None):
         "document": doc,
         "form": form,
         "add_document_form": AddDocument(),
+        "content_html": mark_safe(content_html),
     }
     template = loader.get_template("plain_text_edit.html")
     return HttpResponse(template.render(context, request))
