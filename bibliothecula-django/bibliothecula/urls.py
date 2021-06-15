@@ -77,6 +77,11 @@ urlpatterns = [
         name="edit_plain_text_document",
     ),
     path(
+        "document/<uuid>/edit/<metadata_uuid>/",
+        views.edit_plain_text_document,
+        name="edit_plain_text_document_metadata",
+    ),
+    path(
         "document/<uuid>/set-thumbnail/",
         views.set_document_thumbnail,
         name="set_document_thumbnail",

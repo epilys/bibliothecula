@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load help_tags %}
 {% block title %}{{document}}{% endblock %}
 {% block style %}
     <style>
@@ -172,8 +173,8 @@
         {% endwith %}
     </div>
     <div class="text-metadata" itemscope itemtype="http://schema.org/Book" itemid="{{ document.uuid }}">
-      <data itemprop="keywords" value="{% for tag in document.tags_list %}{{ tag.metadata.data}}{% if not forloop.last %},{% endif%}{% endfor %}" hidden>{% for tag in document.tags_list %}{{ tag.metadata.data}}{% if not forloop.last %},{% endif%}{% endfor %}</data>
-      <data itemprop="thumbnailUrl" value="{{ document.get_thumbnail.0 }}" hidden>{{ document.get_thumbnail.0 }}</data>
+        <data itemprop="keywords" value="{% for tag in document.tags_list %}{{ tag.metadata.data}}{% if not forloop.last %},{% endif%}{% endfor %}" hidden>{% for tag in document.tags_list %}{{ tag.metadata.data}}{% if not forloop.last %},{% endif%}{% endfor %}</data>
+        <data itemprop="thumbnailUrl" value="{{ document.get_thumbnail.0 }}" hidden>{{ document.get_thumbnail.0 }}</data>
         <table>
             <caption></caption>
             <colgroup>
@@ -192,7 +193,7 @@
                     <td itemprop="name">{{ document.title }}</td>
                 </tr>
                 <tr>
-                  <td><strong>uuid</strong></td>
+                    <td><strong>uuid</strong></td>
                     <td><code itemprop="identifier">{{ document.uuid }}</code></td>
                 </tr>
                 <tr>
@@ -278,8 +279,13 @@
 
                         {% if content_type %}
                             <div class="content-type">[<code>{{ content_type.content_type }}</code> {{ content_type.size|filesizeformat}}]</div>
-                            {% if content_type.content_type in THUMBNAIL_MIMES %}
+                            {% if content_type.content_type|is_thumbnail_mime %}
                                 <button type="submit" form="set-thumbnail-form" formaction="{% url 'set_document_thumbnail_2' uuid=document.uuid metadata_uuid=s.metadata.uuid %}">Set thumbnail</button>
+                            {% endif %}
+                            {% if content_type.content_type|is_plain_text %}
+                                <form method="GET" action="{% url 'edit_plain_text_document_metadata' uuid=document.uuid metadata_uuid=s.metadata.uuid %}">
+                                    <button type="submit">Edit</button>
+                                </form>
                             {% endif %}
                         {% endif %}
                     {% endwith %}

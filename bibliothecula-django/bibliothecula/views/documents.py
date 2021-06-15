@@ -15,8 +15,8 @@ def view_document(request, uuid):
     try:
         with connections["bibliothecula"].cursor() as cursor:
             cursor.execute(
-                    f"SELECT referrer FROM backrefs_fts WHERE target = '{doc.uuid.hex}'"
-                    )
+                f"SELECT referrer FROM backrefs_fts WHERE target = '{doc.uuid.hex}'"
+            )
             backrefs = cursor.fetchall()
         print("backrefs: ", backrefs)
     except db.OperationalError:
@@ -38,7 +38,6 @@ def view_document(request, uuid):
         "document": doc,
         "EMBEDDED_SUBMIT_VALUE": EMBEDDED_SUBMIT_VALUE,
         "LINK_SUBMIT_VALUE": LINK_SUBMIT_VALUE,
-        "THUMBNAIL_MIMES": THUMBNAIL_MIMES,
         "add_link_form": DocumentAddLinkStorage(),
         "add_embedded_form": DocumentAddEmbeddedStorage(),
         "add_document_form": AddDocument(),
@@ -565,13 +564,22 @@ def import_documents_2(request, files=None):
 
 
 @staff_member_required
-def edit_plain_text_document(request, uuid):
+def edit_plain_text_document(request, uuid, metadata_uuid=None):
     try:
         doc = Document.objects.all().get(uuid=uuid)
     except Document.DoesNotExist:
         raise Http404("Document with this uuid does not exist.")
+    has_metadata = None
+    if metadata_uuid is not None:
+        try:
+            has_metadata = doc.binary_metadata.all().get(metadata__uuid=metadata_uuid)
+        except DocumentHasBinaryMetadata.DoesNotExist:
+            raise Http404(
+                f"Document {doc} does not have associated metadata with uuid {metadata_uuid}."
+            )
+
     if request.method == "POST":
-        form = NewTextStorage(request.POST)
+        form = TextStorageEdit(request.POST)
         if form.is_valid():
             uuid = form.cleaned_data["uuid"]
             filename = form.cleaned_data["filename"]
@@ -591,8 +599,33 @@ def edit_plain_text_document(request, uuid):
                 f'Added file "{filename if filename else m.uuid}" {m.uuid if filename else ""} for {doc}',
             )
             return redirect(doc)
+    elif has_metadata:
+        _t = has_metadata.metadata.try_get_content_type()
+        if _t is None:
+            return HttpResponseBadRequest(
+                request, f"{has_metadata.metadata} is not a plaintext file."
+            )
+        filename = _t["filename"]
+        _type = _t["content_type"]
+        try:
+            content = has_metadata.metadata.data.decode(
+                encoding="utf-8", errors="strict"
+            )
+        except:
+            return HttpResponseBadRequest(
+                request, f"{has_metadata.metadata} is not a plaintext file."
+            )
+
+        form = TextStorageEdit(
+            initial={
+                "uuid": has_metadata.metadata.uuid,
+                "content_type": _type,
+                "filename": filename,
+                "content": content,
+            }
+        )
     else:
-        form = NewTextStorage()
+        form = TextStorageEdit()
     context = {
         "document": doc,
         "form": form,

@@ -140,7 +140,7 @@ class NewDocument(forms.Form):
     tag0 = new_tag_field()
 
 
-class NewTextStorage(forms.Form):
+class TextStorageEdit(forms.Form):
     datalist_id = "content-types"
     datalist_options = [
         "text/plain",
