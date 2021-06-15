@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>django non-interactive demo - bibliothecula</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://nessuent.xyz/bibliothecula.png">
+    <meta property="og:site_name" content="bibliothecula - tagged document storage">
+    <meta property="og:title" content="bibliothecula - tagged document storage">
+    <style>
+    * {
+        box-sizing: border-box;
+    }
+    :root {
+      --bg-color: #ffcc00;
+      --fg-color: #231900;
+      --color-syntax-constant: #005cc5;
+      --color-syntax-keyword: #d73a49;
+      --color-syntax-string: #032f62;
+    }
+
+    ul {
+      margin: 0;
+      list-style: square;
+    }
+
+    @font-face {
+      font-family: 'Amstelvar Roman';
+      src: url('fonts/Amstelvar-Roman.woff2') format('woff2'),
+      url('fonts/Amstelvar-Roman.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    html {
+    font-size: 18px;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    }
+
+    body {
+      background: var(--bg-color);
+      color:var(--fg-color);
+      font-family: "Amstelvar Roman", "IBM Plex Serif", serif;
+      font-size: 1rem;
+      font-kerning: none;
+      font-stretch: 92.4%;
+      font-variation-settings: "opsz" 8, "GRAD" -0.72, "XTRA" 500, "XOPQ" 176, "YOPQ" 125, "YTLC" 529, "YTUC" 726, "YTAS" 760, "YTDE" -206, "YTFI" 881;
+      margin: 0 auto;
+      min-width: 250px;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-auto-rows: min-content min-content min-content;
+      gap: 0rem;
+      width: 100%;
+      height: 100%;
+      align-content: space-between;
+    }
+
+    header {
+      margin-left: 1rem;
+      grid-row: 1 / span 1;
+      grid-column: 2 / span 10;
+      display: flex;
+      flex-direction: column;
+      place-items: center;
+    }
+
+    h1 {
+      font-variation-settings: "opsz" 8, "GRAD" 0.55;
+      font-size: 3rem; /* fallback */
+      font-size: min(5vw,3rem); /* scale with viewport width size */
+      margin: 0;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    body > header > img.logo {
+      max-width: max-content;
+      width: 7rem;
+    }
+
+    body > * {
+      grid-row: span 1;
+      grid-column: 2 / span 10;
+      max-width: 100%;
+    }
+
+    div.screenshots  {
+      text-align: center;
+      height: min-content;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      place-content: center;
+      display: grid;
+      row-gap: 4rem;
+      grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+      grid-auto-rows: 12rem;
+      column-gap: 2rem;
+      grid-auto-flow: dense;
+    }
+
+    div.screenshots > figure {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      row-gap: 1rem;
+    }
+
+    div.screenshots > figure > img {
+      width: auto;
+      height: 100%;
+      vertical-align: text-top;
+      outline: 1px solid gray;
+      object-fit: cover;
+    }
+
+    figcaption {
+      font-weight: 500;
+      font-variation-settings: "opsz" 8, "GRAD" 0.58, "XTRA" 571, "XOPQ" 176, "YOPQ" 125, "YTLC" 533, "YTUC" 726, "YTAS" 760, "YTDE" -206, "YTFI" 881;
+      width: max-content;
+      margin: 0 auto;
+      background: #e6bd1a;
+      border: 5px solid #e6bd1a;
+    }
+
+    footer {
+      text-align: center;
+      font-weight: 800;
+      font-variation-settings: "opsz" 8;
+      background: #000;
+      padding: .6rem;
+      width: 100%;
+      margin: 0 auto;
+      color: white;
+      border: 1px solid black;
+      grid-column: 1 / span 12;
+    }
+
+    footer a {
+      color: #999;
+      text-decoration: none;
+    }
+    footer a:visited {
+      color: #999;
+    }
+
+    div.repo {
+      background: #000;
+      color: white;
+      padding: 5px;
+      width: max-content;
+      border-radius: 2px;
+    }
+
+    div.repo a:visited {
+      color: white;
+    }
+    </style>
+</head>
+<body>
+    <header>
+        <img class="logo" src="../img/logo.png" alt="bibliothecula logo">
+        <h1>bibliothecula</h1>
+        <a href="../index.html">go back</a>
+    </header>
+
+    <div>
+        <h2><code>django</code> non-interactive demo</h2>
+        <p>Some statically crawled pages:<sup>&dagger;</sup></p>
+
+        <div class="screenshots">
+          <figure>
+            <img src="./thumb-grid.webp" alt="main view (as grid)">
+            <figcaption>
+              <a href="./grid.html">main view (as grid)</a>
+            </figcaption>
+          </figure>
+          <figure>
+            <img src="./thumb-table.webp" alt="main view (as table)">
+            <figcaption>
+              <a href="./table.html">main view (as table)</a>
+            </figcaption>
+          </figure>
+          <figure>
+            <img src="./thumb-full-grid.webp" alt="full-text (on grid)">
+            <figcaption>
+              <a href="./full_text_query_grid.html">full-text (on grid)</a>
+            </figcaption>
+          </figure>
+          <figure>
+            <img src="./thumb-full-table.webp" alt="full-text (on table)">
+            <figcaption>
+              <a href="./full_text_query_table.html">full-text (on table)</a>
+            </figcaption>
+          </figure>
+          <figure>
+            <img src="./thumb-document.webp" alt="document view">
+            <figcaption>
+              <a href="./document_cefc21a0-f7ab-46ae-8824-46d254ba053d.html">document view</a>
+            </figcaption>
+          </figure>
+          <figure>
+            <img src="./thumb-tags_d3.webp" alt="dynamic tags view with d3.js">
+            <figcaption>
+              <a href="./tags_d3.html">dynamic tags view with d3.js</a>
+            </figcaption>
+          </figure>
+          <figure>
+            <img src="./thumb-tags.webp" alt="static tags view with matplotlib">
+            <figcaption>
+              <a href="./tags.html">static tags view with matplotlib</a>
+            </figcaption>
+          </figure>
+          <figure>
+            <img src="./thumb-database_view.webp" alt="database overview">
+            <figcaption>
+              <a href="./database_view.html">database overview</a>
+            </figcaption>
+          </figure>
+        </div>
+    </div>
+        <p>&dagger;. scraped with <a href="https://gist.github.com/epilys/b78fe285a2647ece8689f7c7c1bca90c">this python3 script</a>.</p>
+
+    <footer>
+        <a rel="me" style="display: none;" href="https://chaos.social/@epilys"></a> <a rel="me" href="https://github.com/epilys/bibliothecula">https://github.com/epilys/bibliothecula</a> <small><abbr title="The GNU General Public License v3.0">GPLv3</abbr></small>
+    </footer>
+</body>
+</html>

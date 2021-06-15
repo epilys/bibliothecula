@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="./static/style.css">
+        <title>The Communist Manifesto</title>
+        
+    <style>
+        @media (min-width: 950px) {
+            main {
+                display: grid;
+                grid-gap: 1rem;
+                grid-template-areas: "title title title title"
+                "thumbnail-metadata text-metadata tags tags"
+                "thumbnail-metadata text-metadata files files"
+                "backrefs backrefs forms forms";
+                grid-template-columns: auto 1fr 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 950px) {
+            main {
+                display: grid;
+                grid-gap: 1rem;
+                grid-template-areas: "title title"
+                "thumbnail-metadata text-metadata"
+                "tags tags"
+                "backrefs backrefs"
+                "files files"
+                "forms forms";
+                grid-template-columns: auto 1fr 1fr 1fr;
+            }
+        }
+
+        h1.title{
+            grid-area: title;
+            min-width: min-content;
+        }
+
+        .files > div:first-child {
+            display: flex;
+            gap: 1rem;
+            place-items: end;
+        }
+        .files > div:first-child > h2 {
+            margin-bottom: 0;
+        }
+
+        .filename {
+            max-width: 72ch;
+            word-break: break-all;
+            align-self: last baseline;
+            border-left: 2px solid #b2b2b2;
+            padding-left: 5px;
+        }
+
+        .filelist > li {
+            background: #eee;
+            outline: 2px solid black;
+            padding: .5rem;
+            display: flex;
+            gap: 1rem;
+            flex-flow: row;
+            align-items: center;
+        }
+
+        .filelist > li + li {
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 950px) {
+            .filelist > li {
+                flex-flow: column;
+            }
+        }
+
+        .filelist > li > div:first-child {
+            display: flex;
+            justify-content: space-evenly;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .filelist > li > div.content-type {
+            white-space: pre;
+            width: min-content;
+        }
+
+        .filelist > li > button {
+            width: min-content;
+            white-space: pre;
+        }
+
+        div.thumbnail-metadata {
+            grid-area: thumbnail-metadata;
+            min-width: min-content;
+            place-items: center;
+            display: flex;
+            row-gap: 1rem;
+            flex-direction: column;
+            width: 100px;
+        }
+        div.text-metadata {
+            grid-area: text-metadata;
+            min-width: min-content;
+        }
+        div.tags {
+            grid-area: tags;
+            min-width: 0;
+        }
+        div.files {
+            grid-area: files;
+            min-width: min-content;
+        }
+
+        div.files > h2, div.tags > h2, div.forms > h2 {
+            margin-top: 0;
+        }
+
+        div.forms {
+            grid-area: forms;
+            min-width: min-content;
+        }
+
+        div.forms label {
+            width: 20ch;
+        }
+
+        #id__file {
+            max-width: 41ch;
+        }
+
+        div.backrefs {
+            grid-area: backrefs;
+        }
+
+        figure.thumbnail {
+            display: flex;
+            flex-direction: column;
+            max-width: 100px;
+            margin-top:0;
+        }
+
+        figure.thumbnail figcaption {
+            font-size: 0.8rem;
+            white-space: break-spaces;
+            word-break: break-all;
+            width: max-content;
+            margin-top:150px;
+            place-self: center;
+        }
+
+        .metadata_value {
+            text-decoration: underline dotted;
+            text-underline-offset: 2px;
+        }
+
+        .file-forms > div + div {
+            margin-top: 1rem;
+        }
+
+    </style>
+
+    </head>
+    <body>
+        <header><div class="header-left"><div class="logo"><h1>bibliothecula</h1><div class="logo-image"></div></div><hr class="horizontal" /><nav><ul class="menu"><li><a href="/">collection</a></li><li><a href="/import/">mass import files</a></li><li><a href="/database/">database</a></li><li><a href="/tag/">visualise tags</a></li></ul></nav><hr class="horizontal" /><nav aria-label="Breadcrumb" class="breadcrumb"><ul><li><a href="/">collection</a></li><li><span aria-current="page">The Communist Manifesto</span></li></ul></nav></div><nav><details id="add"><summary ><span class="add-label add-hidden">new document</span><span class="add-hidden"> ➕</span><span class="add-show">hide</span></summary><form method="POST" action="/add/document/" id="add_form"><input type="hidden" name="csrfmiddlewaretoken" value="emLLkZqLTBP3MpnWCuy5jUdDRruh0lkMSfjMgXJJobF6BeFK5vuj6QoflPngTjcV"><label for="id_title">document title:</label><input type="text" name="title" required id="id_title"><input type="submit" value="create"></form></details></nav></header>
+        
+        <main>
+            
+    <h1 class="title">The Communist Manifesto</h1>
+    <div class="thumbnail-metadata">
+        
+            
+                <figure class="thumbnail">
+                    <img src="data:image/x-webp;base64,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" class="thumbnail metadata" alt="thumbnail" />
+                    <figcaption class="uuid"><code>a3573649-6e0d-4d59-ba9b-2dfb063a96ea</code></figcaption>
+                </figure>
+            
+        
+    </div>
+    <div class="text-metadata" itemscope itemtype="http://schema.org/Book" itemid="cefc21a0-f7ab-46ae-8824-46d254ba053d">
+        <data itemprop="keywords" value="Socialism,Communism" hidden>Socialism,Communism</data>
+        <data itemprop="thumbnailUrl" value="data:image/x-webp;base64,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" hidden>data:image/x-webp;base64,UklGRoANAABXRUJQVlA4IHQNAACQMwCdASpkAJYAPpE6l0gloyojrVctEUASCU2nKuIZgsl5qo9bdZt+4H7bzG/kO+h6S9xRzyGnR7tBYQuLLon+hS3bi/thnZ/r+/X5WKJ7hHvJ5x0yOFA8hD0z2AP0h/wPWf0K6hf65dcP0SP2cUX5EqSV+PsDixTCaWrLb1GKEr/GTUAyvZO4t1bWwD2mS87kOSH3/FR88ekwikB7NSwkWfYGrUqC+Tbnog9hXmUeVMxt23eMqkOmHWcWleIO/yh1tpmT3D3ZwV95oWV+WjS9/T44ZRGk1TSFLtl6YjWUyUc0EiGL844LeTTu2w+hyWt9TGMA9PjoWMmSnS4uA56BAPqD0MB5hrexGh1MG6fPhYyXIzy6I0TPvuMYDe1UFe407yuFE4K9jSzdVIxGTeoOsLImgYSQhuiVlHNTxbobIQUWQK8ZW6TPM5qA+Lh4NwyulylvgHqmcgbHdircxq4KncxWwpdvNwwmO6SUOJegRQj/aLwsfjenOizNXYTo4ZMQbc5tOB8osqKLJMNaxNR0wFCDUElQ0gneYJpuqF0kdIl7B1NAAP75z80Asn/4q78Af379BRu6IDKKXRXlhuyA+Ky9mD9Tvu4byHfAGUWYKjHvPEwZDb62Yo97M8AUSbFHG1ki8hbU7CllFQ09E4wrlZc27LisztlVgAIyuSZFEFTInA7NfCoF6/DWnoVVbfv3C8aYqO2WMJJHDy4jaxjrYRv7cA6lFaJi9Si48glLPHe9Ska4LDddOZxU3kG8W9OKtWBtybU0eotSkvkEn6xva6ZfPT+R4ndBVP0PyvxkMnXeDb2VrAsckxmZL5weC1KpEEy5GClW9n+7A888tFlssY02tHQNT5/n8O+9iltwGtnXrN36wcJXa1M6TLK/eo5lkL9PgU1f2JpRJGO0YDblTI9EwAipdjPLVS9i30STgiVhHXY9vwibU3Q9weShns+52PTh0ivhoNWqvuXgdEAp3ZeQtzQsdHzGEelC19AfrFbzQNnaXqmeDVNhTSLVe9QupaT5guH4gvBTYbcu1eQwJA6zUeCa4/a7so5X9Ard2iLtyZ8WQMgGQCdSTPzUsEQvpxuiO980ID4tSfHMm32m87pm9pgo/iADu8hSDLssG0wfRpT4egHFKyOgEiyGYs+i8CQR3C/2B3JRgPF0Kld9U6FiG/03puJhTT9YbMqyuynOKcR6jqtjkTw01jWKwKsR9MCsGGwADqI3Fgi9fJ2d5If74HmaMe5jsEMy62iRKx5GP0XhOHt54xAamIuHGwCL9XknAuPhrpaP9OfibCKMfBxxCB/P+uOwJtDwe/Xi457z9YXdX20VJGEz++qtCjCf39wVig8oQpjLQOFe/OF70cumJMqOTBswLspK5NOun8zrCFrN53gSOCnUkcSZhMKl8JSgg767sEXQTJ19kTWnAqYE7dB3RV3I5sGain+S7wZKTaL5ZcCPH7Kbqq/pLjF8JoaRLjxZcVjRfqHm0h/fE2BnITt3OeuFzNY9ejPAW5d9YUHPJZbdO9ZkKoIH3Y4vF8u7d59uekbQQNOPyiqHuufhvMWPVYWqiSSg8WRi/fy4LgUWCqq21CV1WZWIy8XqEd717z1ScEQpThkKz2cQUR+TGqdeG4a9jwYEcSRaFaKCWaGTJ9yGSjQMXE2C04bryWh+l3HBHaPHYL5OBM7sVrm/OCvzhPjFsIFlLKzrIovvxoqrBzXB20hZRlF5IVASDa3WxPKr+a1gvO1xaMlcmAa6ps5kUJ5i9RcYsI6thEmy+uGxk3wiw2kmSGQ6v4swO09WEWb6goh1D5q5wgNcxyNncxYxYjvrwVpXr6j1awoiG8miZcQhTzCPptKYYsMhZgy/djvBtZt0mwp8tIJerKDUz6ksZBFWR9Tf1so/0uvYAxJSTvCp2rZuXazZfT0V8T58/Uxqaj2IWggemL4MJFayMQ+zS35c2HYqmFAT/36vFLdEI/lG/LJjU9kqY1IxIdLco1K5oBRLIZeXcLLLxelsak8ZZzrK0vYhyxFMVcJz4I4XqJ+NcJVUS1mPjgbsZckTQLoZuxCQnZhUUsYz9GQ2tF+XDglesaU7mQ1UHkoJLeaNiSjgsSMXzLal0LLKQj14BihoUfApQpvhOccVyJqligNvA0N49K0C+ze/r/CT8WXJGX3ZGm9/U2vFRPrTNl4yXESgQlMecdER8A3uz+Gx61QytdpVTv7hkjUBaaHHZDbJXviCaZyYspsz4Ez7YdoVGRkpePrjHEUnbBd8UUWo4nw/GvMRKhDzGffCGgAX0w3JNiPCb634vQeUEwjdJerzo4G0X8W2LdlLbt4l4/5CQzJC32Ab6r0rumo11g25P5FzdvkwWXDfdJkgQY0VHpQy0BbSsT9BaGTkgQMjo3DJvg/XqBOUlhrCuHxb+ZfOa57YmiWI9KXGZIqyxtnO5sNwC09YOQthcPpxdBLdBpX2jKc4+VkjjgpwEKdTi0KmYJuKb4/DRAh+LYEhZz3CjrsVATJMBp4VLpv+f7SE4Eh36a1E30Bjv5t0BuhzX7RAC9YT4+Ih49SpgClU5o+5BoF2GR90gzS+Fi+TSf+1D/FlJ+K81dhsLaLzCdRNhbD3jrERMWi+Qrgb5DFNOBckpJ8lqfVeTpI/rsxcMC8dQvUDnOQweYF2jrFqbNuGHlEztWB985m4JU3Notzbt+6nXIMEURL7vIipd3WoZCewHOjgU8TkwJ2GkGR9c1o1S62pSKNqdb1/uxDswJ8uKx/Cz1s9n/feseZpGA95+zkvqHa28o+8Zd29Udzb6UvOnlXND8AvtXjNm/DewbOgM1TKAdBGdFagEyWZrtuTaWuKm5hrAcpLCQQy3hiyAwDk80+fQihrS8EMOsjbHOafEzJ1QqlqdBT+pt3zHBNnnbdKMT0lzIWLekz3Cm5IU3pJXGIxt71fzecQqaLXeTGdvaAvMB63ADDg3P006cEyVGRXy38YQHy5EYKGXrIVL5qCxwFthMx5rAKqdKZ9HvwYQnNBimwvp83kuSDIQCnasjpKmOT9A2RaM2JMCRJYeE62QCT7b0aCD6oBgMlr9zBngJ6B65kWpZy1gOmKws7d4mVZmpEGum+xj8NPaASpAYkKxXUe28LTN10/GJjp3CPnkWa5ZLzjB+d4jJ4HDdpiXqrG3vb6LC6oJ5LlyhIbHqZsjLCnjC55rfFaRLzu19bl3JABQVqlwFwDUciq0CNuMceY+vtzgG1xbBGsv1n4xjsYc9zp4iIHtB3FvrSzAm3RYRvMbI0/ev79Xkr+nJcZb+NoPasdmJWyS060fJpp9MAH1Fe+i+qoBm8evCofOJbw8XeGru32efBw7FOYc6n6tGKxLVXxDj5lH8QsmO43tfUKtqU/55fk5DC47a42nuFz8zXOFGnbBw7w/bCmyWJt17OKNFr/4lg85wFYzbuG0yJuE9v0egk5PMmZto43ZW/FTSyQ4frnZsyY3a5P/T/UV3/tH0kXHPWTMHwwXa+e74PS89EwrBA5Gvw78QN7TWCF/Mf1dMQ5Vfa+BhhCe+wD8In7Dsf/iX3DZFuR3/Ei9bD+kOuj/8qakxISE/9iE15rUQYYYMf92T7A+NMfvov+wH9bt/dyXwWueqyafmM9EU1m3xa3fERCJfPmtOVfUp3xJceBlfQHd6IhU/z+ajOH+v0afXfPa79m1yAS4lsW+3yzHrcothPMyJEOJ0BC4Xxnctes3TJCBG4XK4Sd9Z/8BCfgXSeeHKX4NyE8TP5KFf4V6e2RkLD3FMpp2B2Vqr9Zxh47qqoPAmcu8np8gCasJDUx9JwINbg+v9u/waGmnl1AhuE7QvIvgCgKjNfNz+XFIf731v5MSApXH15dwa7cLtjUMQF5A9zEnp5C0V82yqykExQ6KfL/tDv0F1lUQGqmGQCy76jQlFeFPf7GG/r3pJMLbKC63+kGpjKubV9j70B8i9sIu5m/eufawzBK+eSEPczIhiKvdpiY3ddOYXCWBnXzdfWguSf/N+0Plu091UZzsz7HdJrvND6qffklxecyDZT0JOeKFtyZfKkQHtgEAhc1aHHiky3qj5d8U+S2uz0mrOqTlyJSG6Mv5+F/MFoRXC/UWVKxzREMdXb8MLsGgEM/S+8ih/4J9n+zOP20SO/bvOkhbqj0Bb1R4C/Nl7CvdBW1RbOQ+EAbnoalbuKwoH/XvLTBOC40gK3lPQ/MopJnY29HtYznB+73K5RTyoacUH3nggZCBIJnlalrAQA+g9aGgsEJtIMZDGzvXO4CwnaRxsZ8bsruNq3TbbdO/t56PQ0AFkyCTSOcYjdX10L0bfAqD4dz+Vq+xw/zJZ6iTl/PjRqrJA/NEfgyaixkZMGznEy7VyQFGMxn28m1b/1eG4vIb4WllsKYnBuJyKUnK7jsBs1KLF+luxMgbqP8TxZWW6szD13d1iaimn7k+k/htFp6asMUpmiohwt9b0y9/0NQrulMvLnKH5NWxMDxjXl628VdIJtydyp7qJrsl1jKNLKV3THgNjZndGCtrHN73ztmlZJgDIWGnzbAdjeMxDACUfRrGbsLOvkswlRFy+PtQSS2HRORVEceY5dqv2EUnp8tHBgAAAA=</data>
+        <table>
+            <caption></caption>
+            <colgroup>
+                <col span="1">
+                <col span="1">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th scope="col">name</th>
+                    <th scope="col">value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>title</strong></td>
+                    <td itemprop="name">The Communist Manifesto</td>
+                </tr>
+                <tr>
+                    <td><strong>uuid</strong></td>
+                    <td><code itemprop="identifier">cefc21a0-f7ab-46ae-8824-46d254ba053d</code></td>
+                </tr>
+                <tr>
+                    <td><strong>created at</strong></td>
+                    <td>June 13, 2021, 9:46 p.m.</td>
+                </tr>
+                <tr>
+                    <td><strong>last modified</strong></td>
+                    <td>June 13, 2021, 9:46 p.m.</td>
+                </tr>
+                
+                    
+                    
+                
+                    
+                    
+                
+                    
+                        <tr>
+                            <td><strong>author</strong></td><td><span class="metadata metadata_value" itemprop="author" itemscope itemtype="https://schema.org/Person">Karl Marx</span><div class="uuid">ecd8ef1a-57ca-445b-bd25-3f29cf7b89ad</div></td>
+                        </tr>
+                    
+                
+                    
+                        <tr>
+                            <td><strong>type</strong></td><td><span class="metadata metadata_value">book</span><div class="uuid">82cc0edf-ccac-4488-b03d-ad3cf07a93bb</div></td>
+                        </tr>
+                    
+                
+                    
+                        <tr>
+                            <td><strong>url</strong></td><td><a class="metadata metadata_value" href="https://standardebooks.org/ebooks/karl-marx_friedrich-engels/the-communist-manifesto/samuel-moore" rel="external noreferrer" itemprop="url">https://standardebooks.org/ebooks/karl-marx_friedrich-engels/the-communist-manifesto/samuel-moore</a><div class="uuid">fd7ca6c1-90b2-48eb-bf89-a5818f05dc4d</div></td>
+                        </tr>
+                    
+                
+                    
+                        <tr>
+                            <td><strong>summary</strong></td><td><span class="metadata metadata_value">Karl Marx and Friedrich Engels’ classic analysis of modern industrial society and call for Working Class revolution.</span><div class="uuid">5482edcd-dd9c-452b-81dd-0d1087be2acf</div></td>
+                        </tr>
+                    
+                
+            </tbody>
+        </table>
+    </div>
+    <div class="tags tagcloud">
+        <h2>tags</h2>
+        <hr />
+        <ul>
+            
+                <li><a class="item-tag metadata" rel="tag" href="/?tags=Socialism">Socialism <span>3</span></a><div class="uuid">7b44f508-875b-4e64-b39f-5ae4e1ecdbf2</div></li>
+            
+                <li><a class="item-tag metadata" rel="tag" href="/?tags=Communism">Communism <span>2</span></a><div class="uuid">96f4d8b8-dd86-415c-8e0c-c3ff886a5587</div></li>
+            
+        </ul>
+    </div>
+
+    <div class="files">
+        <div><h2>files</h2><div>
+                    
+                        embedded size: 575.5 KB, linked files size: 0 bytes
+    </div>
+    </div>
+    <hr />
+    
+        <form method="post" id="set-thumbnail-form" action="/document/cefc21a0-f7ab-46ae-8824-46d254ba053d/set-thumbnail/">
+            <input type="hidden" name="csrfmiddlewaretoken" value="emLLkZqLTBP3MpnWCuy5jUdDRruh0lkMSfjMgXJJobF6BeFK5vuj6QoflPngTjcV">
+        </form>
+    
+    <ul class="filelist">
+        
+            <li title="30942a77-3cb2-4dc8-a6fe-d06364351fdc"><div>
+                            
+                                📎
+                            
+                            <div class="filename"><a class="metadata" href="/document/cefc21a0-f7ab-46ae-8824-46d254ba053d/view/30942a77-3cb2-4dc8-a6fe-d06364351fdc">karl-marx_friedrich-engels_the-communist-manifesto_samuel-moore.epub</a><div class="uuid">30942a77-3cb2-4dc8-a6fe-d06364351fdc</div></div></div><div class="content-type">[<code>application/epub+zip</code> 575.5 KB]</div><button type="submit" form="set-thumbnail-form" formaction="/document/cefc21a0-f7ab-46ae-8824-46d254ba053d/set-thumbnail/30942a77-3cb2-4dc8-a6fe-d06364351fdc/">Set thumbnail</button></li>
+        
+    </ul>
+    </div>
+    <div class="forms">
+        <h2>add storage</h2>
+        <hr />
+        <div class="file-forms">
+            <div>
+                <form method="post" action="/document/cefc21a0-f7ab-46ae-8824-46d254ba053d/add-storage/">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="emLLkZqLTBP3MpnWCuy5jUdDRruh0lkMSfjMgXJJobF6BeFK5vuj6QoflPngTjcV">
+                    
+                        
+                        <label for="id_path">Full document path:</label>
+                        <input type="text" name="path" maxlength="500" required id="id_path">
+                    
+                    <input type="submit" value="add" name="link">
+                </form>
+            </div>
+            <div>
+                <form enctype="multipart/form-data" method="post" action="/document/cefc21a0-f7ab-46ae-8824-46d254ba053d/add-storage/">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="emLLkZqLTBP3MpnWCuy5jUdDRruh0lkMSfjMgXJJobF6BeFK5vuj6QoflPngTjcV">
+                    
+                        
+                        <label for="id__file">Browse and select files to upload:</label>
+                        <input type="file" name="_file" required id="id__file">
+                    
+                    <input type="submit" value="upload" name="embedded">
+                </form>
+            </div>
+        </div>
+    </div>
+    
+
+        </main>
+        <footer></footer>
+
+        <svg class="global-hidden" aria-hidden="true" id="missingthumb" version="1.1" viewBox="0 0 329.78 406.01"><!--
+<svg aria-hidden="true" id="missingthumb" version="1.1" viewBox="0 0 329.78 406.01" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink"><metadata><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/><dc:title/></cc:Work></rdf:RDF></metadata>
+                --><defs><linearGradient id="a" x1="660.07" x2="658.46" y1="6.5996" y2="108.78" gradientTransform="translate(-45.255 .35355)" gradientUnits="userSpaceOnUse"><stop stop-color="#c2c2c2" offset="0"/><stop stop-color="#9f9f9f" offset="1"/></linearGradient></defs><g transform="translate(-399.13 -122.79)"><rect x="399.13" y="122.79" width="329.78" height="406.01" ry="7.0136" fill="#eee"/><g transform="translate(43.778 191.04)"><rect transform="rotate(-16.343)" x="398.76" y="178.75" width="82.49" height="90.47" ry="8.397" fill="#9f9f9f"/><g transform="rotate(16.321 538.14 -184.9)" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"><rect x="547.19" y="1.6498" width="107.83" height="115.97" ry="4.5962" fill="url(#a)" stroke-width="5.398"/><g transform="matrix(.17265 0 0 .17265 512.49 -6.3296)" fill-rule="evenodd" shape-rendering="auto" stroke-width="13.071"><rect x="270" y="107.36" width="491.11" height="450" color="#000000" color-rendering="auto" fill="#ccc" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal"/><rect x="270" y="107.36" width="491.11" height="210" color="#000000" color-rendering="auto" fill="#fff" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal"/><path d="m300 317.36 38.461-53.538 60.531-45.161 15.883 18.574 13.613-38.684 8.2013-2.9819 13.311-28.209 180 180" color="#000000" color-rendering="auto" fill="#ccc" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal;paint-order:stroke"/><path transform="translate(270 107.36)" d="m180 60c4.0931 16.475 7.7122 33.067 10.852 49.75 2.3826 12.661 4.4886 25.374 6.3164 38.127l-22.064-7.1602-46.111-29.416 5.3242 46.426-1.6152 24.787 10.053 30.377 73.186-11.756 84.061-21.135-47.801-77.434-9.6992 14.934-27.125-22.125z" color="#000000" color-rendering="auto" fill="#b3b3b3" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal;paint-order:stroke"/><path d="m420 347.36 81.899-74.43 18.506-9.6801 23.651-44.189 25.944-21.701 180 180" color="#000000" color-rendering="auto" fill="#ccc" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal;paint-order:stroke"/><path d="m570 197.36 35.939 80.913v30.11 30.11l22.459 19.467c6.5245-6.4503 14.149-11.785 22.444-15.705 14.824-7.0045 31.338-9.3596 47.171-13.622 6.4278-1.7304 12.907-3.8542 18.213-7.8728 1.3517-1.0236 2.6159-2.1628 3.7742-3.4011h-30l-40.521-40.55-29.856-48.92-10.253 8.8389z" color="#000000" color-rendering="auto" fill="#b3b3b3" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal;paint-order:stroke"/><path d="m420 557.36c-0.41699-9.6009-8.8176-17.609 17.125-30.668 31.832-16.024 125.9-35.888 152.15-59.984 19.427-17.827-70.415-37.669-55.019-59.073 6.981-9.7053 59.037-19.969 82.146-30.274 21.906-9.768 15.141-19.803 31.405-29.975 15.709-9.8256 68.35-19.774 72.189-30.025-10.414 10.522-68.834 20.403-90 30-22.338 10.128-21.469 19.93-49.431 29.484-30.124 10.292-89.142 20.553-102.71 30.516-28.413 20.869 46.863 42.6 16.202 60-41.52 23.563-149.34 43.294-194.06 60-30.904 11.544-28.408 17.748-30 30" color="#000000" color-rendering="auto" fill="#fff" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal;paint-order:stroke"/></g></g></g><text x="562.00677" y="412.12527" fill="#767676" font-family="sans-serif" font-size="32px" font-weight="bold" text-anchor="middle" style="line-height:1.25" xml:space="preserve"><tspan x="562.00677" y="412.12527">NO IMAGE</tspan><tspan x="562.00677" y="452.12527">AVAILABLE</tspan></text></g></svg><svg class="global-hidden" id="header-link-svg" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z"></path></svg>
+    </body>
+</html>

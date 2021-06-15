@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="./static/style.css">
+        <title>View collection</title>
+        
+    <style>
+        div.wrapper {
+            display: grid;
+            width: 100%;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 5px;
+            margin: 0 auto;
+        }
+
+        div.wrapper > div p {
+          margin: 0;
+          padding: 0;
+        }
+
+        div.wrapper > div p a  {
+          color: initial;
+          text-decoration: none;
+          max-width: 90%;
+          display: inline-block;
+          text-align: justify;
+          text-justify: inter-word;
+          hyphens: auto;
+        }
+
+        div.wrapper > div p a  {
+          font-style: oblique;
+        }
+
+        div.wrapper > div p b {
+          font-style: initial;
+        }
+
+        div.snippet {
+          margin-bottom: .5rem;
+          font-size: .8rem;
+        }
+
+
+        figure.document-thumbnail {
+          min-width: 15px;
+          border: 1px solid black;
+          max-width: 118px;
+          padding: .4rem;
+          box-sizing: border-box;
+          background-color: white;
+          display: grid;
+          grid-template-rows: max-content min-content;
+          max-height: 170px;
+          overflow: hidden;
+        }
+
+        div.tagcloud {
+          max-width: 80vw;
+          margin: 0 auto;
+        }
+
+        figure {
+          display: flex;
+          flex-flow: column;
+          height: 100%;
+          margin: 0;
+          min-height:150px;
+          padding:0;
+          position: relative;
+        }
+
+        figure > img {
+          display: inline-block;
+          height: auto;
+          width: 100%;
+        }
+
+        figcaption {
+          background-color: #000000ab;
+          bottom:0;
+          color: white;
+          hyphens: auto;
+          max-height: 7rem;
+          overflow: hidden;
+          position:absolute;
+          text-overflow: ellipsis;
+          text-shadow: 1px 1px black;
+          white-space: pre-line;
+          width: 100%;
+          word-break: normal;
+          word-wrap: anywhere;
+          padding: .5rem;
+          border: 1px inset white;
+          border-top: none;
+          box-sizing: border-box;
+        }
+        figcaption > hr {
+          margin: 1px 0;
+          height: 1px;
+          max-height: 1px;
+        }
+        figcaption > div {
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 3;
+          display: -webkit-box;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          word-break: normal;
+          white-space: pre-line;
+          word-wrap: anywhere;
+          box-sizing: border-box;
+          font-size: .9rem;
+        }
+        figcaption > div.authors {
+          font-size: .8rem;
+          -webkit-line-clamp: 1;
+        }
+
+        figure:hover figcaption {
+          background: black;
+          position: absolute;
+          bottom:0;
+          outline: 3px inset white;
+          display: block;
+          box-sizing: border-box;
+          overflow: initial;
+          height: max-content;
+          z-index: 2;
+          max-height: initial;
+        }
+        figure:hover figcaption > div {
+          -webkit-box-orient: initial;
+          -webkit-line-clamp: initial;
+          display: block;
+          overflow: initial;
+          height: max-content;
+          z-index: 2;
+          max-height: initial;
+          box-sizing: border-box;
+        }
+    </style>
+
+    </head>
+    <body>
+        <header><div class="header-left"><div class="logo"><h1>bibliothecula</h1><div class="logo-image"></div></div><hr class="horizontal" /><nav><ul class="menu"><li><a href="/">collection</a></li><li><a href="/import/">mass import files</a></li><li><a href="/database/">database</a></li><li><a href="/tag/">visualise tags</a></li></ul></nav><hr class="horizontal" /><nav aria-label="Breadcrumb" class="breadcrumb"><ul><li><a href="/">collection</a></li></ul></nav></div><nav><details id="add"><summary ><span class="add-label add-hidden">new document</span><span class="add-hidden"> ➕</span><span class="add-show">hide</span></summary><form method="POST" action="/add/document/" id="add_form"><input type="hidden" name="csrfmiddlewaretoken" value="7kBxIocd7igWrxW8xDa9IWCrRKQXGolpPzPB9rmjxcKzPvEm9XWxA4kIAQ5aLzCB"><label for="id_title">document title:</label><input type="text" name="title" required id="id_title"><input type="submit" value="create"></form></details></nav></header>
+        
+        <main>
+            
+    <div id="collection-wrapper">
+        <div id="query-forms">
+            <form method="POST" id="search_form">
+                <input type="hidden" name="csrfmiddlewaretoken" value="7kBxIocd7igWrxW8xDa9IWCrRKQXGolpPzPB9rmjxcKzPvEm9XWxA4kIAQ5aLzCB">
+                
+                    
+                    <label for="id_query">Metadata query string:</label>
+                    <input type="search" name="query" maxlength="200" placeholder="query" id="id_query">
+                
+                <button class="reset-icon close-icon" form="search_form" type="reset">&#10006;</button>
+                <input type="submit" value="submit">
+            </form>
+            <hr class="horizontal" />
+            <form method="POST" id="full_text_search_form">
+                <input type="hidden" name="csrfmiddlewaretoken" value="7kBxIocd7igWrxW8xDa9IWCrRKQXGolpPzPB9rmjxcKzPvEm9XWxA4kIAQ5aLzCB">
+                
+                    
+                    <label for="id_full_text_query">Full text query:</label>
+                    <input type="search" name="full_text_query" value="abolition of private property" maxlength="200" placeholder="full-text query" id="id_full_text_query">
+                
+                <button class="reset-icon close-icon" form="full_text_search_form" type="reset">&#10006;</button>
+                <input type="submit" value="submit" name="full-text-query">
+            </form>
+        </div>
+        <div class="tagcloud scrollbox" id="tags">
+          
+            
+                <ul>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Chekhov%2C+Anton+Pavlovich%2C+1860-1904">Chekhov, Anton Pavlovich, 1860-1904 <span>3</span></a><div class="uuid">3aedd7da-3566-4b79-a737-5b06f2efd991</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Communism">Communism <span>2</span></a><div class="uuid">96f4d8b8-dd86-415c-8e0c-c3ff886a5587</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Fiction">Fiction <span>334</span></a><div class="uuid">f16e168e-72f0-4bbc-b405-7b966d4babf6</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=History">History <span>53</span></a><div class="uuid">48fefa63-b6f1-4eee-80a1-18ef6c80de78</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Revolution%2C+1917-1921">Revolution, 1917-1921 <span>1</span></a><div class="uuid">ff64878e-cfa6-4f10-9726-a2b82b8e3ac1</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Russia">Russia <span>20</span></a><div class="uuid">6e4e694b-7399-4ec2-ae1e-e7ad200f9d78</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Short+stories">Short stories <span>18</span></a><div class="uuid">b66b22d0-4b62-4d3b-b9c3-3f83bacc597e</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Short+stories%2C+Russian">Short stories, Russian <span>7</span></a><div class="uuid">1cab1d84-90f6-4eca-8bee-6abeaef4da6c</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Social+life+and+customs">Social life and customs <span>38</span></a><div class="uuid">8a9b9828-e1c3-45d1-83f1-8245384f7cc5</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Socialism">Socialism <span>3</span></a><div class="uuid">7b44f508-875b-4e64-b39f-5ae4e1ecdbf2</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Soviet+Union">Soviet Union <span>3</span></a><div class="uuid">634e9345-d468-4ef7-b67c-3f5252982a06</div></li>
+                    
+                        <li><a class="item-tag metadata" rel="tag" href="/?full_text_query=abolition+of+private+property&amp;tags=Translations+into+English">Translations into English <span>37</span></a><div class="uuid">705763fb-f37c-4661-b0d0-6c952740ae80</div></li>
+                    
+                </ul>
+            
+        </div>
+        <div id="results_meta">
+            <p>Showing 4/540 results.</p>
+            <hr class="horizontal" />
+            <form method="POST">
+                <input type="hidden" name="csrfmiddlewaretoken" value="7kBxIocd7igWrxW8xDa9IWCrRKQXGolpPzPB9rmjxcKzPvEm9XWxA4kIAQ5aLzCB">
+                
+                    
+                    <label for="id_field">Sort field:</label>
+                    <select name="field" id="id_field">
+  <option value="title">title</option>
+
+  <option value="last_modified" selected>last modified</option>
+
+  <option value="created">creation date</option>
+
+</select>
+                
+                    
+                    <label for="id_ascending">Ascending:</label>
+                    <input type="checkbox" name="ascending" id="id_ascending">
+                
+                <input type="submit" value="change" name="change-sort">
+            </form>
+            <hr class="horizontal" />
+            <form method="POST">
+                <input type="hidden" name="csrfmiddlewaretoken" value="7kBxIocd7igWrxW8xDa9IWCrRKQXGolpPzPB9rmjxcKzPvEm9XWxA4kIAQ5aLzCB">
+                
+                    
+                    <label for="id_null">Null:</label>
+                    <input type="checkbox" name="null" id="id_null">
+                
+                    
+                    <label for="id__type">Document type:</label>
+                    <select name="_type" autocomplete="off" size="4" id="id__type" multiple>
+  <option value="82cc0edf-ccac-4488-b03d-ad3cf07a93bb">book</option>
+
+</select>
+                
+                <input type="submit" value="change" name="change-type">
+            </form>
+            <hr class="horizontal" />
+            <form method="POST">
+                <input type="hidden" name="csrfmiddlewaretoken" value="7kBxIocd7igWrxW8xDa9IWCrRKQXGolpPzPB9rmjxcKzPvEm9XWxA4kIAQ5aLzCB">
+                
+                    
+                    <label for="id_layout_0">Layout:</label>
+                    <ul id="id_layout">
+    <li><label for="id_layout_0"><input type="radio" name="layout" value="grid" id="id_layout_0" checked>
+ Grid</label>
+
+</li>
+    <li><label for="id_layout_1"><input type="radio" name="layout" value="table" id="id_layout_1">
+ Table</label>
+
+</li>
+</ul>
+                
+                <input type="submit" value="change" name="change-layout">
+            </form>
+            <hr class="horizontal" />
+            <form method="POST">
+                <input type="hidden" name="csrfmiddlewaretoken" value="7kBxIocd7igWrxW8xDa9IWCrRKQXGolpPzPB9rmjxcKzPvEm9XWxA4kIAQ5aLzCB">
+                
+                    
+                    <label for="id_combination_0">Boolean operator:</label>
+                    <ul id="id_combination">
+    <li><label for="id_combination_0"><input type="radio" name="combination" value="AND" id="id_combination_0">
+ AND</label>
+
+</li>
+    <li><label for="id_combination_1"><input type="radio" name="combination" value="OR" id="id_combination_1" checked>
+ OR</label>
+
+</li>
+</ul>
+                
+                <input type="submit" value="change" name="change-combination">
+            </form>
+        </div>
+        <hr />
+        <div id="results">
+            
+    
+        <div class="wrapper">
+            
+                <div><a href="/document/ed44198f-15a8-46e4-9ffb-76d3638d7828/"><figure class="document-thumbnail"><img src="data:image/x-webp;base64,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" alt="Ten Days That Shook the World" /><figcaption><div>Ten Days That Shook the World</div><hr /><div class="authors">John Reed</div></figcaption></figure></a><div class="snippet lineclamp lineclamp-5"><p><a href="/document/ed44198f-15a8-46e4-9ffb-76d3638d7828/">
+                               […] No compromise with the bourgeoisie is possible; its power must be absolutely crushed.﻿ ﻿… “We Bolsheviki have not changed our Land Programme; we have not given up the <b>abolition of private property</b> in the land, and we […] 
+                              </a></p></div></div>
+            
+                <div><a href="/document/cefc21a0-f7ab-46ae-8824-46d254ba053d/"><figure class="document-thumbnail"><img src="data:image/x-webp;base64,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" alt="The Communist Manifesto" /><figcaption><div>The Communist Manifesto</div><hr /><div class="authors">Karl Marx</div></figcaption></figure></a><div class="snippet lineclamp lineclamp-5"><p><a href="/document/cefc21a0-f7ab-46ae-8824-46d254ba053d/">
+                               […] It has been objected, that upon the <b>abolition of private property</b> all work will cease, and universal laziness will overtake us. According to this, bourgeois society ought long ago to have gone to the dogs through […] 
+                              </a></p></div></div>
+            
+                <div><a href="/document/ac080926-0541-495a-872b-5155514c1e52/"><figure class="document-thumbnail"><img src="data:image/x-webp;base64,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" alt="Short Fiction" /><figcaption><div>Short Fiction</div><hr /><div class="authors">Leo Tolstoy</div></figcaption></figure></a><div class="snippet lineclamp lineclamp-5"><p><a href="/document/ac080926-0541-495a-872b-5155514c1e52/">
+                               […] Just as, when serfdom was abolished, no distribution of the people liberated was necessary, but all that was needed was the abolition of the law that upheld serfdom, so with the <b>abolition of private property</b> in […] 
+                              </a></p></div></div>
+            
+                <div><a href="/document/afdc3397-e885-4b12-b1b0-1daa4ec9c0e8/"><figure class="document-thumbnail"><img src="data:image/x-webp;base64,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" alt="Short Fiction" /><figcaption><div>Short Fiction</div><hr /><div class="authors">Anton Chekhov</div></figcaption></figure></a><div class="snippet lineclamp lineclamp-5"><p><a href="/document/afdc3397-e885-4b12-b1b0-1daa4ec9c0e8/">
+                               […] ideas, people, events, places﻿ ﻿… my enthusiasm was endless! Five years ago I was working for the <b>abolition of private property</b>; my last creed was nonresistance to evil.” Sasha gave an abrupt sigh and began moving. Liharev […] 
+                              </a></p></div></div>
+            
+        </div>
+    
+
+        </div>
+    </div>
+
+        </main>
+        <footer></footer>
+
+        <svg class="global-hidden" aria-hidden="true" id="missingthumb" version="1.1" viewBox="0 0 329.78 406.01"><!--
+<svg aria-hidden="true" id="missingthumb" version="1.1" viewBox="0 0 329.78 406.01" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink"><metadata><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/><dc:title/></cc:Work></rdf:RDF></metadata>
+                --><defs><linearGradient id="a" x1="660.07" x2="658.46" y1="6.5996" y2="108.78" gradientTransform="translate(-45.255 .35355)" gradientUnits="userSpaceOnUse"><stop stop-color="#c2c2c2" offset="0"/><stop stop-color="#9f9f9f" offset="1"/></linearGradient></defs><g transform="translate(-399.13 -122.79)"><rect x="399.13" y="122.79" width="329.78" height="406.01" ry="7.0136" fill="#eee"/><g transform="translate(43.778 191.04)"><rect transform="rotate(-16.343)" x="398.76" y="178.75" width="82.49" height="90.47" ry="8.397" fill="#9f9f9f"/><g transform="rotate(16.321 538.14 -184.9)" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"><rect x="547.19" y="1.6498" width="107.83" height="115.97" ry="4.5962" fill="url(#a)" stroke-width="5.398"/><g transform="matrix(.17265 0 0 .17265 512.49 -6.3296)" fill-rule="evenodd" shape-rendering="auto" stroke-width="13.071"><rect x="270" y="107.36" width="491.11" height="450" color="#000000" color-rendering="auto" fill="#ccc" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal"/><rect x="270" y="107.36" width="491.11" height="210" color="#000000" color-rendering="auto" fill="#fff" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal"/><path d="m300 317.36 38.461-53.538 60.531-45.161 15.883 18.574 13.613-38.684 8.2013-2.9819 13.311-28.209 180 180" color="#000000" color-rendering="auto" fill="#ccc" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal;paint-order:stroke"/><path transform="translate(270 107.36)" d="m180 60c4.0931 16.475 7.7122 33.067 10.852 49.75 2.3826 12.661 4.4886 25.374 6.3164 38.127l-22.064-7.1602-46.111-29.416 5.3242 46.426-1.6152 24.787 10.053 30.377 73.186-11.756 84.061-21.135-47.801-77.434-9.6992 14.934-27.125-22.125z" color="#000000" color-rendering="auto" fill="#b3b3b3" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal;paint-order:stroke"/><path d="m420 347.36 81.899-74.43 18.506-9.6801 23.651-44.189 25.944-21.701 180 180" color="#000000" color-rendering="auto" fill="#ccc" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal;paint-order:stroke"/><path d="m570 197.36 35.939 80.913v30.11 30.11l22.459 19.467c6.5245-6.4503 14.149-11.785 22.444-15.705 14.824-7.0045 31.338-9.3596 47.171-13.622 6.4278-1.7304 12.907-3.8542 18.213-7.8728 1.3517-1.0236 2.6159-2.1628 3.7742-3.4011h-30l-40.521-40.55-29.856-48.92-10.253 8.8389z" color="#000000" color-rendering="auto" fill="#b3b3b3" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal;paint-order:stroke"/><path d="m420 557.36c-0.41699-9.6009-8.8176-17.609 17.125-30.668 31.832-16.024 125.9-35.888 152.15-59.984 19.427-17.827-70.415-37.669-55.019-59.073 6.981-9.7053 59.037-19.969 82.146-30.274 21.906-9.768 15.141-19.803 31.405-29.975 15.709-9.8256 68.35-19.774 72.189-30.025-10.414 10.522-68.834 20.403-90 30-22.338 10.128-21.469 19.93-49.431 29.484-30.124 10.292-89.142 20.553-102.71 30.516-28.413 20.869 46.863 42.6 16.202 60-41.52 23.563-149.34 43.294-194.06 60-30.904 11.544-28.408 17.748-30 30" color="#000000" color-rendering="auto" fill="#fff" image-rendering="auto" style="isolation:auto;mix-blend-mode:normal;paint-order:stroke"/></g></g></g><text x="562.00677" y="412.12527" fill="#767676" font-family="sans-serif" font-size="32px" font-weight="bold" text-anchor="middle" style="line-height:1.25" xml:space="preserve"><tspan x="562.00677" y="412.12527">NO IMAGE</tspan><tspan x="562.00677" y="452.12527">AVAILABLE</tspan></text></g></svg><svg class="global-hidden" id="header-link-svg" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z"></path></svg>
+    </body>
+</html>
