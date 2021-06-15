@@ -2,6 +2,8 @@
 
 ## Screenshots
 
+See non-interactive/static HTML demos here: <https://epilys.github.io/bibliothecula/web-demo/index.html>
+
 <table>
 	<tbody>
 		<tr>
