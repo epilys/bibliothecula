@@ -112,6 +112,8 @@ class Treemap:
         width = upper[axis] - lower[axis]
         try:
             for child in self.iter_method(node):
+                if self.size_method(node) == 0:
+                    continue
                 upper[axis] = lower[axis] + (
                     width * float(self.size_method(child))
                 ) / self.size_method(node)
