@@ -103,8 +103,8 @@ The <span class="name">bibliothecula</span> schema.
 <span class="line">  "uuid" <b>CHAR</b><b>(</b>32<b>)</b> <b>NOT</b> <b>NULL</b> <b>PRIMARY</b> <b>KEY</b><b>,</b></span>
 <span class="line">  "name" <b>TEXT</b> <b>NULL</b><b>,</b></span>
 <span class="line">  "data" <b>TEXT</b> <b>NOT</b> <b>NULL</b><b>,</b></span>
-<span class="line">  "created" <b>DATETIME</b> <b>NOT</b> <b>NULL</b><b>,</b></span>
-<span class="line">  "last_modified" <b>DATETIME</b> <b>NOT</b> <b>NULL</b></span>
+<span class="line">  "created" <b>DATETIME</b> <b>NOT</b> <b>NULL</b> <b>DEFAULT</b><b>(</b>strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b><b>)</b><b>,</b></span>
+<span class="line">  "last_modified" <b>DATETIME</b> <b>NOT</b> <b>NULL</b> <b>DEFAULT</b><b>(</b>strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b><b>)</b></span>
 <span class="line">  <b>)</b><b>;</b></span></pre>
 </td>
 </tr>
@@ -132,8 +132,8 @@ The <span class="name">bibliothecula</span> schema.
 <span class="line">  "uuid" <b>CHAR</b><b>(</b>32<b>)</b> <b>NOT</b> <b>NULL</b> <b>PRIMARY</b> <b>KEY</b><b>,</b></span>
 <span class="line">  "name" <b>TEXT</b> <b>NULL</b><b>,</b></span>
 <span class="line">  "data" <b>BLOB</b> <b>NOT</b> <b>NULL</b><b>,</b></span>
-<span class="line">  "created" <b>DATETIME</b> <b>NOT</b> <b>NULL</b><b>,</b></span>
-<span class="line">  "last_modified" <b>DATETIME</b> <b>NOT</b> <b>NULL</b></span>
+<span class="line">  "created" <b>DATETIME</b> <b>NOT</b> <b>NULL</b> <b>DEFAULT</b><b>(</b>strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b><b>)</b><b>,</b></span>
+<span class="line">  "last_modified" <b>DATETIME</b> <b>NOT</b> <b>NULL</b> <b>DEFAULT</b><b>(</b>strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b><b>)</b></span>
 <span class="line">  <b>)</b><b>;</b></span></pre>
 </td>
 </tr>
@@ -193,66 +193,12 @@ A list of utility SQL statements for use with the **bibliothecula** schema.
 <td><em>create view</em>
 </td>
 <th class="blue">CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS</th>
-<td class="doc">Auxiliary view for use in <var>document_title_authors_text_view</var> view. Returns document title and a comma separated string with all authors or NULL for all documents. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
+<td class="doc">Auxiliary view for use in <var>document_title_authors_text_view_fts</var> table. Returns document title and a NUL byte separated string with all authors or NULL for all documents. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
 <td class="sql"><pre class="sql">
 <span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span>
 <span class="line">document_title_authors<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>)</b> <b>AS</b></span>
 <span class="line"><b>SELECT</b> <b>*</b> <b>FROM</b> document_title_without_authors</span>
 <span class="line"><b>UNION</b> <b>SELECT</b> <b>*</b> <b>FROM</b> document_title_with_authors</span></pre>
-</td>
-</tr>
-
-<tr>
-<td><em>create view</em>
-</td>
-<th class="blue">CREATE_VIEW_DOCUMENT_TITLE_AUTHORS_TEXT</th>
-<td class="doc">Auxiliary view for use in <abbr title="Full-Text Search">FTS</abbr> create trigger. Returns document title, a comma separated string with all authors or NULL if there aren't any. and the full text blob for all documents. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
-<td class="sql"><pre class="sql">
-<span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span>
-<span class="line">document_title_authors_text_view<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>,</b> full_text<b>,</b> metadata_uuid<b>)</b> <b>AS</b></span>
-<span class="line"><b>SELECT</b> v.rowid <b>AS</b> uuid<b>,</b></span>
-<span class="line">v.title <b>AS</b> title<b>,</b></span>
-<span class="line">v.authors <b>AS</b> authors<b>,</b></span>
-<span class="line">bm.data <b>AS</b> full_text<b>,</b></span>
-<span class="line">bm.uuid <b>AS</b> metadata_uuid</span>
-<span class="line"><b>FROM</b> document_title_authors <b>AS</b> v<b>,</b></span>
-<span class="line">DocumentHasBinaryMetadata <b>AS</b> dhbm<b>,</b></span>
-<span class="line">BinaryMetadata <b>AS</b> bm</span>
-<span class="line"><b>WHERE</b> bm.uuid <b>=</b> dhbm.metadata_uuid</span>
-<span class="line"><b>AND</b> v.uuid <b>=</b> dhbm.document_uuid</span>
-<span class="line"><b>AND</b> dhbm.name <b>=</b> 'full-text'</span>
-<span class="line"><b>ORDER</b> <b>BY</b> dhbm.last_modified</span></pre>
-</td>
-</tr>
-
-<tr>
-<td><em>create view</em>
-</td>
-<th class="blue">CREATE_VIEW_WITHOUT_AUTHORS</th>
-<td class="doc">Auxiliary view for use in <var>document_title_authors</var> view. Returns document title and NULL for all documents that have no <var>author</var> metadata. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
-<td class="sql"><pre class="sql">
-<span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span>
-<span class="line">document_title_without_authors<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>)</b> <b>AS</b></span>
-<span class="line"><b>SELECT</b> d.uuid <b>AS</b> uuid<b>,</b> d.title <b>AS</b> title<b>,</b> <b>NULL</b> <b>AS</b> authors</span>
-<span class="line"><b>FROM</b> Documents <b>AS</b> d</span>
-<span class="line"><b>WHERE</b> <b>NOT</b> <b>EXISTS</b></span>
-<span class="line"><b>(</b><b>SELECT</b> <b>*</b> <b>FROM</b> TextMetadata <b>AS</b> t<b>,</b> DocumentHasTextMetadata <b>AS</b> dt <b>WHERE</b> t.name <b>=</b> 'author' <b>AND</b> t.uuid <b>=</b> dt.metadata_uuid <b>AND</b> dt.document_uuid <b>=</b> d.uuid<b>)</b></span></pre>
-</td>
-</tr>
-
-<tr>
-<td><em>create view</em>
-</td>
-<th class="blue">CREATE_VIEW_WITH_AUTHORS</th>
-<td class="doc">Auxiliary view for use in <var>document_title_authors</var> view. Returns document title and a comma separated string with all authors for all documents that have <var>author</var> metadata. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
-<td class="sql"><pre class="sql">
-<span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span>
-<span class="line">document_title_with_authors<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>)</b> <b>AS</b></span>
-<span class="line"><b>SELECT</b> d.uuid <b>AS</b> uuid<b>,</b> d.title <b>AS</b> title<b>,</b> GROUP_CONCAT<b>(</b>authors.author<b>)</b> <b>AS</b> authors</span>
-<span class="line"><b>FROM</b> Documents <b>AS</b> d<b>,</b></span>
-<span class="line"><b>(</b><b>SELECT</b> d.uuid <b>AS</b> uuid<b>,</b> tm.data <b>AS</b> author <b>FROM</b> Documents <b>AS</b> d<b>,</b> TextMetadata <b>AS</b> tm<b>,</b> DocumentHasTextMetadata <b>AS</b> dhtm <b>WHERE</b> dhtm.document_uuid <b>=</b> d.uuid <b>AND</b> dhtm.metadata_uuid <b>=</b> tm.uuid <b>AND</b> tm.name <b>=</b> 'author'<b>)</b> <b>AS</b> authors</span>
-<span class="line"><b>WHERE</b> authors.uuid <b>=</b> d.uuid</span>
-<span class="line"><b>GROUP</b> <b>BY</b> d.uuid</span></pre>
 </td>
 </tr>
 

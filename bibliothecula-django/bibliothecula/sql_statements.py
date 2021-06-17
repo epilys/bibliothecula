@@ -166,7 +166,15 @@ def sqlite3_reference_href(url, text=None):
 
 CREATE_BINARYMETADATA = SqlStatement(
     "CREATE_BINARYMETADATA",
-    'CREATE TABLE IF NOT EXISTS "BinaryMetadata" (\n        "uuid" char(32) NOT NULL PRIMARY KEY,\n        "name" text NULL,\n        "data" BLOB NOT NULL,\n        "created" datetime NOT NULL,\n        "last_modified" datetime NOT NULL\n);\n\n',
+    """CREATE TABLE IF NOT EXISTS "BinaryMetadata" (
+        "uuid" char(32) NOT NULL PRIMARY KEY,
+        "name" text NULL,
+        "data" BLOB NOT NULL,
+        "created" datetime NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f',
+                'now')),
+        "last_modified" datetime NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f',
+                'now'))
+);""",
     doc="",
     kind=StatementKind.TABLE,
     callable_=True,
@@ -174,7 +182,15 @@ CREATE_BINARYMETADATA = SqlStatement(
 
 CREATE_TEXTMETADATA = SqlStatement(
     "CREATE_TEXTMETADATA",
-    'CREATE TABLE IF NOT EXISTS "TextMetadata" (\n        "uuid" char(32) NOT NULL PRIMARY KEY,\n        "name" text NULL,\n        "data" text NOT NULL,\n        "created" datetime NOT NULL,\n        "last_modified" datetime NOT NULL\n);\n\n',
+    """CREATE TABLE IF NOT EXISTS "TextMetadata" (
+        "uuid" char(32) NOT NULL PRIMARY KEY,
+        "name" text NULL,
+        "data" text NOT NULL,
+        "created" datetime NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f',
+                'now')),
+        "last_modified" datetime NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f',
+                'now'))
+);""",
     doc="",
     kind=StatementKind.TABLE,
     callable_=True,
@@ -182,7 +198,15 @@ CREATE_TEXTMETADATA = SqlStatement(
 
 CREATE_DOCUMENTS = SqlStatement(
     "CREATE_DOCUMENTS",
-    'CREATE TABLE IF NOT EXISTS "Documents" (\n        "uuid" CHAR(32) NOT NULL PRIMARY KEY,\n        "title" TEXT NOT NULL,\n        "title_suffix" TEXT,\n        "created" datetime NOT NULL DEFAULT (strftime (\'%Y-%m-%d %H:%M:%f\',\'now\')),\n        "last_modified" datetime NOT NULL DEFAULT (strftime (\'%Y-%m-%d %H:%M:%f\',\'now\'))\n);\n\n',
+    """CREATE TABLE IF NOT EXISTS "Documents" (
+        "uuid" CHAR(32) NOT NULL PRIMARY KEY,
+        "title" TEXT NOT NULL,
+        "title_suffix" TEXT,
+        "created" datetime NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f',
+                'now')),
+        "last_modified" datetime NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f',
+                'now'))
+);""",
     doc="",
     kind=StatementKind.TABLE,
     callable_=True,
@@ -190,7 +214,16 @@ CREATE_DOCUMENTS = SqlStatement(
 
 CREATE_DOCUMENTHASBINARYMETADATA = SqlStatement(
     "CREATE_DOCUMENTHASBINARYMETADATA",
-    'CREATE TABLE IF NOT EXISTS "DocumentHasBinaryMetadata" (\n        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n        "name" TEXT NOT NULL,\n        "document_uuid" char(32) NOT NULL REFERENCES "Documents" ("uuid") DEFERRABLE INITIALLY DEFERRED,\n        "metadata_uuid" char(32) NOT NULL REFERENCES "BinaryMetadata" ("uuid") DEFERRABLE INITIALLY DEFERRED,\n        "created" datetime NOT NULL DEFAULT (strftime (\'%Y-%m-%d %H:%M:%f\',\'now\')),\n        "last_modified" datetime NOT NULL DEFAULT (strftime (\'%Y-%m-%d %H:%M:%f\',\'now\'))\n);\n\n',
+    """CREATE TABLE IF NOT EXISTS "DocumentHasBinaryMetadata" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "name" TEXT NOT NULL,
+        "document_uuid" char(32) NOT NULL REFERENCES "Documents" ("uuid") DEFERRABLE INITIALLY DEFERRED,
+        "metadata_uuid" char(32) NOT NULL REFERENCES "BinaryMetadata" ("uuid") DEFERRABLE INITIALLY DEFERRED,
+        "created" datetime NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f',
+                'now')),
+        "last_modified" datetime NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f',
+                'now'))
+);""",
     doc="",
     kind=StatementKind.TABLE,
     callable_=True,
@@ -207,75 +240,27 @@ CREATE_DOCUMENTHASTEXTMETADATA = SqlStatement(
 )
 
 
-CREATE_VIEW_WITHOUT_AUTHORS = SqlStatement(
-    "CREATE_VIEW_WITHOUT_AUTHORS",
-    """CREATE VIEW IF NOT EXISTS document_title_without_authors(rowid, title, authors) AS
-SELECT d.uuid AS uuid, d.title AS title, NULL AS authors
-FROM Documents AS d
-WHERE NOT EXISTS (SELECT * FROM TextMetadata AS t, DocumentHasTextMetadata AS dt WHERE t.name = 'author' AND t.uuid = dt.metadata_uuid AND dt.document_uuid = d.uuid)""",
-    doc=f"""Auxiliary view for use in <var>document_title_authors</var> view. Returns document title and NULL for all documents that have no <var>author</var> metadata. {sqlite3_reference_href("https://sqlite.org/lang_createview.html",text="for creating views")}""",
-    kind=StatementKind.VIEW,
-    callable_=True,
-    dependencies=[
-        CREATE_DOCUMENTS,
-        CREATE_TEXTMETADATA,
-        CREATE_DOCUMENTHASTEXTMETADATA,
-    ],
-)
-
-
-CREATE_VIEW_WITH_AUTHORS = SqlStatement(
-    "CREATE_VIEW_WITH_AUTHORS",
-    """CREATE VIEW IF NOT EXISTS document_title_with_authors(rowid, title, authors) AS
-SELECT d.uuid AS uuid, d.title AS title, GROUP_CONCAT(authors.author) AS authors
-FROM Documents AS d,
-        (SELECT d.uuid AS uuid, tm.data AS author FROM Documents AS d, TextMetadata AS tm, DocumentHasTextMetadata AS dhtm WHERE dhtm.document_uuid = d.uuid AND dhtm.metadata_uuid = tm.uuid AND tm.name = 'author') AS authors
-       WHERE authors.uuid = d.uuid
-       GROUP BY d.uuid""",
-    doc=f"""Auxiliary view for use in <var>document_title_authors</var> view. Returns document title and a comma separated string with all authors for all documents that have <var>author</var> metadata. {sqlite3_reference_href("https://sqlite.org/lang_createview.html",text="for creating views")}""",
-    kind=StatementKind.VIEW,
-    callable_=True,
-    dependencies=[
-        CREATE_DOCUMENTS,
-        CREATE_TEXTMETADATA,
-        CREATE_DOCUMENTHASTEXTMETADATA,
-    ],
-)
-
-
 CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS = SqlStatement(
     "CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS",
-    """CREATE VIEW IF NOT EXISTS document_title_authors(rowid, title, authors) AS
-SELECT * FROM document_title_without_authors
-UNION SELECT * FROM document_title_with_authors""",
-    doc=f"""Auxiliary view for use in <var>document_title_authors_text_view</var> view. Returns document title and a comma separated string with all authors or NULL for all documents. {sqlite3_reference_href("https://sqlite.org/lang_createview.html",text="for creating views")}""",
+    """CREATE VIEW document_title_authors (rowid, title, authors) AS
+SELECT uuid, title, authors
+FROM
+    Documents AS d
+    LEFT JOIN (SELECT
+            document_uuid,
+            GROUP_CONCAT (data, '\\0') AS authors
+        FROM
+            DocumentHasTextMetadata AS dhtm
+            JOIN TextMetadata AS tm ON dhtm.metadata_uuid = tm.uuid
+        WHERE
+            tm.name = 'author'
+        GROUP BY
+            document_uuid) AS authors ON d.uuid = authors.document_uuid;""",
+    doc=f"""Auxiliary view for use in <var>document_title_authors_text_view_fts</var> index. Returns document title and a NULL byte separated string with all authors or NULL for all documents. {sqlite3_reference_href("https://sqlite.org/lang_createview.html",text="for creating views")}""",
     kind=StatementKind.VIEW,
     callable_=True,
-    dependencies=[CREATE_VIEW_WITHOUT_AUTHORS, CREATE_VIEW_WITH_AUTHORS],
+    dependencies=[],
 )
-
-
-CREATE_VIEW_DOCUMENT_TITLE_AUTHORS_TEXT = SqlStatement(
-    "CREATE_VIEW_DOCUMENT_TITLE_AUTHORS_TEXT",
-    """CREATE VIEW IF NOT EXISTS document_title_authors_text_view(rowid, title, authors, full_text, metadata_uuid) AS
-SELECT v.rowid AS uuid,
-v.title AS title,
-v.authors AS authors,
-bm.data AS full_text,
-bm.uuid AS metadata_uuid
-FROM document_title_authors AS v,
-DocumentHasBinaryMetadata AS dhbm,
-BinaryMetadata AS bm
-WHERE bm.uuid = dhbm.metadata_uuid
-AND v.uuid = dhbm.document_uuid
-AND dhbm.name = 'full-text'
-ORDER BY dhbm.last_modified""",
-    doc=f"""Auxiliary view for use in <abbr title="Full-Text Search">FTS</abbr> create trigger. Returns document title, a comma separated string with all authors or NULL if there aren't any. and the full text blob for all documents. {sqlite3_reference_href("https://sqlite.org/lang_createview.html",text="for creating views")}""",
-    kind=StatementKind.VIEW,
-    callable_=True,
-    dependencies=[CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS],
-)
-
 
 FTS_CREATE_TABLE = SqlStatement(
     "FTS_CREATE_TABLE",
@@ -287,23 +272,35 @@ FTS_CREATE_TABLE = SqlStatement(
 
 FTS_CREATE_INSERT_TRIGGER = SqlStatement(
     "FTS_CREATE_INSERT_TRIGGER",
-    """CREATE TRIGGER IF NOT EXISTS insert_full_text_trigger
-    AFTER INSERT ON DocumentHasBinaryMetadata
-    WHEN NEW.name = 'full-text'
-    BEGIN
-    INSERT INTO document_title_authors_text_view_fts(uuid, title, authors, full_text)
-    SELECT d.rowid AS rowid, d.title AS title, d.authors AS authors, d.full_text AS full_text
-    FROM document_title_authors_text_view AS d
-    WHERE d.metadata_uuid = NEW.metadata_uuid
-    AND d.rowid=NEW.document_uuid;
-    END""",
+    """CREATE TRIGGER insert_full_text_trigger AFTER INSERT ON DocumentHasBinaryMetadata
+WHEN EXISTS (
+        SELECT
+            *
+        FROM
+            BinaryMetadata AS bm
+        WHERE
+            NEW.metadata_uuid = bm.uuid
+            AND bm.name = 'full-text')
+BEGIN
+    INSERT INTO document_title_authors_text_view_fts (
+        uuid, title, authors, full_text)
+SELECT
+    d.rowid AS rowid, d.title AS title, d.authors AS authors, bm.data AS full_text
+FROM
+    document_title_authors AS d,
+    BinaryMetadata AS bm
+WHERE
+    d.rowid = NEW.document_uuid
+    AND bm.name = 'full-text'
+    AND bm.uuid = NEW.metadata_uuid;
+END;""",
     doc=f"""Trigger to insert full text data when a <var>DocumentHasBinaryMetadata</var> row for a full-text <var>BinaryMetadata</var> is created. {sqlite3_reference_href("https://sqlite.org/lang_createtrigger.html", text="for creating triggers")}""",
     kind=(StatementKind.TRIGGER | StatementKind.INDEX),
     callable_=True,
     dependencies=[
         FTS_CREATE_TABLE,
         CREATE_DOCUMENTHASBINARYMETADATA,
-        CREATE_VIEW_DOCUMENT_TITLE_AUTHORS_TEXT,
+        CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS,
     ],
 )
 
@@ -388,10 +385,7 @@ CORE_SCHEMA = [
     CREATE_DOCUMENTHASBINARYMETADATA,
 ]
 FTS_SCHEMA = [
-    CREATE_VIEW_WITHOUT_AUTHORS,
-    CREATE_VIEW_WITH_AUTHORS,
     CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS,
-    CREATE_VIEW_DOCUMENT_TITLE_AUTHORS_TEXT,
     FTS_CREATE_TABLE,
     FTS_CREATE_INSERT_TRIGGER,
     FTS_CREATE_DELETE_TRIGGER,
