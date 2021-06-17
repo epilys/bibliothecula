@@ -205,7 +205,7 @@
 
     </head>
     <body>
-        <header><div class="header-left"><div class="logo"><h1>bibliothecula</h1><div class="logo-image"></div></div><hr class="horizontal" /><nav><ul class="menu"><li><a href="/">collection</a></li><li><a href="/import/">mass import files</a></li><li><a href="/database/">database</a></li><li><a href="/tag/">visualise tags</a></li></ul></nav><hr class="horizontal" /><nav aria-label="Breadcrumb" class="breadcrumb"><ul><li><span aria-current="page">database overview</span></li></ul></nav></div><nav><details id="add"><summary ><span class="add-label add-hidden">new document</span><span class="add-hidden"> ➕</span><span class="add-show">hide</span></summary><form method="POST" action="/add/document/" id="add_form"><input type="hidden" name="csrfmiddlewaretoken" value="jiMHT4VN1EFJ4eNkkb5THd6D4ho39l3ixj7wm1jJv3n4ajdZ7FVURALbfdTMPWlT"><label for="id_title">document title:</label><input type="text" name="title" required id="id_title"><input type="submit" value="create"></form></details></nav></header>
+        <header><div class="header-left"><div class="logo"><h1>bibliothecula</h1><div class="logo-image"></div></div><hr class="horizontal" /><nav><ul class="menu"><li><a>collection</a></li><li><a>mass import files</a></li><li><a>database</a></li><li><a>visualise tags</a></li></ul></nav><hr class="horizontal" /><nav aria-label="Breadcrumb" class="breadcrumb"><ul><li><span aria-current="page">database overview</span></li></ul></nav></div><nav><details id="add"><summary ><span class="add-label add-hidden">new document</span><span class="add-hidden"> ➕</span><span class="add-show">hide</span></summary><form id="add_form"><input type="hidden" name="csrfmiddlewaretoken" value="jiMHT4VN1EFJ4eNkkb5THd6D4ho39l3ixj7wm1jJv3n4ajdZ7FVURALbfdTMPWlT"><label for="id_title">document title:</label><input type="text" name="title" required id="id_title"><input type="button" value="create"></form></details></nav></header>
         
         <main>
             
@@ -214,12 +214,12 @@
             <details>
                 <summary>Contents</summary>
                 <ul>
-                    <li><a href="#overview">overview</a>
+                    <li><a>overview</a>
                         <ul>
-                            <li><a href="#triggers">database triggers</a></li>
-                            <li><a href="#sql-schema-reference">SQL schema reference</a></li>
-                            <li><a href="#sql-statements-reference">SQL statements reference</a></li>
-                            <li><a href="#table-sizes">Analytical table sizes</a></li>
+                            <li><a>database triggers</a></li>
+                            <li><a>SQL schema reference</a></li>
+                            <li><a>SQL statements reference</a></li>
+                            <li><a>Analytical table sizes</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -227,7 +227,7 @@
         </nav>
     </aside>
 
-    <h1 id="overview"><a id="header-anchor-overview" class="header-anchor" aria-hidden="true" href="#overview"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use href="#header-link-svg"></use></svg></a>database overview</h1>
+    <h1 id="overview"><a id="header-anchor-overview" class="header-anchor" aria-hidden="true"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use></use></svg></a>database overview</h1>
     <hr/>
     <div class="wrapper">
         <table>
@@ -262,23 +262,23 @@
                             <tbody>
                                 
                                     <tr>
-                                        <td><a class="item-tag" rel="tag" href="/?tags=Qualia">Qualia <span>29</span></a></td>
+                                        <td><a class="item-tag" rel="tag">Qualia <span>29</span></a></td>
                                     </tr>
                                 
                                     <tr>
-                                        <td><a class="item-tag" rel="tag" href="/?tags=Computerized%20typesetting">Computerized typesetting <span>6</span></a></td>
+                                        <td><a class="item-tag" rel="tag">Computerized typesetting <span>6</span></a></td>
                                     </tr>
                                 
                                     <tr>
-                                        <td><a class="item-tag" rel="tag" href="/?tags=Editing">Editing <span>6</span></a></td>
+                                        <td><a class="item-tag" rel="tag">Editing <span>6</span></a></td>
                                     </tr>
                                 
                                     <tr>
-                                        <td><a class="item-tag" rel="tag" href="/?tags=Graphic%20design%20%28Typography%29">Graphic design (Typography) <span>6</span></a></td>
+                                        <td><a class="item-tag" rel="tag">Graphic design (Typography) <span>6</span></a></td>
                                     </tr>
                                 
                                     <tr>
-                                        <td><a class="item-tag" rel="tag" href="/?tags=History">History <span>6</span></a></td>
+                                        <td><a class="item-tag" rel="tag">History <span>6</span></a></td>
                                     </tr>
                                 
                             </tbody>
@@ -1594,18 +1594,18 @@ L 69 0
         
     </div>
     <div class="triggers">
-        <h2 id="triggers"><a id="header-anchor-triggers" class="header-anchor" aria-hidden="true" href="#triggers"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use href="#header-link-svg"></use></svg></a>database triggers</h2>
+        <h2 id="triggers"><a id="header-anchor-triggers" class="header-anchor" aria-hidden="true"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use></use></svg></a>database triggers</h2>
         <form id="drop-trigger-form"></form>
         <ol>
             
                 <li><div class="flex-horizontal"><h3>delete_full_text_trigger</h3>
-                    <button form="drop-trigger-form" formaction="/database/drop/delete_full_text_trigger/" formmethod="get" type="submit">delete trigger</button></div>
+                    <button type="button">delete trigger</button></div>
                     <p>Trigger on table &ldquo;<var>DocumentHasBinaryMetadata</var>&rdquo;</p>
                     <code class="sql"><span class="line"><b>CREATE</b> <b>TRIGGER</b> delete_full_text_trigger <b>AFTER</b> <b>DELETE</b> <b>ON</b> DocumentHasBinaryMetadata <b>WHEN</b> <b>EXISTS</b></span> <span class="line"><b>(</b><b>SELECT</b> <b>*</b> <b>FROM</b> BinaryMetadata <b>AS</b> bm <b>WHERE</b> OLD.metadata_uuid <b>=</b> bm.uuid <b>AND</b> bm.name <b>=</b> 'full-text'<b>)</b> </span><span class="line"><b>BEGIN</b></span> </span> <span class="line">&emsp;&emsp;<b>DELETE</b> <b>FROM</b> document_title_authors_text_view_fts <b>WHERE</b> uuid <b>=</b> OLD.document_uuid<b>;</b> </span> </span><span class="line"><b>END</b></span></code>
                 </li>
             
                 <li><div class="flex-horizontal"><h3>insert_full_text_trigger</h3>
-                    <button form="drop-trigger-form" formaction="/database/drop/insert_full_text_trigger/" formmethod="get" type="submit">delete trigger</button></div>
+                    <button type="button">delete trigger</button></div>
                     <p>Trigger on table &ldquo;<var>DocumentHasBinaryMetadata</var>&rdquo;</p>
                     <code class="sql"><span class="line"><b>CREATE</b> <b>TRIGGER</b> insert_full_text_trigger <b>AFTER</b> <b>INSERT</b> <b>ON</b> DocumentHasBinaryMetadata <b>WHEN</b> <b>EXISTS</b></span> <span class="line"><b>(</b><b>SELECT</b> <b>*</b> <b>FROM</b> BinaryMetadata <b>AS</b> bm <b>WHERE</b> NEW.metadata_uuid <b>=</b> bm.uuid <b>AND</b> bm.name <b>=</b> 'full-text'<b>)</b> </span><span class="line"><b>BEGIN</b></span> </span> <span class="line">&emsp;&emsp;<b>INSERT</b> <b>INTO</b> document_title_authors_text_view_fts<b>(</b>uuid<b>,</b> title<b>,</b> authors<b>,</b> full_text<b>)</b> </span> <span class="line">&emsp;&emsp;<b>SELECT</b> d.rowid <b>AS</b> rowid<b>,</b> d.title <b>AS</b> title<b>,</b> d.authors <b>AS</b> authors<b>,</b> bm.data <b>AS</b> full_text <b>FROM</b> document_title_authors <b>AS</b> d <b>JOIN</b> BinaryMetadata <b>AS</b> bm <b>ON</b> bm.uuid <b>=</b> NEW.metadata_uuid <b>WHERE</b> d.rowid=NEW.document_uuid <b>AND</b> bm.name <b>=</b> 'full-text' <b>AND</b> bm.uuid <b>=</b> NEW.metadata_uuid<b>;</b> </span> </span><span class="line"><b>END</b></span></code>
                 </li>
@@ -1614,7 +1614,7 @@ L 69 0
     </div>
     <div class="wrapper">
         <div>
-            <h2 id="sql-schema-reference"><a id="header-anchor-sql-schema-reference" class="header-anchor" aria-hidden="true" href="#sql-schema-reference"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use href="#header-link-svg"></use></svg></a>SQL schema reference</h2>
+            <h2 id="sql-schema-reference"><a id="header-anchor-sql-schema-reference" class="header-anchor" aria-hidden="true"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use></use></svg></a>SQL schema reference</h2>
             <table style="width: 100%;">
                 <caption>The bibliothecula schema.</caption>
                 <thead>
@@ -1656,7 +1656,7 @@ L 69 0
     </div>
     <div class="wrapper">
         <div>
-            <h2 id="sql-statements-reference"><a id="header-anchor-sql-statements-reference" class="header-anchor" aria-hidden="true" href="#sql-statements-reference"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use href="#header-link-svg"></use></svg></a>SQL statements reference</h2>
+            <h2 id="sql-statements-reference"><a id="header-anchor-sql-statements-reference" class="header-anchor" aria-hidden="true"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use></use></svg></a>SQL statements reference</h2>
             <form id="run-query-form"></form>
             <table style="width: 100%;">
                 <caption>A list of utility SQL statements for use with the bibliothecula schema.</caption>
@@ -1679,7 +1679,7 @@ L 69 0
                 <tbody>
                     
                         <tr>
-                            <th id="CLI" colspan="5" scope="colgroup"><span class="statement_kind_header section-header"><a id="header-anchor-CLI" class="header-anchor" aria-hidden="true" href="#CLI"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use href="#header-link-svg"></use></svg></a>Using the CLI</span></th>
+                            <th id="CLI" colspan="5" scope="colgroup"><span class="statement_kind_header section-header"><a id="header-anchor-CLI" class="header-anchor" aria-hidden="true"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use></use></svg></a>Using the CLI</span></th>
                         </tr>
                         
                         
@@ -1687,7 +1687,7 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-32">example</span><span class="keyword-64">CLI</span></div>
                                 </td>
                                 <th class="blue">CLI_EDIT_FILE</th>
-                                <td class="doc">Edit any binary <code>BLOB</code> with the <code>edit()</code> function in the CLI. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/cli.html#the_edit_sql_function">sqlite3 reference for Documentation on the CLI <code>EDIT</code> function</a></cite></td>
+                                <td class="doc">Edit any binary <code>BLOB</code> with the <code>edit()</code> function in the CLI. <cite><a rel="external nofollow noreferrer">sqlite3 reference for Documentation on the CLI <code>EDIT</code> function</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>UPDATE</b> BinaryMetadata <b>SET</b> data=edit<b>(</b>data<b>,</b> 'vim'<b>)</b> </span> <span class="line"><b>WHERE</b> uuid ='17ee75452e574e03b0b8e4ef2bc9be25'<b>;</b></code></td>
                                 
                                     <td><button disabled style="color: rgba(0,0,0,0);">run statement</button></td>
@@ -1698,7 +1698,7 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-32">example</span><span class="keyword-64">CLI</span></div>
                                 </td>
                                 <th class="blue">CLI_EXCTRACT_FILE</th>
-                                <td class="doc">Exctract a binary <code>BLOB</code> from any column using the CLI. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/cli.html#file_i_o_functions">sqlite3 reference for Documentation on the CLI file I/O functions</a></cite></td>
+                                <td class="doc">Exctract a binary <code>BLOB</code> from any column using the CLI. <cite><a rel="external nofollow noreferrer">sqlite3 reference for Documentation on the CLI file I/O functions</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> writefile<b>(</b>'file.pdf'<b>,</b> data<b>)</b> <b>FROM</b> BinaryMetadata </span> <span class="line"><b>WHERE</b> uuid ='17ee75452e574e03b0b8e4ef2bc9be25'<b>)</b><b>;</b> </span></code></td>
                                 
                                     <td><button disabled style="color: rgba(0,0,0,0);">run statement</button></td>
@@ -1710,7 +1710,7 @@ L 69 0
                                 </td>
                                 <th class="blue">CLI_INSERT_FILE</th>
                                 <td class="doc">The sqlite3 CLI has some special I/O function to facilate reading and writing files. <code>readfile(PATH)</code> will return the bytes read from the path <code>PATH</code> as a <code>BLOB</code>.
-    We also use <code>json_object()</code> to create a new name for the entry; this could also be done with <code>json_replace()</code>. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/cli.html#file_i_o_functions">sqlite3 reference for Documentation on the CLI file I/O functions</a></cite> and <cite><a rel="external nofollow noreferrer" href="https://www.sqlite.org/json1.html">sqlite3 reference for Documentation on JSON1 extension</a></cite></td>
+    We also use <code>json_object()</code> to create a new name for the entry; this could also be done with <code>json_replace()</code>. <cite><a rel="external nofollow noreferrer">sqlite3 reference for Documentation on the CLI file I/O functions</a></cite> and <cite><a rel="external nofollow noreferrer">sqlite3 reference for Documentation on JSON1 extension</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>UPDATE</b> BinaryMetadata <b>SET</b> </span> <span class="line">data=readfile<b>(</b>'file.pdf'<b>)</b><b>,</b> </span> <span class="line">name=json_object<b>(</b>'content_type'<b>,</b> 'application/pdf'<b>,</b> 'filename'<b>,</b> 'file.pdf'<b>,</b> 'size'<b>,</b> LENGTH<b>(</b>readfile<b>(</b>'file.pdf'<b>)</b><b>)</b> <b>)</b><b>,</b> </span> <span class="line">last_modified <b>=</b> strftime<b>(</b>'%Y-%m-%d %H:%M:%f'<b>,</b> 'now'<b>)</b> </span> <span class="line"><b>WHERE</b> uuid <b>=</b> '17ee75452e574e03b0b8e4ef2bc9be25'<b>;</b></code></td>
                                 
                                     <td><button disabled style="color: rgba(0,0,0,0);">run statement</button></td>
@@ -1721,7 +1721,7 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-32">example</span><span class="keyword-64">CLI</span></div>
                                 </td>
                                 <th class="blue">CLI_VIEW_FILE</th>
-                                <td class="doc">View any binary <code>BLOB</code> with the <code>edit()</code> function in the CLI by ignoring the value it returns. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/cli.html#the_edit_sql_function">sqlite3 reference for Documentation on the CLI <code>EDIT</code> function</a></cite></td>
+                                <td class="doc">View any binary <code>BLOB</code> with the <code>edit()</code> function in the CLI by ignoring the value it returns. <cite><a rel="external nofollow noreferrer">sqlite3 reference for Documentation on the CLI <code>EDIT</code> function</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> LENGTH<b>(</b>edit<b>(</b>data<b>,</b> 'zathura'<b>)</b><b>)</b> <b>FROM</b> BinaryMetadata </span> <span class="line"><b>WHERE</b> uuid ='17ee75452e574e03b0b8e4ef2bc9be25'<b>;</b></code></td>
                                 
                                     <td><button disabled style="color: rgba(0,0,0,0);">run statement</button></td>
@@ -1730,7 +1730,7 @@ L 69 0
                         
                     
                         <tr>
-                            <th id="EXAMPLE" colspan="5" scope="colgroup"><span class="statement_kind_header section-header"><a id="header-anchor-EXAMPLE" class="header-anchor" aria-hidden="true" href="#EXAMPLE"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use href="#header-link-svg"></use></svg></a>Example queries</span></th>
+                            <th id="EXAMPLE" colspan="5" scope="colgroup"><span class="statement_kind_header section-header"><a id="header-anchor-EXAMPLE" class="header-anchor" aria-hidden="true"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use></use></svg></a>Example queries</span></th>
                         </tr>
                         
                             <tr>
@@ -1799,7 +1799,7 @@ L 69 0
                         
                     
                         <tr>
-                            <th id="INDEX" colspan="5" scope="colgroup"><span class="statement_kind_header section-header"><a id="header-anchor-INDEX" class="header-anchor" aria-hidden="true" href="#INDEX"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use href="#header-link-svg"></use></svg></a>Indices and searching</span></th>
+                            <th id="INDEX" colspan="5" scope="colgroup"><span class="statement_kind_header section-header"><a id="header-anchor-INDEX" class="header-anchor" aria-hidden="true"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use></use></svg></a>Indices and searching</span></th>
                         </tr>
                         
                             <tr>
@@ -1818,7 +1818,7 @@ L 69 0
                                 <td class="doc">Create backref index.</td>
                                 <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIRTUAL</b> <b>TABLE</b> backrefs_fts <b>USING</b> fts5<b>(</b>referrer<b>,</b> target<b>)</b><b>;</b></code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/CREATE_BACKREF_INDEX/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1826,10 +1826,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-1">create table</span><span class="keyword-4">index</span></div>
                                 </td>
                                 <th class="blue">CREATE_UUID_TOKENIZER</th>
-                                <td class="doc"><cite><a rel="external nofollow noreferrer" href="https://www.sqlite.org/fts3.html#querying_tokenizers">sqlite3 reference</a></cite></td>
+                                <td class="doc"><cite><a rel="external nofollow noreferrer">sqlite3 reference</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIRTUAL</b> <b>TABLE</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span> <span class="line">uuidtok <b>USING</b> fts3tokenize<b>(</b>'unicode61'<b>,</b> "tokenchars=-1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"<b>,</b> "separators= "<b>)</b><b>;</b></code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/CREATE_UUID_TOKENIZER/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1837,10 +1837,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-2">create view</span></div>
                                 </td>
                                 <th class="blue">CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS</th>
-                                <td class="doc">Auxiliary view for use in <var>document_title_authors_text_view</var> view. Returns document title and a comma separated string with all authors or NULL for all documents. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
+                                <td class="doc">Auxiliary view for use in <var>document_title_authors_text_view</var> view. Returns document title and a comma separated string with all authors or NULL for all documents. <cite><a rel="external nofollow noreferrer">sqlite3 reference for for creating views</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span> <span class="line">document_title_authors<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>)</b> <b>AS</b> </span> <span class="line"><b>SELECT</b> <b>*</b> <b>FROM</b> document_title_without_authors </span> <span class="line"><b>UNION</b> <b>SELECT</b> <b>*</b> <b>FROM</b> document_title_with_authors</code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1848,10 +1848,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-2">create view</span></div>
                                 </td>
                                 <th class="blue">CREATE_VIEW_DOCUMENT_TITLE_AUTHORS_TEXT</th>
-                                <td class="doc">Auxiliary view for use in <abbr title="Full-Text Search">FTS</abbr> create trigger. Returns document title, a comma separated string with all authors or NULL if there aren't any. and the full text blob for all documents. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
+                                <td class="doc">Auxiliary view for use in <abbr title="Full-Text Search">FTS</abbr> create trigger. Returns document title, a comma separated string with all authors or NULL if there aren't any. and the full text blob for all documents. <cite><a rel="external nofollow noreferrer">sqlite3 reference for for creating views</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span> <span class="line">document_title_authors_text_view<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>,</b> full_text<b>,</b> metadata_uuid<b>)</b> <b>AS</b> </span> <span class="line"><b>SELECT</b> v.rowid <b>AS</b> uuid<b>,</b> </span> <span class="line">v.title <b>AS</b> title<b>,</b> </span> <span class="line">v.authors <b>AS</b> authors<b>,</b> </span> <span class="line">bm.data <b>AS</b> full_text<b>,</b> </span> <span class="line">bm.uuid <b>AS</b> metadata_uuid </span> <span class="line"><b>FROM</b> document_title_authors <b>AS</b> v<b>,</b> </span> <span class="line">DocumentHasBinaryMetadata <b>AS</b> dhbm<b>,</b> </span> <span class="line">BinaryMetadata <b>AS</b> bm </span> <span class="line"><b>WHERE</b> bm.uuid <b>=</b> dhbm.metadata_uuid </span> <span class="line"><b>AND</b> v.uuid <b>=</b> dhbm.document_uuid </span> <span class="line"><b>AND</b> dhbm.name <b>=</b> 'full-text' </span> <span class="line"><b>ORDER</b> <b>BY</b> dhbm.last_modified</code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/CREATE_VIEW_DOCUMENT_TITLE_AUTHORS_TEXT/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1859,10 +1859,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-2">create view</span></div>
                                 </td>
                                 <th class="blue">CREATE_VIEW_WITHOUT_AUTHORS</th>
-                                <td class="doc">Auxiliary view for use in <var>document_title_authors</var> view. Returns document title and NULL for all documents that have no <var>author</var> metadata. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
+                                <td class="doc">Auxiliary view for use in <var>document_title_authors</var> view. Returns document title and NULL for all documents that have no <var>author</var> metadata. <cite><a rel="external nofollow noreferrer">sqlite3 reference for for creating views</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span> <span class="line">document_title_without_authors<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>)</b> <b>AS</b> </span> <span class="line"><b>SELECT</b> d.uuid <b>AS</b> uuid<b>,</b> d.title <b>AS</b> title<b>,</b> <b>NULL</b> <b>AS</b> authors </span> <span class="line"><b>FROM</b> Documents <b>AS</b> d </span> <span class="line"><b>WHERE</b> <b>NOT</b> <b>EXISTS</b></span> <span class="line"><b>(</b><b>SELECT</b> <b>*</b> <b>FROM</b> TextMetadata <b>AS</b> t<b>,</b> DocumentHasTextMetadata <b>AS</b> dt <b>WHERE</b> t.name <b>=</b> 'author' <b>AND</b> t.uuid <b>=</b> dt.metadata_uuid <b>AND</b> dt.document_uuid <b>=</b> d.uuid<b>)</b></code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/CREATE_VIEW_WITHOUT_AUTHORS/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1870,10 +1870,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-2">create view</span></div>
                                 </td>
                                 <th class="blue">CREATE_VIEW_WITH_AUTHORS</th>
-                                <td class="doc">Auxiliary view for use in <var>document_title_authors</var> view. Returns document title and a comma separated string with all authors for all documents that have <var>author</var> metadata. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite></td>
+                                <td class="doc">Auxiliary view for use in <var>document_title_authors</var> view. Returns document title and a comma separated string with all authors for all documents that have <var>author</var> metadata. <cite><a rel="external nofollow noreferrer">sqlite3 reference for for creating views</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIEW</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span> <span class="line">document_title_with_authors<b>(</b>rowid<b>,</b> title<b>,</b> authors<b>)</b> <b>AS</b> </span> <span class="line"><b>SELECT</b> d.uuid <b>AS</b> uuid<b>,</b> d.title <b>AS</b> title<b>,</b> GROUP_CONCAT<b>(</b>authors.author<b>)</b> <b>AS</b> authors </span> <span class="line"><b>FROM</b> Documents <b>AS</b> d<b>,</b> </span> <span class="line"><b>(</b><b>SELECT</b> d.uuid <b>AS</b> uuid<b>,</b> tm.data <b>AS</b> author <b>FROM</b> Documents <b>AS</b> d<b>,</b> TextMetadata <b>AS</b> tm<b>,</b> DocumentHasTextMetadata <b>AS</b> dhtm <b>WHERE</b> dhtm.document_uuid <b>=</b> d.uuid <b>AND</b> dhtm.metadata_uuid <b>=</b> tm.uuid <b>AND</b> tm.name <b>=</b> 'author'<b>)</b> <b>AS</b> authors </span> <span class="line"><b>WHERE</b> authors.uuid <b>=</b> d.uuid </span> <span class="line"><b>GROUP</b> <b>BY</b> d.uuid</code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/CREATE_VIEW_WITH_AUTHORS/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1881,10 +1881,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-4">index</span><span class="keyword-8">create trigger</span></div>
                                 </td>
                                 <th class="blue">FTS_CREATE_DELETE_TRIGGER</th>
-                                <td class="doc">Trigger to remove a document's full text from the full text search table when the full-text binary metadata is deleted. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createtrigger.html">sqlite3 reference for for creating triggers</a></cite></td>
+                                <td class="doc">Trigger to remove a document's full text from the full text search table when the full-text binary metadata is deleted. <cite><a rel="external nofollow noreferrer">sqlite3 reference for for creating triggers</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>TRIGGER</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span> <span class="line">delete_full_text_trigger </span> <span class="line"><b>AFTER</b> <b>DELETE</b> <b>ON</b> DocumentHasBinaryMetadata </span> <span class="line"><b>WHEN</b> OLD.name <b>=</b> 'full-text' </span> </span><span class="line"><b>BEGIN</b></span> </span> <span class="line">&emsp;&emsp;<b>DELETE</b> <b>FROM</b> document_title_authors_text_view_fts </span> <span class="line">&emsp;&emsp;<b>WHERE</b> uuid <b>=</b> OLD.document_uuid<b>;</b> </span> </span><span class="line"><b>END</b></span></code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/FTS_CREATE_DELETE_TRIGGER/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1892,10 +1892,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-4">index</span><span class="keyword-8">create trigger</span></div>
                                 </td>
                                 <th class="blue">FTS_CREATE_INSERT_TRIGGER</th>
-                                <td class="doc">Trigger to insert full text data when a <var>DocumentHasBinaryMetadata</var> row for a full-text <var>BinaryMetadata</var> is created. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createtrigger.html">sqlite3 reference for for creating triggers</a></cite></td>
+                                <td class="doc">Trigger to insert full text data when a <var>DocumentHasBinaryMetadata</var> row for a full-text <var>BinaryMetadata</var> is created. <cite><a rel="external nofollow noreferrer">sqlite3 reference for for creating triggers</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>TRIGGER</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span> <span class="line">insert_full_text_trigger </span> <span class="line"><b>AFTER</b> <b>INSERT</b> <b>ON</b> DocumentHasBinaryMetadata </span> <span class="line"><b>WHEN</b> NEW.name <b>=</b> 'full-text' </span> </span><span class="line"><b>BEGIN</b></span> </span> <span class="line">&emsp;&emsp;<b>INSERT</b> <b>INTO</b> document_title_authors_text_view_fts<b>(</b>uuid<b>,</b> title<b>,</b> authors<b>,</b> full_text<b>)</b> </span> <span class="line">&emsp;&emsp;<b>SELECT</b> d.rowid <b>AS</b> rowid<b>,</b> d.title <b>AS</b> title<b>,</b> d.authors <b>AS</b> authors<b>,</b> d.full_text <b>AS</b> full_text </span> <span class="line">&emsp;&emsp;<b>FROM</b> document_title_authors_text_view <b>AS</b> d </span> <span class="line">&emsp;&emsp;<b>WHERE</b> d.metadata_uuid <b>=</b> NEW.metadata_uuid </span> <span class="line">&emsp;&emsp;<b>AND</b> d.rowid=NEW.document_uuid<b>;</b> </span> </span><span class="line"><b>END</b></span></code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/FTS_CREATE_INSERT_TRIGGER/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1903,10 +1903,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-1">create table</span><span class="keyword-4">index</span></div>
                                 </td>
                                 <th class="blue">FTS_CREATE_TABLE</th>
-                                <td class="doc">Create a full-text search index using the <em>fts5</em> module. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html">sqlite3 reference</a></cite></td>
+                                <td class="doc">Create a full-text search index using the <em>fts5</em> module. <cite><a rel="external nofollow noreferrer">sqlite3 reference</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>CREATE</b> <b>VIRTUAL</b> <b>TABLE</b> <b>IF</b> <b>NOT</b> <b>EXISTS</b></span> <span class="line">document_title_authors_text_view_fts <b>USING</b> fts5<b>(</b>title<b>,</b> authors<b>,</b> full_text<b>,</b> uuid <b>UNINDEXED</b><b>)</b></code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/FTS_CREATE_TABLE/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1914,10 +1914,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-4">index</span><span class="keyword-16">query data</span></div>
                                 </td>
                                 <th class="blue">FTS_INTEGRITY_CHECK</th>
-                                <td class="doc">This command is used to verify that the full-text index is internally consistent. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html#the_integrity_check_command">sqlite3 reference</a></cite></td>
+                                <td class="doc">This command is used to verify that the full-text index is internally consistent. <cite><a rel="external nofollow noreferrer">sqlite3 reference</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>INSERT</b> <b>INTO</b> document_title_authors_text_view_fts<b>(</b>document_title_authors_text_view_fts<b>)</b> <b>VALUES</b><b>(</b>'integrity-check'<b>)</b></code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/FTS_INTEGRITY_CHECK/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1925,10 +1925,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-4">index</span></div>
                                 </td>
                                 <th class="blue">FTS_OPTIMIZE</th>
-                                <td class="doc">This command merges all individual b-trees that currently make up the full-text index into a single large b-tree structure. Because it reorganizes the entire <abbr title="Full-Text Search">FTS</abbr> index, the optimize command can take a long time to run. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html#the_optimize_command">sqlite3 reference</a></cite></td>
+                                <td class="doc">This command merges all individual b-trees that currently make up the full-text index into a single large b-tree structure. Because it reorganizes the entire <abbr title="Full-Text Search">FTS</abbr> index, the optimize command can take a long time to run. <cite><a rel="external nofollow noreferrer">sqlite3 reference</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>INSERT</b> <b>INTO</b> document_title_authors_text_view_fts<b>(</b>document_title_authors_text_view_fts<b>)</b> <b>VALUES</b><b>(</b>'optimize'<b>)</b></code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/FTS_OPTIMIZE/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1936,10 +1936,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-4">index</span></div>
                                 </td>
                                 <th class="blue">FTS_REBUILD</th>
-                                <td class="doc">This command first deletes the entire full-text index, then rebuilds it. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html#the_rebuild_command">sqlite3 reference</a></cite></td>
+                                <td class="doc">This command first deletes the entire full-text index, then rebuilds it. <cite><a rel="external nofollow noreferrer">sqlite3 reference</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>INSERT</b> <b>INTO</b> document_title_authors_text_view_fts<b>(</b>document_title_authors_text_view_fts<b>)</b> <b>VALUES</b><b>(</b>'rebuild'<b>)</b></code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/FTS_REBUILD/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1947,7 +1947,7 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-4">index</span><span class="keyword-16">query data</span></div>
                                 </td>
                                 <th class="blue">FTS_SEARCH</th>
-                                <td class="doc">This command queries the full-text search index for documents. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html">sqlite3 reference</a></cite></td>
+                                <td class="doc">This command queries the full-text search index for documents. <cite><a rel="external nofollow noreferrer">sqlite3 reference</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> uuid <b>FROM</b> document_title_authors_text_view_fts<b>(</b>'query text'<b>)</b></code></td>
                                 
                                     <td><button disabled style="color: rgba(0,0,0,0);">run statement</button></td>
@@ -1958,10 +1958,10 @@ L 69 0
                                 <td class="keywords"><div><span class="keyword-4">index</span><span class="keyword-16">query data</span></div>
                                 </td>
                                 <th class="blue">FTS_SELECT_CONFIG</th>
-                                <td class="doc">This command returns the values of persistent configuration parameters. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html#appendix_b">sqlite3 reference</a></cite></td>
+                                <td class="doc">This command returns the values of persistent configuration parameters. <cite><a rel="external nofollow noreferrer">sqlite3 reference</a></cite></td>
                                 <td class="sql"><code class="sql"><span class="line"><b>SELECT</b> <b>*</b> <b>FROM</b> document_title_authors_text_view_fts_config</code></td>
                                 
-                                    <td><button form="run-query-form" formaction="/database/run/FTS_SELECT_CONFIG/" formmethod="get" type="submit">run statement</button></td>
+                                    <td><button type="button">run statement</button></td>
                                 
                             </tr>
                         
@@ -1970,7 +1970,7 @@ L 69 0
             </table>
         </div>
     </div>
-    <h2 id="table-sizes"><a id="header-anchor-table-sizes" class="header-anchor" aria-hidden="true" href="#table-sizes"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use href="#header-link-svg"></use></svg></a>Analytical table sizes</h2>
+    <h2 id="table-sizes"><a id="header-anchor-table-sizes" class="header-anchor" aria-hidden="true"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use></use></svg></a>Analytical table sizes</h2>
     <div class="wrapper">
         <table>
             <caption>Size of each table and index.</caption>

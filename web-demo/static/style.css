@@ -1,5 +1,9 @@
 /* || General setup */
 
+a {
+  cursor: pointer;
+}
+
 :root {
   --black-color: #2C2E35;
   --blue-color: #217ac0;
