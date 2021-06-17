@@ -1,0 +1,122 @@
+This page uses  some modern CSS/HTML5 techniques  to achieve stuff
+without any javascript.
+
+Here's a  rough list so  that you  can look at  whatever interests
+you:
+
+- The  layout: Uses  CSS Grid  and some  CSS flex  boxes. See  the
+  `body`, `div.screenshots`,  `div.screenshots>figure` elements in
+  the stylesheet.
+
+  The body  width is split to  12 columns, and each  body child is
+  set to skip  the first and last column to  appear centered using
+  the `body>*` selector. To override this for specific elements we
+  use CSS  specificity: more  specific rules over...rule  the less
+  specific ones. So setting the footer element to
+
+  `grid-column: span 12;`
+
+  means it won't appear centered but span the whole width.
+
+- The emoji list markers:  achieved with the `list-style-type` CSS
+  property which accepts strings as input.
+
+- the  screenshot gallery  is a  CSS Grid  that only  sets up  the
+  `grid-auto-rows`  and  `grid-template-columns` properties.  That
+  way we can add any number of  grid items and they are setup in a
+  grid on  their own.  We specify a  minimum screenshot  size with
+  `minmax()`  CSS function.  The  `auto`  grid properties  specify
+  auto-placement of children.
+
+- the screenshots <figure>  elements are also a CSS  grid of their
+  own,  in order  to control  the size  of the  image. We  want to
+  ensure  it  won't  overflow  its  container,  so  we  setup  max
+  dimensions and  set `object-*`  CSS properties to  control their
+  offsets and scaling.
+
+- The click to zoom screenshot gallery without any javascript uses
+  the  `:target` CSS  selector. You  set the  element's `id`  HTML
+  property, you add an `<a>` element with `href="#id"` where id is
+  the one you used, and when  you click it the element becomes the
+  user's target, selectable via the `:target` CSS selector.
+
+  Instead of  making the visible  screenshot a target, we  make an
+  invisible  one (an  element with  `display: none;`).  Then, when
+  it's the target we make it visible. To return to the page, add a
+  link to "#" or any other element id, maybe a heading's.
+
+  How is the zoomed screenshot  the only thing visible? By putting
+  the  invisible elements  before  any visible  ones,  we use  the
+  adjacent sibling CSS selector (`~`) to select *all* the siblings
+  that  follow the  targeted  screenshot. We  can  then make  them
+  invisible by setting `display: none;`. Simple as that!
+
+- The header:
+
+  * the title has different font  settings than the main font. The
+    loaded font is  "variable", it can be  customised through some
+    parameters  using  the `font-variation-settings`  property  of
+    each element.
+
+  * the title has textured background. This is achieved by setting
+    the  texture as  a `background`  with a  `radial-gradient` and
+    then, setting the `background-clip`  to `text`: this makes the
+    background visible only through text.
+
+  * the font-size  uses the `min()`  CSS function to set  the font
+    size to a smaller value if  the viewport becomes too small: if
+    the viewport's  5% of  width is less  than 3rem  (that's three
+    times the  size of the  font-size of the root  <html> element)
+    then the `min()` function selects the smaller width as the new
+    font-size.
+
+  * the <h1> element  is set to `display: grid`  and its `:before`
+    and `:after` pseudoelements suddenly become grid items!
+
+    What a weird thing. (This is a recent CSS feature.)
+
+    They are then set up to look like dashes on the left and right
+    of the title.
+
+  * the title shows... something when you hover or activate it:
+
+    o the  <h1>  grid  changes  its layout  through  the  `:hover`
+      selector  and then  one  of the  pseudo-elements becomes  an
+      image  box via  the `content`  CSS property,  and the  other
+      becomes a  caption that  takes its  text from  the heading's
+      `title` HTML property (the one that shows a tooltip when you
+      hover over the element).
+
+    o on touch  devices, a <detail>  element is used  instead that
+      shows  the  hover card  when  you  open it.  This  increases
+      complexity too much, if I knew a priori I wouldn't do it.
+
+    o Note:  the image  doesn't  load until  the pseudoelement  is
+      visible.
+
+    o The image  and caption appear above  everything else because
+      they create a new stacking context via CSS; that is achieved
+      via setting the `position` CSS  property to absolute in this
+      case.
+
+    o The pseudo elements are moved to the right of the heading by
+      setting up the `grid-column` and `grid-row` CSS properties.
+
+    o The heading compensates the lack  of the previous column gap
+      by setting `margin-left` to the column gap width.
+
+    o The  changes  are  delayed   through  the  `transition`  CSS
+      property.
+
+    o The  image, having  a  height larger  of  the <h1>  element,
+      doesn't hang its excess height  on the bottom: it uses `top:
+      calc(100% -  <image-height>)` where <image-height> is  a CSS
+      variable set to the <h1> element.
+
+    o The  image is  cropped with  the `background-position-{x,y}`
+      CSS  properties.The  upper  corners are  also  smoothed  out
+      by  setting `border-top-{right,left}-radius`  CSS properties
+      without any actual border setup.
+
+    o The image is scaled responsively to the viewport width using
+      the `min()` function.
