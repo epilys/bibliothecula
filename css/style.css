@@ -68,8 +68,22 @@ header {
   grid-row: 1 / span 1;
   grid-column: 2 / span 10;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   place-items: center;
+  position: relative;
+  width: min-content;
+  place-self: center;
+}
+
+header:after {
+  position: absolute;
+  color: black;
+  font-size: xx-small;
+  margin-bottom: .5em;
+  margin-bottom: min(.5vw, 1em);
+  place-self: center;
+  margin-left: 15vw;
+  font-style: oblique;
 }
 
 h1 {
@@ -112,6 +126,7 @@ h1:after {
   align-self: center;
   border: 1px outset var(--spoiled-orange);
   width: 2rem;
+  width: min(4vw, 2rem);
   height: 0.4rem;
   height: min(1vw, 0.4rem);
   background: var(--blood);
@@ -119,16 +134,151 @@ h1:after {
   background-size: 3px 4px;
   font-size: 0;
   font-weight: normal;
+  pointer-events: none;
 }
 
 .index h1:before,
 .index h1:after {
   width: 3rem;
+  width: min(6vw, 3rem);
   height: 0.8rem;
   height: min(1vw, 0.8rem);
 }
 
-h1:hover {
+@media (hover: hover) and (any-pointer: fine) {
+  details.touch {
+    display: none;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  details.touch h1 {
+    display: none;
+    width: 0;
+    height: 0;
+    font-size: 0;
+    pointer-events: none;
+  }
+
+  details.touch div.h1 {
+    display: none;
+    width: 0;
+    height: 0;
+    font-size: 0;
+    pointer-events: none;
+  }
+
+  header:after {
+    content: "hover over!";
+  }
+
+  header:hover:after {
+    display: none;
+  }
+
+  @media (max-width: 1000px) {
+    header {
+      margin-top: 3rem;
+    }
+
+    h1 {
+      --cover-width: min(323px,50vw);
+    }
+
+    header:hover h1:before { 
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    header:hover h1:after {
+      grid-column: 1;
+      grid-row: 3;
+    }
+  }
+
+  @media (min-width: 1000px) {
+    header:hover h1:before {
+      grid-column: 2 / span 1;
+      grid-row: 1;
+    }
+
+    header:hover h1:after {
+      grid-column: 2 / span 1;
+      grid-row: 2;
+    }
+  }
+}
+
+@media (hover: none) or (not (any-pointer: fine)) {
+  header:after {
+    content: "click me!";
+  }
+
+  h1.hover {
+    display: none;
+  }
+
+  details.touch {
+    display: inline-block;
+    height: min-content;
+    width: min-content;
+    cursor: pointer;
+  }
+
+  details.touch>summary {
+    height: min-content;
+    width: min-content;
+    display: inline-flex;
+    flex-direction: row;
+    row-gap: 0;
+    place-items:center;
+  }
+
+  @media (max-width: 1000px) {
+    header {
+      margin-top: 3rem;
+    }
+
+    h1 {
+      --cover-width: min(323px,50vw);
+    }
+
+    details.touch[open] h1:before {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    details.touch[open] h1:after {
+      grid-column: 1;
+      grid-row: 3;
+    }
+  }
+
+  @media (min-width: 1000px) {
+    details.touch[open] h1:before {
+      grid-column: 2 / span 1;
+      grid-row: 1;
+    }
+
+    details.touch[open] h1:after {
+      grid-column: 2 / span 1;
+      grid-row: 2;
+    }
+  }
+}
+
+div.h1 {
+  font-size: xx-small;
+  width: max-content;
+  height: min-content;
+  position: relative;
+  top: -16%;
+  place-self: end;
+  right: 20%;
+}
+
+header:hover h1, details.touch[open] h1 {
   /* on hover, the left grid item is lost and the column gap is lost as well so
    * compensate with the same value used for the column gap */
   margin-left: var(--column-gap);
@@ -139,7 +289,7 @@ h1:hover {
   position: relative;
 }
 
-h1:hover:after {
+header:hover h1:after, details.touch[open] h1:after {
   content: attr(title);
   border: none;
   font-size: var(--font-sz);
@@ -150,8 +300,6 @@ h1:hover:after {
   width: var(--cover-width);
   background: #e6b725;
   z-index: 998;
-  grid-column: 2 / span 1;
-  grid-row: 2;
   color: var(--fg-color);
   padding: var(--padding-tb) var(--padding-lr);
   box-sizing: border-box;
@@ -163,7 +311,7 @@ h1:hover:after {
   border-top: 2px outset #ab6a2d;
 }
 
-h1:hover:before {
+header:hover h1:before, details.touch[open] h1:before {
   border: none;
   background-color: var(--bg-color);
   background-image: url(https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Dracula-First-Edition-1897.jpg/344px-Dracula-First-Edition-1897.jpg);
@@ -180,11 +328,10 @@ h1:hover:before {
   border-top-left-radius: 8px;
   display: block;
   color: var(--blood);
-  grid-column: 2 / span 1;
-  grid-row: 1;
   /* Create new stacking context */
   position: absolute;
   top: calc(100% - var(--cover-height));
+  z-index: 2;
 }
 
 h2 {
