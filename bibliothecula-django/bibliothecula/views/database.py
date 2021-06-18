@@ -1,6 +1,7 @@
 from . import *
 from django.db import connections
 from django.template.defaultfilters import filesizeformat
+from django.core.cache import cache
 import inspect
 from bibliothecula import sql_statements
 from bibliothecula.sql_statements import SqlStatement, StatementKind
@@ -9,6 +10,7 @@ try:
     from .database_treemap import Treemap
 except Exception as exc:
     Treemap = exc
+
 
 def make_treemap(q, trees):
     dbg(Treemap)
@@ -119,8 +121,22 @@ class Trigger:
 
 
 @staff_member_required
-# @cache_page(15*60)
+@cache_page(60)
 def database_overview(request):
+    cache_view = cache.get("database_overview")
+    last_modified = last_modified_collection()
+    if cache_view is not None:
+        if cache_view["last_modified"] != last_modified:
+            cache.delete("database_overview")
+            cache_view = None
+    if cache_view is None:
+        new_cache = {
+            "last_modified": last_modified,
+            "total_documents": Document.objects.all().count(),
+            "total_tags": TextMetadata.objects.all().filter(name=TAG_NAME).count(),
+        }
+        cache.set("database_overview", new_cache)
+        cache_view = new_cache
     fts5_table_exists = None
     fts5_indexed_documents_no = 0
     fts5_size = None
@@ -207,8 +223,8 @@ def database_overview(request):
             d["EXAMPLE"]["statements"].append(s)
     context = {
         "total_size": total_size,
-        "total_tags": TextMetadata.objects.all().filter(name=TAG_NAME).count(),
-        "total_documents": Document.objects.all().count(),
+        "total_tags": cache_view["total_tags"],
+        "total_documents": cache_view["total_documents"],
         "top_tags": top_tags,
         "treemap": svg,
         "tables": tables,

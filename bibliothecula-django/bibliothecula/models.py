@@ -491,3 +491,22 @@ def last_modified_binary_metadata(request, uuid, metadata_uuid):
         return m.last_modified
     except BinaryMetadata.DoesNotExist:
         return datetime.datetime.now()
+
+
+def last_modified_collection():
+    lasts = []
+    for model in (
+        Document,
+        TextMetadata,
+        BinaryMetadata,
+        DocumentHasTextMetadata,
+        DocumentHasBinaryMetadata,
+    ):
+        try:
+            m = model.objects.all().latest("last_modified").last_modified
+            lasts.append(m)
+        except model.DoesNotExist:
+            pass
+    if len(lasts) == 0:
+        return datetime.datetime.now()
+    return max(lasts)
