@@ -14,6 +14,7 @@ import urllib.parse
 import os
 import io
 import json
+import datetime
 from functools import reduce, lru_cache
 from pathlib import PurePosixPath, Path
 
@@ -474,3 +475,19 @@ class DocumentHasBinaryMetadata(models.Model):
             "document",
             "metadata",
         )
+
+
+def last_modified_document(request, uuid):
+    try:
+        doc = Document.objects.get(uuid=uuid)
+        return doc.last_modified
+    except Document.DoesNotExist:
+        return datetime.datetime.now()
+
+
+def last_modified_binary_metadata(request, uuid, metadata_uuid):
+    try:
+        m = BinaryMetadata.objects.get(pk=metadata_uuid)
+        return m.last_modified
+    except BinaryMetadata.DoesNotExist:
+        return datetime.datetime.now()

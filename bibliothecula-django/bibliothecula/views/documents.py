@@ -1,11 +1,13 @@
 from . import *
 from django import db
+from django.views.decorators.http import condition
 
 EMBEDDED_SUBMIT_VALUE = "embedded"
 LINK_SUBMIT_VALUE = "link"
 
 
 @staff_member_required
+@condition(last_modified_func=last_modified_document)
 def view_document(request, uuid):
     try:
         doc = Document.objects.all().get(uuid=uuid)
@@ -179,6 +181,7 @@ def add_document_storage(request, uuid):
 
 
 @staff_member_required
+@condition(last_modified_func=last_modified_binary_metadata)
 def view_document_storage(request, uuid, metadata_uuid):
     from django.http import FileResponse
 
