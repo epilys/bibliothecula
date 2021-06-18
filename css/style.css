@@ -338,7 +338,7 @@ h2 {
   margin-top: 0;
 }
 
-body>header>img.logo {
+body>header img.logo {
   width: 7rem;
   width: min(15vw, 7rem);
   max-width: max-content;
