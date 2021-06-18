@@ -383,15 +383,18 @@ div.screenshots>figure {
   gap: 0;
 }
 
-div.screenshots>figure>img {
+div.screenshots>figure>a {
+  grid-row: span 1;
+  grid-column: span 1;
+  place-self: center;
+}
+
+div.screenshots>figure img {
   width: max-content;
   height: 100%;
   vertical-align: text-top;
   object-fit: cover;
   object-position: top;
-  grid-row: span 1;
-  grid-column: span 1;
-  place-self: center;
   max-width: 100%;
   overflow-y: hidden;
   max-height: 11rem;
@@ -409,9 +412,10 @@ figcaption {
 
 body>figure.zoom {
   grid-column: 1 / span 12;
+  grid-row: 1 / span 2;
 }
 
-figure.zoom {
+figure.zoom, figure.zoom img, a.zoom {
   display: none;
 }
 
@@ -437,7 +441,11 @@ figure#document-zoom:target {
   min-height: max-content;
 }
 
-figure.zoom img {
+figure.zoom:target a.zoom {
+  display: initial;
+}
+
+figure.zoom:target img {
   min-height: max-content;
   max-width: min-content;
   display: inline-flex;
