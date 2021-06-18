@@ -1,13 +1,15 @@
 use clap::{crate_version, App, Arg};
 use crossbeam_channel::{bounded, select};
 use fuser::{
-    FileAttr, FileType, Filesystem, ReplyAttr, ReplyData, ReplyDirectory, ReplyEntry, Request,
+    FileAttr, FileType, Filesystem, ReplyAttr, ReplyData, ReplyDirectory, ReplyEntry, ReplyWrite,
+    Request,
 };
 use libc::ENOENT;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{self, Connection, DatabaseName, Result};
 use signal_hook::{consts::SIGINT, iterator::Signals};
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::dbg;
 use std::env;
 use std::ffi::OsStr;
@@ -149,6 +151,10 @@ const TTL: Duration = Duration::from_secs(1); // 1 second
 const ROOT_DIR_INO: INode = 1;
 const TAG_DIR_INO: INode = 2;
 const QUERY_DIR_INO: INode = 3;
+const SQL_TEXT_FILE_INO: INode = 4;
+const SQL_TEXT_FILE_NAME: &str = "query.sql";
+const SQL_RESULT_FILE_INO: INode = 5;
+const SQL_RESULT_FILE_NAME: &str = "results.txt";
 
 impl DateTime {
     fn to_systemtime(&self) -> std::time::SystemTime {
@@ -214,6 +220,44 @@ struct Tag {
     ino: INode,
 }
 
+#[derive(Debug, PartialEq)]
+enum QueryType {
+    Fts(String),
+    Sql(String),
+}
+
+impl QueryType {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::Fts(ref inner) | Self::Sql(ref inner) => inner,
+        }
+    }
+
+    fn as_sql(&self) -> String {
+        match self {
+            Self::Fts(ref inner) => {
+                format!(
+                    "SELECT uuid FROM document_title_authors_text_view_fts({})",
+                    inner
+                )
+            }
+            Self::Sql(ref inner) => inner.to_string(),
+        }
+    }
+    fn is_fts(&self) -> bool {
+        matches!(self, Self::Fts(_))
+    }
+}
+
+#[derive(Debug)]
+struct QueryDir {
+    query_inodes: HashMap<INode, String>,
+    executed: bool,
+    rev_query_inodes: HashMap<String, INode>,
+    results: Result<Vec<DocumentUuid>, String>,
+    query: QueryType,
+}
+
 struct BiblFs {
     connection: Connection,
     documents: HashMap<DocumentUuid, Document>,
@@ -226,9 +270,51 @@ struct BiblFs {
     rev_tags: HashMap<String, TextMetadataUuid>,
     inodes_tags: HashMap<INode, TextMetadataUuid>,
     rev_inodes_tags: HashMap<TextMetadataUuid, INode>,
-    query_inodes: HashMap<INode, String>,
-    rev_query_inodes: HashMap<String, INode>,
+    query_dir: QueryDir,
     next_inode: INode,
+}
+
+impl BiblFs {
+    fn select(&mut self, query_str: String) {
+        self.query_dir.query = QueryType::Fts(query_str);
+        self.execute_query();
+    }
+
+    fn execute_query(&mut self) {
+        self.query_dir.executed = false;
+        self.query_dir.results = Ok(vec![]);
+        let mut stmt = self
+            .connection
+            .prepare("SELECT uuid FROM document_title_authors_text_view_fts(?)")
+            .unwrap();
+        let doc_iter = stmt
+            .query_map([self.query_dir.query.as_ref()], |row| {
+                let v: DocumentUuid = DocumentUuid(row.get(0)?);
+                Ok(v)
+            })
+            .unwrap();
+        self.query_dir.results = Ok(vec![]);
+        let mut results_uuids = vec![];
+        for doc in doc_iter {
+            match doc {
+                Ok(uuid) => {
+                    results_uuids.push(uuid);
+                }
+                Err(err) => {
+                    self.query_dir.results = Err(err.to_string());
+                    break;
+                }
+            }
+        }
+        dbg!(&results_uuids);
+        dbg!(&self.query_dir.results);
+        if let Ok(v) = self.query_dir.results.as_mut() {
+            *v = results_uuids;
+        }
+        dbg!(&self.query_dir.results);
+
+        self.query_dir.executed = true;
+    }
 }
 
 impl Filesystem for BiblFs {
@@ -244,26 +330,75 @@ impl Filesystem for BiblFs {
                 }
                 reply.error(ENOENT);
             }
-            _ if dbg!(name == "tags") => {
+            _ if name == "tags" => {
                 reply.entry(&TTL, &make_dir_attr(TAG_DIR_INO), 0);
                 //reply.error(ENOENT);
             }
-            parent if parent == QUERY_DIR_INO => {
-                let query_ino =
-                    if let Some(query_ino) = self.rev_query_inodes.get(name.to_str().unwrap()) {
-                        *query_ino
-                    } else {
-                        let new_query_ino = self.next_inode;
-                        self.next_inode += 1;
-                        self.rev_query_inodes
-                            .insert(name.to_str().unwrap().to_string(), new_query_ino);
-                        self.query_inodes
-                            .insert(new_query_ino, name.to_str().unwrap().to_string());
-                        new_query_ino
-                    };
-                reply.entry(&TTL, &make_dir_attr(query_ino), 0);
+            _ if name == SQL_TEXT_FILE_NAME => {
+                reply.entry(
+                    &TTL,
+                    &make_file_attr(
+                        SQL_TEXT_FILE_INO,
+                        self.query_dir
+                            .query
+                            .as_sql()
+                            .len()
+                            .try_into()
+                            .unwrap_or_default(),
+                        FILE_BLOCKS,
+                        Default::default(),
+                        Default::default(),
+                    ),
+                    0,
+                );
             }
-            _ if dbg!(name == "query") => {
+            _ if name == SQL_RESULT_FILE_NAME => {
+                reply.entry(
+                    &TTL,
+                    &make_file_attr(
+                        SQL_RESULT_FILE_INO,
+                        self.query_dir
+                            .query
+                            .as_sql()
+                            .len()
+                            .try_into()
+                            .unwrap_or_default(),
+                        FILE_BLOCKS,
+                        Default::default(),
+                        Default::default(),
+                    ),
+                    0,
+                );
+            }
+            parent if parent == QUERY_DIR_INO => match name.to_str() {
+                Some(name) => {
+                    let query_ino =
+                        if let Some(query_ino) = self.query_dir.rev_query_inodes.get(name) {
+                            *query_ino
+                        } else {
+                            let new_query_ino = self.next_inode;
+                            self.next_inode += 1;
+                            self.query_dir.query = QueryType::Fts(name.to_string());
+                            self.query_dir
+                                .rev_query_inodes
+                                .insert(name.to_string(), new_query_ino);
+                            self.query_dir
+                                .query_inodes
+                                .insert(new_query_ino, name.to_string());
+                            new_query_ino
+                        };
+                    self.query_dir.executed = false;
+                    reply.entry(&TTL, &make_dir_attr(query_ino), 0);
+                }
+                None => {
+                    self.query_dir.results = Err("Could not convert query to utf-8.".to_string());
+                }
+            },
+            _ if name == "query" => {
+                reply.entry(&TTL, &make_dir_attr(QUERY_DIR_INO), 0);
+                //reply.error(ENOENT);
+            }
+            _ if name == "" => {
                 reply.entry(&TTL, &make_dir_attr(QUERY_DIR_INO), 0);
                 //reply.error(ENOENT);
             }
@@ -289,7 +424,41 @@ impl Filesystem for BiblFs {
             i if i == ROOT_DIR_INO => reply.attr(&TTL, &make_dir_attr(ROOT_DIR_INO)),
             i if i == TAG_DIR_INO => reply.attr(&TTL, &make_dir_attr(TAG_DIR_INO)),
             i if i == QUERY_DIR_INO => reply.attr(&TTL, &make_dir_attr(QUERY_DIR_INO)),
-            i if self.query_inodes.contains_key(&i) => reply.attr(&TTL, &make_dir_attr(i)),
+            i if i == SQL_TEXT_FILE_INO => reply.attr(
+                &TTL,
+                &make_file_attr(
+                    SQL_TEXT_FILE_INO,
+                    self.query_dir
+                        .query
+                        .as_sql()
+                        .len()
+                        .try_into()
+                        .unwrap_or_default(),
+                    FILE_BLOCKS,
+                    Default::default(),
+                    Default::default(),
+                ),
+            ),
+            i if i == SQL_RESULT_FILE_INO => reply.attr(
+                &TTL,
+                &make_file_attr(
+                    SQL_TEXT_FILE_INO,
+                    self.query_dir
+                        .results
+                        .as_ref()
+                        .map(|v| v.len())
+                        .map_err(|err| err.len())
+                        .unwrap_or_else(|err| err)
+                        .try_into()
+                        .unwrap_or_default(),
+                    FILE_BLOCKS,
+                    Default::default(),
+                    Default::default(),
+                ),
+            ),
+            i if self.query_dir.query_inodes.contains_key(&i) => {
+                reply.attr(&TTL, &make_dir_attr(i))
+            }
             i if self.inodes_map.contains_key(&i) => {
                 let f = &self.files[&self.inodes_map[&ino]];
                 reply.attr(
@@ -320,6 +489,37 @@ impl Filesystem for BiblFs {
         dbg!(&size);
         dbg!(&_flags);
         dbg!(&_lock);
+        match ino {
+            i if i == SQL_TEXT_FILE_INO => {
+                if !self.query_dir.executed {
+                    self.execute_query();
+                }
+                reply.data(&self.query_dir.query.as_sql().as_bytes());
+                return;
+            }
+            i if i == SQL_RESULT_FILE_INO => {
+                if !self.query_dir.executed {
+                    self.execute_query();
+                }
+                match self.query_dir.results.as_ref() {
+                    Ok(uuids) => {
+                        let s = uuids
+                            .iter()
+                            .map(|u| u.0 .0.to_hyphenated().to_string())
+                            .collect::<Vec<String>>()
+                            .join("\n");
+
+                        reply.data(s.as_bytes());
+                    }
+                    Err(err) => {
+                        reply.data(err.as_bytes());
+                    }
+                }
+                return;
+            }
+            _ => {}
+        }
+
         if !self.inodes_map.contains_key(&ino) {
             reply.error(ENOENT);
             return;
@@ -347,13 +547,14 @@ impl Filesystem for BiblFs {
         offset: i64,
         mut reply: ReplyDirectory,
     ) {
-        dbg!("readdir");
+        print!("readdir: ");
         dbg!(&ino);
         dbg!(&_fh);
         dbg!(&offset);
 
         let entries = match ino {
-            ino if dbg!(ino == TAG_DIR_INO) => {
+            ino if ino == TAG_DIR_INO => {
+                println!("tags");
                 let mut ret = vec![
                     (TAG_DIR_INO, FileType::Directory, "."),
                     (ROOT_DIR_INO, FileType::Directory, ".."),
@@ -364,54 +565,64 @@ impl Filesystem for BiblFs {
                 }
                 ret
             }
-            ino if dbg!(ino == QUERY_DIR_INO) => {
+            ino if ino == QUERY_DIR_INO => {
+                println!("query");
                 vec![
                     (QUERY_DIR_INO, FileType::Directory, "."),
                     (ROOT_DIR_INO, FileType::Directory, ".."),
+                    (SQL_TEXT_FILE_INO, FileType::RegularFile, "query.sql"),
                 ]
             }
-            ino if dbg!(self.query_inodes.contains_key(&ino)) => {
+            ino if self.query_dir.query_inodes.contains_key(&ino) => {
                 let mut ret = vec![
                     (ino, FileType::Directory, "."),
                     (QUERY_DIR_INO, FileType::Directory, ".."),
+                    (SQL_TEXT_FILE_INO, FileType::RegularFile, SQL_TEXT_FILE_NAME),
+                    (
+                        SQL_RESULT_FILE_INO,
+                        FileType::RegularFile,
+                        SQL_RESULT_FILE_NAME,
+                    ),
                 ];
-                let query_s = &self.query_inodes[&ino];
-                let mut stmt = self
-                    .connection
-                    .prepare("SELECT uuid FROM document_title_authors_text_view_fts(?)")
-                    .unwrap();
-                let doc_iter = stmt
-                    .query_map([&query_s], |row| {
-                        let v: DocumentUuid = DocumentUuid(row.get(0)?);
-                        Ok(v)
-                    })
-                    .unwrap();
-                for doc in doc_iter {
-                    let uuid = doc.unwrap();
-                    /* Doc might not have files so use get() instead of indexing: */
-                    if let Some(doc_inos) = self.rev_inodes_doc.get(&uuid) {
-                        for file_ino in doc_inos {
-                            let file_uuid = &self.inodes_map[&file_ino];
-                            let file = &self.files[file_uuid];
-                            ret.push((*file_ino, FileType::RegularFile, &file.name));
+                let query_s = &self.query_dir.query_inodes[&ino];
+                println!("{}", query_s);
+                dbg!(&self.query_dir);
+                if !(self.query_dir.query.is_fts()
+                    && query_s == self.query_dir.query.as_ref()
+                    && self.query_dir.executed)
+                {
+                    let q = query_s.to_string();
+                    self.select(q);
+                }
+                if let Ok(v) = self.query_dir.results.as_ref() {
+                    for uuid in v {
+                        /* Doc might not have files so use get() instead of indexing: */
+                        if let Some(doc_inos) = self.rev_inodes_doc.get(&uuid) {
+                            for file_ino in doc_inos {
+                                let file_uuid = &self.inodes_map[&file_ino];
+                                let file = &self.files[file_uuid];
+                                ret.push((*file_ino, FileType::RegularFile, &file.name));
+                            }
                         }
                     }
                 }
                 ret
             }
             ino if ino == ROOT_DIR_INO => {
+                println!("root");
                 vec![
                     (ROOT_DIR_INO, FileType::Directory, "."),
                     (ROOT_DIR_INO, FileType::Directory, ".."),
                 ]
             }
-            ino if dbg!(self.inodes_tags.contains_key(&ino)) => {
+            ino if self.inodes_tags.contains_key(&ino) => {
                 let mut ret = vec![
                     (ino, FileType::Directory, "."),
                     (TAG_DIR_INO, FileType::Directory, ".."),
                 ];
 
                 let u = &self.inodes_tags[&ino];
+                println!("{}", u.0 .0.to_hyphenated());
                 let mut stmt = self
                     .connection
                     .prepare(
@@ -467,6 +678,30 @@ impl Filesystem for BiblFs {
             }
         }
         reply.ok();
+    }
+
+    fn write(
+        &mut self,
+        _req: &Request<'_>,
+        ino: u64,
+        _fh: u64,
+        _offset: i64,
+        _data: &[u8],
+        _write_flags: u32,
+        _flags: i32,
+        _lock_owner: Option<u64>,
+        reply: ReplyWrite,
+    ) {
+        println!("write ino {}", ino);
+        match ino {
+            i if i == SQL_TEXT_FILE_INO => {
+                //reply.data(&self.query_dir.query.as_sql().as_bytes());
+            }
+            i if i == SQL_RESULT_FILE_INO => {}
+            _ => {}
+        }
+
+        reply.error(ENOENT);
     }
 }
 
@@ -541,9 +776,14 @@ fn main() -> Result<()> {
         rev_tags: HashMap::new(),
         inodes_tags: HashMap::new(),
         rev_inodes_tags: HashMap::new(),
-        query_inodes: HashMap::new(),
-        rev_query_inodes: HashMap::new(),
-        next_inode: 4,
+        query_dir: QueryDir {
+            executed: true,
+            query_inodes: HashMap::new(),
+            rev_query_inodes: HashMap::new(),
+            results: Ok(vec![]),
+            query: QueryType::Sql(String::new()),
+        },
+        next_inode: 6,
     };
     {
         let BiblFs {
@@ -558,8 +798,7 @@ fn main() -> Result<()> {
             ref mut rev_tags,
             ref mut inodes_tags,
             ref mut rev_inodes_tags,
-            query_inodes: _,
-            rev_query_inodes: _,
+            query_dir: _,
             ref mut next_inode,
         } = &mut fs;
         let mut stmt =

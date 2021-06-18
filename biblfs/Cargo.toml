@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 #fuser = "0.7"
-fuser = { git = "https://github.com/cberner/fuser.git", rev = "dcc56bb" }
+fuser = { version = "^0.8" }
 rusqlite = { version = "0.25.3", features = ["time", "blob", "uuid"] }
 uuid = { version = "^0.8", features = ["v3", "v4", "v5", "serde"] }
 time = "0.2.26"
