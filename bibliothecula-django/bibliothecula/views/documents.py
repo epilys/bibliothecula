@@ -201,6 +201,8 @@ def view_document_storage(request, uuid, metadata_uuid):
             ),
         )
         response["Content-Type"] = _t["content_type"]
+        if _t["content_type"].startswith("text/"):
+            response["Content-Type"] += "; charset=UTF-8"
     else:
         response = FileResponse(io.BytesIO(m.data), filename=m.name, as_attachment=True)
     return response
