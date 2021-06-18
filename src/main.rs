@@ -73,7 +73,7 @@ impl FromSql for DateTime {
                     .or_else(|err| {
                         OffsetDateTime::parse(s, SQLITE_DATETIME_FMT_LEGACY).map_err(|_| err)
                     })
-                    .map(|d| DateTime(d)),
+                    .map(DateTime),
             }
             .map_err(|err| FromSqlError::Other(Box::new(err)))
         })
@@ -243,11 +243,9 @@ impl Filesystem for BiblFs {
                     return reply.entry(&TTL, &make_dir_attr(ino), 0);
                 }
                 reply.error(ENOENT);
-                return;
             }
             _ if dbg!(name == "tags") => {
                 reply.entry(&TTL, &make_dir_attr(TAG_DIR_INO), 0);
-                return;
                 //reply.error(ENOENT);
             }
             parent if parent == QUERY_DIR_INO => {
@@ -267,7 +265,6 @@ impl Filesystem for BiblFs {
             }
             _ if dbg!(name == "query") => {
                 reply.entry(&TTL, &make_dir_attr(QUERY_DIR_INO), 0);
-                return;
                 //reply.error(ENOENT);
             }
             _ => {
@@ -292,19 +289,15 @@ impl Filesystem for BiblFs {
             i if i == ROOT_DIR_INO => reply.attr(&TTL, &make_dir_attr(ROOT_DIR_INO)),
             i if i == TAG_DIR_INO => reply.attr(&TTL, &make_dir_attr(TAG_DIR_INO)),
             i if i == QUERY_DIR_INO => reply.attr(&TTL, &make_dir_attr(QUERY_DIR_INO)),
-            i if self.query_inodes.contains_key(&i) => {
-                return reply.attr(&TTL, &make_dir_attr(i));
-            }
+            i if self.query_inodes.contains_key(&i) => reply.attr(&TTL, &make_dir_attr(i)),
             i if self.inodes_map.contains_key(&i) => {
                 let f = &self.files[&self.inodes_map[&ino]];
-                return reply.attr(
+                reply.attr(
                     &TTL,
                     &make_file_attr(ino, f.size, FILE_BLOCKS, f.last_modified, f.created),
-                );
+                )
             }
-            i if self.inodes_tags.contains_key(&i) => {
-                return reply.attr(&TTL, &make_dir_attr(ino));
-            }
+            i if self.inodes_tags.contains_key(&i) => reply.attr(&TTL, &make_dir_attr(ino)),
             _ => reply.error(ENOENT),
         }
     }
@@ -510,10 +503,8 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    let verbosity: u64 = matches.occurrences_of("v");
-    let db_path = matches
-        .value_of("db")
-        .unwrap_or_else(|| "../bibliothecula.db");
+    let _verbosity: u64 = matches.occurrences_of("v");
+    let db_path = matches.value_of("db").unwrap_or("bibliothecula.db");
     let connection =
         Connection::open_with_flags(&db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
 
@@ -533,7 +524,7 @@ fn main() -> Result<()> {
 
     let (sender, receiver) = bounded(100);
     thread::spawn(move || {
-        for sig in signals.forever() {
+        for _sig in signals.forever() {
             let _ = sender.send(());
         }
     });
@@ -590,8 +581,8 @@ fn main() -> Result<()> {
                 },
             );
             rev_tags.insert(tag, uuid);
-            inodes_tags.insert(ino, uuid.clone());
-            rev_inodes_tags.insert(uuid.clone(), ino);
+            inodes_tags.insert(ino, uuid);
+            rev_inodes_tags.insert(uuid, ino);
         }
         let mut stmt = connection
             .prepare("SELECT uuid, title, title_suffix, created, last_modified FROM Documents")?;
@@ -625,12 +616,12 @@ fn main() -> Result<()> {
             let u = &file.uuid;
             let inode = *next_inode;
             *next_inode += 1;
-            inodes_map.insert(inode, u.clone());
+            inodes_map.insert(inode, *u);
             rev_inodes_doc
                 .entry(file.document_uuid)
                 .or_default()
                 .push(inode);
-            rev_inodes_files.insert(u.clone(), inode);
+            rev_inodes_files.insert(*u, inode);
             rev_files.insert(file.name.clone(), file.uuid);
             files.insert(file.uuid, file);
         }
@@ -640,14 +631,11 @@ fn main() -> Result<()> {
         //dbg!(&fs.rev_inodes_files);
     }
 
-    let mount = fuser::spawn_mount(fs, mountpoint, options).unwrap();
-    loop {
-        select! {
-            recv(receiver) -> _ => {
-                println!();
-                println!("Goodbye!");
-                break;
-            }
+    let _mount = fuser::spawn_mount(fs, mountpoint, options).unwrap();
+    select! {
+        recv(receiver) -> _ => {
+            println!();
+            println!("Goodbye!");
         }
     }
 
