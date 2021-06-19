@@ -298,6 +298,13 @@ class TextMetadata(models.Model):
     created = DateTimeField(null=False, auto_now_add=True)
     last_modified = DateTimeField(null=False, auto_now=True)
 
+    def set_last_modified(self, datetime_=None):
+        if datetime_ is None:
+            datetime_ = timezone.now()
+        self.last_modified = datetime_
+        self.save()
+        return self.last_modified
+
     def document_len(self):
         return len(self.documents.all())
 
@@ -323,6 +330,13 @@ class BinaryMetadata(models.Model):
     compressed = models.BooleanField(null=False,default=False)
     created = DateTimeField(null=False, auto_now_add=True)
     last_modified = DateTimeField(null=False, auto_now=True)
+
+    def set_last_modified(self, datetime_=None):
+        if datetime_ is None:
+            datetime_ = timezone.now()
+        self.last_modified = datetime_
+        self.save()
+        return self.last_modified
 
     def new_file(blob, size, uuid=None, content_type="", filename=""):
         d = {
@@ -454,6 +468,13 @@ class DocumentHasTextMetadata(models.Model):
     created = DateTimeField(null=False, auto_now_add=True)
     last_modified = DateTimeField(null=False, auto_now=True)
 
+    def set_last_modified(self, datetime_=None):
+        if datetime_ is None:
+            datetime_ = timezone.now()
+        self.last_modified = datetime_
+        self.save()
+        return self.last_modified
+
     def __str__(self):
         return f"{self.document}->{self.metadata}"
 
@@ -484,6 +505,13 @@ class DocumentHasBinaryMetadata(models.Model):
     )
     created = DateTimeField(null=False, auto_now_add=True)
     last_modified = DateTimeField(null=False, auto_now=True)
+
+    def set_last_modified(self, datetime_=None):
+        if datetime_ is None:
+            datetime_ = timezone.now()
+        self.last_modified = datetime_
+        self.save()
+        return self.last_modified
 
     def contents_as_str(self):
         return self.metadata.contents_as_str()
