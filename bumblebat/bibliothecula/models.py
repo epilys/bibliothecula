@@ -62,7 +62,7 @@ class DateTimeField(models.DateTimeField):
 class Document(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.TextField(null=False)
-    title_suffix = models.TextField(null=True, blank=False)
+    title_suffix = models.TextField(null=True, blank=True)
     created = DateTimeField(null=False, auto_now_add=True)
     last_modified = DateTimeField(null=False, auto_now=True)
 
