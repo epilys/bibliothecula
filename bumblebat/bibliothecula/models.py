@@ -19,7 +19,11 @@ from functools import reduce, lru_cache
 from pathlib import PurePosixPath, Path
 
 from . import *
-from .thumbnails import generate_pdf_thumbnail, generate_epub_thumbnail
+from .thumbnails import (
+    generate_pdf_thumbnail,
+    generate_epub_thumbnail,
+    generate_image_thumbnail,
+)
 from .text_extract import get_pdf_text, get_epub_text
 
 PDF_MIME = "application/pdf"
@@ -219,21 +223,23 @@ class Document(models.Model):
         return False
 
     def create_thumbnail(self, force=False, binary_metadata_uuid=None):
-        # print(self, " ", self.binary_metadata.all().count())
-        if (
-            not force
-            and self.binary_metadata.all()
+        created = False
+        previous_thumbnails = list(
+            self.binary_metadata.all()
             .filter(metadata__name=THUMBNAIL_NAME)
-            .exists()
-        ):
+            .values("metadata__uuid")
+        )
+        has_already = len(previous_thumbnails) > 0
+        if not force and has_already:
             return False
         files = self.files()
-        # print("files = ", files)
         for m in files:
-            if binary_metadata_uuid is not None and binary_metadata_uuid != m.metadata:
+            if (
+                binary_metadata_uuid is not None
+                and binary_metadata_uuid != m.metadata.uuid
+            ):
                 continue
             path = m.metadata.try_as_path()
-            # print("path = ", path, " exists ", os.path.exists(path))
             data_url = None
             if path and path.exists(path):
                 if path.endswith(".pdf"):
@@ -247,7 +253,10 @@ class Document(models.Model):
                 if _t["content_type"] == PDF_MIME:
                     path = _t["filename"]
                     data_url = generate_pdf_thumbnail(path, blob=m.metadata.data)
-                if _t["content_type"] == EPUB_MIME:
+                elif _t["content_type"].startswith("image/"):
+                    path = _t["filename"]
+                    data_url = generate_image_thumbnail(path, blob=m.metadata.data)
+                elif _t["content_type"] == EPUB_MIME:
                     path = _t["filename"]
                     data_url = generate_epub_thumbnail(path, blob=m.metadata.data)
             if data_url is not None:
@@ -259,8 +268,16 @@ class Document(models.Model):
                 )
                 m.save()
                 has.save()
-                return True
-        return False
+                created = True
+        if created:
+            self.set_last_modified()
+            if has_already:
+                for v in previous_thumbnails:
+                    has = self.binary_metadata.all().get(
+                        metadata__uuid=v["metadata__uuid"]
+                    )
+                    has.delete()
+        return created
 
     class Meta:
         ordering = (

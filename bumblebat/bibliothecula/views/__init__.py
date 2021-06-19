@@ -14,7 +14,11 @@ from django.views.decorators.cache import cache_page
 from django.forms import formset_factory
 from ..models import *
 from ..forms import *
-from ..thumbnails import generate_pdf_thumbnail, generate_epub_thumbnail
+from ..thumbnails import (
+    generate_pdf_thumbnail,
+    generate_epub_thumbnail,
+    generate_image_thumbnail,
+)
 from ..text_extract import get_pdf_text, get_epub_text
 import re
 import io

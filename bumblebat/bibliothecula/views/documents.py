@@ -1,6 +1,8 @@
 from . import *
 from django import db
 from django.views.decorators.http import condition
+from django.http import FileResponse
+from uuid import UUID
 
 EMBEDDED_SUBMIT_VALUE = "embedded"
 LINK_SUBMIT_VALUE = "link"
@@ -9,6 +11,7 @@ LINK_SUBMIT_VALUE = "link"
 @staff_member_required
 @condition(last_modified_func=last_modified_document)
 def view_document(request, uuid):
+    uuid = UUID(uuid)
     try:
         doc = Document.objects.all().get(uuid=uuid)
     except Document.DoesNotExist:
@@ -51,6 +54,7 @@ def view_document(request, uuid):
 
 @staff_member_required
 def add_document_tag(request, uuid, tag=None):
+    uuid = UUID(uuid)
     try:
         doc = Document.objects.all().get(uuid=uuid)
     except Document.DoesNotExist:
@@ -88,6 +92,7 @@ def add_document_tag(request, uuid, tag=None):
 
 @staff_member_required
 def remove_document_tag(request, uuid, tag=None):
+    uuid = UUID(uuid)
     doc = get_object_or_404(Document, uuid=uuid)
     if request.method == "POST":
         tag_form = DocumentSetTag(request.POST)
@@ -120,6 +125,7 @@ def remove_document_tag(request, uuid, tag=None):
 
 @staff_member_required
 def add_document_storage(request, uuid):
+    uuid = UUID(uuid)
     try:
         doc = Document.objects.all().get(uuid=uuid)
     except Document.DoesNotExist:
@@ -169,7 +175,8 @@ def add_document_storage(request, uuid):
 @staff_member_required
 @condition(last_modified_func=last_modified_binary_metadata)
 def view_document_storage(request, uuid, metadata_uuid):
-    from django.http import FileResponse
+    uuid = UUID(uuid)
+    metadata_uuid = UUID(metadata_uuid)
 
     try:
         m = BinaryMetadata.objects.get(pk=metadata_uuid)
@@ -187,6 +194,7 @@ def view_document_storage(request, uuid, metadata_uuid):
                     "application/pdf",
                 ]
                 and not _t["content_type"].startswith("text/")
+                and not _t["content_type"].startswith("image/")
             ),
         )
         response["Content-Type"] = _t["content_type"]
@@ -222,17 +230,19 @@ def add_document(request):
 
 @staff_member_required
 def set_document_thumbnail(request, uuid, metadata_uuid=None):
+    uuid = UUID(uuid)
+    if metadata_uuid:
+        metadata_uuid = UUID(metadata_uuid)
     try:
         doc = Document.objects.all().get(uuid=uuid)
     except Document.DoesNotExist:
         raise Http404("Document with this uuid does not exist.")
-    response = HttpResponse(content_type="application/pdf")
     if metadata_uuid is not None:
         try:
             m = BinaryMetadata.objects.get(pk=metadata_uuid)
         except BinaryMetadata.DoesNotExist:
             raise Http404("Binary metadata with this uuid does not exist")
-    created = doc.create_thumbnail(binary_metadata_uuid=metadata_uuid)
+    created = doc.create_thumbnail(binary_metadata_uuid=metadata_uuid, force=True)
     if created:
         doc.set_last_modified()
         messages.add_message(request, messages.SUCCESS, f"Thumbnail created.")
@@ -245,6 +255,7 @@ def set_document_thumbnail(request, uuid, metadata_uuid=None):
 
 @staff_member_required
 def add_document_metadata(request, uuid, name=None, data=None):
+    uuid = UUID(uuid)
     try:
         doc = Document.objects.all().get(uuid=uuid)
     except Document.DoesNotExist:
@@ -281,6 +292,7 @@ def add_document_metadata(request, uuid, name=None, data=None):
 
 @staff_member_required
 def remove_document_metadata(request, uuid, metadata_uuid=None):
+    uuid = UUID(uuid)
     doc = get_object_or_404(Document, uuid=uuid)
     if metadata_uuid is not None:
         try:
@@ -309,6 +321,9 @@ def remove_document_metadata(request, uuid, metadata_uuid=None):
 
 @staff_member_required
 def remove_document_storage(request, uuid, metadata_uuid=None):
+    uuid = UUID(uuid)
+    if metadata_uuid is not None:
+        metadata_uuid = UUID(metadata_uuid)
     doc = get_object_or_404(Document, uuid=uuid)
     if metadata_uuid is not None:
         has = get_object_or_404(
@@ -357,6 +372,8 @@ def import_documents(request):
                         data_url = generate_pdf_thumbnail(f.name, blob=f.read())
                     elif f.name.endswith(".epub"):
                         data_url = generate_epub_thumbnail(f.name, blob=f.read())
+                    elif f.content_type.startswith("image"):
+                        data_url = generate_image_thumbnail(f.name, blob=f.read())
                 except Exception as exc:
                     messages.add_message(
                         request,
@@ -581,6 +598,9 @@ def import_documents_2(request, files=None):
 
 @staff_member_required
 def edit_plain_text_document(request, uuid, metadata_uuid=None):
+    uuid = UUID(uuid)
+    if metadata_uuid is not None:
+        metadata_uuid = UUID(metadata_uuid)
     try:
         doc = Document.objects.all().get(uuid=uuid)
     except Document.DoesNotExist:

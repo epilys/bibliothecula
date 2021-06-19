@@ -28,4 +28,4 @@ def is_plain_text(content_type):
 
 @register.filter(is_safe=False)
 def is_thumbnail_mime(content_type):
-    return content_type in THUMBNAIL_MIMES
+    return content_type in THUMBNAIL_MIMES or content_type.startswith("image/")

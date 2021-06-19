@@ -9,6 +9,31 @@ from wand.image import Image
 import subprocess
 
 
+def open_blob_from_path(path):
+    if os.path.isfile(path):
+        file_url = open(path, "rb")
+    else:
+        file_url = urlopen(path)
+    return file_url.read()
+
+
+def generate_image_thumbnail(path, blob=None):
+    if blob is not None and path is not None and len(path) > 0:
+        format_ = path
+    else:
+        blob = open_blob_from_path(path)
+        format_ = None
+
+    with Image(format=format_, blob=blob) as i:
+        with i.convert("webp") as page:
+            width = page.width
+            height = page.height
+            ratio = 100.0 / (width * 1.0)
+            new_height = int(ratio * height)
+            page.thumbnail(width=100, height=new_height)
+            return page.data_url()
+
+
 def generate_pdf_thumbnail(path, blob=None):
     if blob is None:
         with subprocess.Popen(
@@ -111,11 +136,7 @@ def generate_pdf_thumbnail_imagemagick(path, blob=None):
 def generate_epub_thumbnail(input_file, blob=None):
     # An epub is just a zip
     if blob is None:
-        if os.path.isfile(input_file):
-            file_url = open(input_file, "rb")
-        else:
-            file_url = urlopen(input_file)
-        blob = file_url.read()
+        blob = open_blob_from_path(input_file)
     epub = zipfile.ZipFile(BytesIO(blob), "r")
     extraction_strategies = [
         get_cover_from_manifest,
