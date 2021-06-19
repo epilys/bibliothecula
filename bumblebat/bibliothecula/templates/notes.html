@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load help_tags %}
+{% block title %}{{document}}{% endblock %}
+{% block style %}
+    <style>
+        body {
+            min-height: 100vh;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap:0;
+        }
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: min-content 1fr 1fr;
+            height: 100%;
+            width: 100%;
+            min-height: 100%;
+        }
+
+        h1.title {
+            grid-column: 1/ span 2;
+        }
+
+        div.tags, div.backrefs {
+            border-left: 2px solid black;
+        }
+
+    </style>
+{% endblock %}
+{% block content %}
+    <h1 class="title">{{ document.title }}</h1>
+    <div class="notes">
+        <h2>notes</h2>
+        <hr>
+        <a href="{% url 'edit_plain_text_document' document.uuid %}">Add note</a>
+        <ol>
+            {% for s in document.files %}
+                {% spaceless %}
+                    <li title="{{s.metadata.uuid}}">
+                        {% with content_type=s.metadata.try_get_content_type %}
+                            <div>
+                                {% if content_type %}
+                                    📎
+                                {% else %}
+                                    🔗
+                                {% endif %}
+                                <div class="filename">
+                                    {% if content_type %}
+                                        <a class="metadata" href="{% url 'document_storage_viewer' uuid=document.uuid metadata_uuid=s.metadata.uuid %}">{{ content_type.filename }}</a>
+                                    {% else %}
+                                        <a class="metadata" href="{{ s.metadata.contents_as_fileurl}}">{{ s.metadata.contents_as_str}}</a>
+                                    {% endif %}
+                                    <div class="select-all monospace">{{ s.metadata.uuid }}</div>
+                                </div>
+                            </div>
+
+                            {% if content_type %}
+                                <div class="content-type">[<code>{{ content_type.content_type }}</code> {{ content_type.size|filesizeformat}}]</div>
+                                {% if content_type.content_type|is_thumbnail_mime %}
+                                    <button type="submit" form="set-thumbnail-form" formaction="{% url 'set_document_thumbnail_2' uuid=document.uuid metadata_uuid=s.metadata.uuid %}">Set thumbnail</button>
+                                {% endif %}
+                                {% if content_type.content_type|is_plain_text %}
+                                    <form method="GET" action="{% url 'edit_plain_text_document_metadata' uuid=document.uuid metadata_uuid=s.metadata.uuid %}">
+                                        <button type="submit">Edit</button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+                        {% endwith %}
+                    </li>
+                {% endspaceless %}
+            {% empty %}
+                <li>No files.</li>
+            {% endfor %}
+        </ol>
+    </div>
+    <div class="tags">
+        <h2>tags</h2>
+        <hr>
+        <ol>
+            {% if backrefs %}
+                {% for r in backrefs %}
+                    <li><a href="{{ r.0.get_absolute_url }}">{{r.0}}</a> - <a href="{% url 'document_storage_viewer' r.0.uuid r.1.uuid %}">{{r.1}}</a></li>
+                {% endfor %}
+            {% endif %}
+        </ol>
+    </div>
+    <div class="refs">
+        <h2>refs</h2>
+        <hr>
+        <ol>
+            {% if file_refs %}
+                {% for r in file_refs %}
+                    <li><a href="{{ r.0.get_absolute_url }}">{{r.0}}</a> → <a href="">{{r.1}}</a></li>
+                {% endfor%}
+            {% endif %}
+        </ol>
+    </div>
+    <div class="backrefs">
+        <h2>backrefs</h2>
+        <hr>
+        <ol>
+            {% if doc_backrefs %}
+                {% for r in doc_backrefs %}
+                    <li><a href="{{ r.0.get_absolute_url }}">{{r.0}}</a> → <a href="{% url 'document_storage_viewer' r.0.uuid r.1.uuid %}">{{r.1}}</a></li>
+                {% endfor%}
+            {% endif %}
+            {% if file_backrefs %}
+                {% for r in file_backrefs %}
+                    <li><a href="{{ r.0.get_absolute_url }}">{{r.0}}</a> → <a href="">{{r.1}}</a></li>
+                {% endfor%}
+            {% endif %}
+        </ol>
+    </div>
+{% endblock %}

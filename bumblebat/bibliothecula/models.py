@@ -77,7 +77,11 @@ class Document(models.Model):
         return self.last_modified
 
     def get_absolute_url(self):
-        return reverse("view_document", kwargs={"uuid": self.uuid})
+        type_ = self.type_()
+        return reverse(
+            "view_notes" if type_ == "notes" else "view_document",
+            kwargs={"uuid": self.uuid},
+        )
 
     def get_thumbnail_html(self):
         data_url = self.get_thumbnail()

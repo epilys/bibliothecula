@@ -318,3 +318,5 @@ class SVGParser(HTMLParser):
 from .database import *
 from .tags import *
 from .documents import *
+from .storage import *
+from .notes import *

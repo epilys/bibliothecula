@@ -38,6 +38,7 @@ urlpatterns = [
         name="database_drop_item",
     ),
     path("add/document/", views.add_document, name="add_document"),
+    path("notes/<uuid>/", views.view_notes, name="view_notes"),
     path("document/<uuid>/", views.view_document, name="view_document"),
     path(
         "document/<uuid>/add-storage/",
@@ -71,6 +72,11 @@ urlpatterns = [
         "document/<uuid>/view/<metadata_uuid>",
         views.view_document_storage,
         name="view_document_storage",
+    ),
+    path(
+        "document/<uuid>/viewer/<metadata_uuid>",
+        views.document_storage_viewer,
+        name="document_storage_viewer",
     ),
     path(
         "document/<uuid>/edit/",

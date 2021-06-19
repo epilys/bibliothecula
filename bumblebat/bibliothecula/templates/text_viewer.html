@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load help_tags %}
+{% block title %}{{document}}{% endblock %}
+{% block style %}
+    <style>
+        input[type=radio] {
+            display: none;
+        }
+        input[type=radio] + label {
+            outline: 1px solid black;
+        }
+        input[type=radio] ~ div.show {
+            display: none;
+        }
+        input[type=radio]:checked + label {
+            font-weight: bolder;
+        }
+        #raw_radio[type=radio]:checked ~ #raw, #formatted_radio[type=radio]:checked ~ #formatted {
+            display: block;
+            width: 66ch;
+            white-space: normal;
+            word-wrap: break-word;
+            hyphens: auto;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        #raw pre {
+            white-space: pre-wrap;
+        }
+        main {
+            display: grid;
+            grid-template-columns: 1fr 10fr;
+            grid-auto-rows: auto;
+        }
+        div.actions {
+            grid-row: 1 / span 1;
+            grid-column: 1/ span 1;
+        }
+        div.note {
+            grid-row: span 1;
+            grid-column: 2/ span 1;
+            border-left: 2px outset black;
+            padding: 1rem 1rem;
+            border-bottom: 2px outset black;
+            border-bottom-right-radius: 17px;
+        }
+        div.refs {
+            grid-row: 2/span 1;
+            grid-column: 1/ span 1;
+        }
+
+        div.info {
+            grid-row: span 1;
+            grid-column: 2/ span 1;
+        }
+
+        ul.breadcrumb, ul.breadcrumb li {
+            display: flex;
+            gap: .3rem;
+            margin: 0;
+            padding: 0;
+            height: min-content;
+            min-width: min-content;
+            list-style: none;
+            align-items: last baseline;
+        }
+        ul h1, ul h2 {
+            margin: 0;
+
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="info">
+        <ul class="breadcrumb"><li><a href="{{ document.get_absolute_url }}"><h1 class="title">{{ document.title }}</h1></a></li><li><span aria-current="page"><h2>{{ type_.filename }}</h2></span></li></ul>
+        <table>
+            <tr>
+                <th>
+                    <code>size</code>
+                </th>
+                <td>
+                    {{ type_.size|filesizeformat }}
+                </td>
+                <th>
+                    <code>uuid</code>
+                </th>
+                <td class="select-all">
+                    {{ m.uuid }}
+                </td>
+                <th>
+                    <code>created</code>
+                </th>
+                <td>
+                    {{ m.created }}
+                </td>
+                <th>
+                    <code>last_modified</code>
+                </th>
+                <td>
+                    {{ m.last_modified }}
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="actions">
+        <form method="GET" action="{% url 'edit_plain_text_document_metadata' uuid=document.uuid metadata_uuid=m.uuid %}">
+            <button type="submit">edit</button>
+        </form>
+    </div>
+    <div class="note">
+        <input type="radio" id="formatted_radio" name="show" value="formatted" checked>
+        <label tabindex="0"for="formatted_radio">show formatted</label>
+        <input type="radio" id="raw_radio" name="show" value="raw">
+        <label tabindex="0" for="raw_radio">show raw</label>
+        <div class="show" id="formatted">
+            {{ text|safe }}
+        </div>
+        <div class="show" id="raw">
+            <pre>{{ text_raw|safe }}</pre>
+        </div>
+    </div>
+    <div class="refs">
+        <h2>refs</h2>
+        <hr>
+        {% if refs %}
+            <ol>
+                {% for r in refs %}
+                    <li><a href="{{ r.0.get_absolute_url }}">{{r.0}}</a> - <a href="{% url 'document_storage_viewer' r.0.uuid r.1.uuid %}">{{r.1}}</a></li>
+                {% endfor%}
+            </ol>
+        {% else %}
+            <p>no references found</p>
+        {% endif %}
+    </div>
+{% endblock %}
