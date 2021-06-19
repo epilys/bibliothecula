@@ -529,6 +529,14 @@ CLI_VIEW_FILE = SqlStatement(
     kind=(StatementKind.CLI | StatementKind.EXAMPLE),
 )
 
+REMOVE_DUPLICATE_ROWS = SqlStatement(
+    "REMOVE_DUPLICATE_ROWS",
+    """DELETE FROM table WHERE rowid NOT IN (SELECT MIN(rowid) FROM table GROUP BY unique_column_1, unique_column_2;""",
+    doc=f"""If you need to remove duplicate rows, adapt this statement to your table. The <code>MIN(rowid)</code> can be replaced by just <code>rowid</code> if you don't necessarily want the smallest row ids to survive.""",
+    callable_=False,
+    kind=(StatementKind.CLI | StatementKind.EXAMPLE),
+)
+
 
 def topsort():
     from bibliothecula.graphlib import TopologicalSorter
