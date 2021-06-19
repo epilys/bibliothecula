@@ -115,7 +115,7 @@ class NewDocument(forms.Form):
     filename.widget.attrs.update(
         {"rows": 3, "placeholder": "Filename cannot be empty."}
     )
-    index = forms.BooleanField(label="full-text index", required=True, initial=True)
+    index = forms.BooleanField(label="full-text index", required=False, initial=True)
     title = forms.CharField(
         label="document title", required=True, widget=forms.Textarea
     )

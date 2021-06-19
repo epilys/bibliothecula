@@ -142,14 +142,7 @@ def add_document_storage(request, uuid):
                 messages.add_message(
                     request, messages.SUCCESS, f"Added file {_f} with uuid {bm.uuid}"
                 )
-                return HttpResponseRedirect(
-                    reverse(
-                        "view_document",
-                        args=[
-                            uuid,
-                        ],
-                    )
-                )
+                return redirect(doc)
         elif LINK_SUBMIT_VALUE in request.POST:
             add_embedded_form = DocumentAddEmbeddedStorage()
             add_link_form = DocumentAddLinkStorage(request.POST)
@@ -165,14 +158,7 @@ def add_document_storage(request, uuid):
                 has.save()
                 doc.set_last_modified()
                 messages.add_message(request, messages.SUCCESS, f"Added path {_p}")
-                return HttpResponseRedirect(
-                    reverse(
-                        "view_document",
-                        args=[
-                            uuid,
-                        ],
-                    )
-                )
+                return redirect(doc)
         else:
             raise Http400(
                 f"Programming error: form submit values ({[EMBEDDED_SUBMIT_VALUE, LINK_SUBMIT_VALUE]}) were not in request.POST headers."
@@ -374,7 +360,7 @@ def import_documents(request):
                 except Exception as exc:
                     messages.add_message(
                         request,
-                        messages.WARN,
+                        messages.WARNING,
                         f"Could not create thumbnail for {f.name}: {exc}",
                     )
                 data_urls.append(data_url)
@@ -525,12 +511,16 @@ def import_documents_2(request, files=None):
                 .uuid
             )
         except:
-            book_type_uuid = ""
+            book_type_uuid = None
         initials = []
         for f in files:
             title = f.name
             author = ""
             date = ""
+            _type = "book"
+            _type_uuid = book_type_uuid
+            if _type_uuid is not None:
+                _type = ""
             try:
                 date_m = year_pattern.search(f.name)
                 date = date_m[1]
@@ -542,15 +532,36 @@ def import_documents_2(request, files=None):
                 title = author_title[2]
             except:
                 pass
+            try:
+                author_title_medium = author_title_medium_pattern.search(f.name)
+                author = author_title[1]
+                title = author_title[2]
+            except:
+                pass
+            try:
+                if f.content_type.startswith("image"):
+                    _type_uuid = (
+                        TextMetadata.objects.all()
+                        .filter(name=TYPE_NAME, data="artwork")
+                        .first()
+                        .uuid
+                    )
+                    _type = "artwork"
+            except:
+                pass
             print("\n\ninitials\\")
             dbg(f.name)
             initials.append(
                 {
                     "original_filename": f.name,
                     "filename": f.name,
+                    "index": _type
+                    not in [
+                        "artwork",
+                    ],
                     "title": title,
                     "date": date,
-                    "_type": book_type_uuid,
+                    "_type": str(_type_uuid) if _type_uuid is not None else "",
                     "author0": author,
                     "tag0": "",
                 }

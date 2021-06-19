@@ -29,6 +29,7 @@ import inspect, ast
 
 year_pattern = re.compile("[^\d]*([12]\d\d\d)[^\d]*")
 author_title_pattern = re.compile("([^-]+)\s*-\s*([^.(]+).*$")
+author_title_medium_pattern = re.compile("([^,]+)\s*,\s*([^,.(]+)\s*,\s*([^,.(]+).*$")
 
 
 def dbg(result):
@@ -182,8 +183,8 @@ def view_collection(request):
         try:
             with connections["bibliothecula"].cursor() as cursor:
                 cursor.execute(
-                        f"select uuid, snippet({FTS_NAME},-1,'<b>','</b>','\u200a[…]\u200a',36) as snippet from {FTS_NAME}('\"{escaped}\"')"
-                        )
+                    f"select uuid, snippet({FTS_NAME},-1,'<b>','</b>','\u200a[…]\u200a',36) as snippet from {FTS_NAME}('\"{escaped}\"')"
+                )
                 snippets = {uuid.UUID(i[0]): i[1] for i in cursor.fetchall()}
         except Exception as exc:
             print("snippets exc:", exc)
