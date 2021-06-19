@@ -3,6 +3,58 @@
 {% block title %}{{document}}{% endblock %}
 {% block style %}
     <style>
+        :root {
+            --text-base: 1em;
+            --text-ratio: 1.25;
+            --text-xxxl: calc(var(--text-ratio) * var(--text-xxl));
+            --text-xxl: calc(var(--text-ratio) * var(--text-xl));
+            --text-xl: calc(var(--text-ratio) * var(--text-l));
+            --text-l: calc(var(--text-ratio) * var(--text-m));
+            --text-m: var(--text-base);
+            --text-s: calc(var(--text-m) / var(--text-ratio));
+            --text-xs: calc(var(--text-s) / var(--text-ratio));
+            --space-base: 0.25rem;
+            --space-ratio: 2.5;
+            --space-xs: var(--space-base);
+            --space-s: calc(var(--space-ratio) * var(--space-xs));
+            --space-m: calc(var(--space-ratio) * var(--space-s));
+            --space-l: calc(var(--space-ratio) * var(--space-m));
+            --space-xl: calc(var(--space-ratio) * var(--space-l));
+            --space-xxl: calc(var(--space-ratio) * var(--space-xl));
+            --space-px: 1px;
+        }
+
+        div#formatted {
+            counter-reset: ref 0;
+        }
+
+        a.ref {
+            counter-increment: ref;
+        }
+
+        a.ref + sup:after {
+            content: "[" counter(ref) "]";
+        }
+        span.ref-expand:before {
+            content: attr(data-ref-num) ". ";
+            width:0;
+            height:0;
+        }
+        span.ref-expand {
+            display: inline-block;
+            padding: 0.3rem;
+            outline: 1px solid black;
+            background: black;
+            color: white;
+            float: right;
+            font-size: 1rem;
+            text-align: left;
+            transform-origin: left;
+            transform: translateX(100%) translateY(-100%);
+        }
+        span.ref-expand a, span.ref-expand a:visited {
+          color: white;
+        }
         input[type=radio] {
             display: none;
         }
@@ -19,7 +71,6 @@
             display: block;
             width: 66ch;
             white-space: normal;
-            word-wrap: break-word;
             hyphens: auto;
             word-break: break-word;
             overflow-wrap: break-word;
@@ -33,9 +84,13 @@
             grid-template-columns: 1fr 10fr;
             grid-auto-rows: auto;
         }
-        div.actions {
-            grid-row: 1 / span 1;
+        div.sidebar {
             grid-column: 1/ span 1;
+            grid-row: 1/ span 2;
+        }
+        div.info {
+            grid-row: span 1;
+            grid-column: 2/ span 1;
         }
         div.note {
             grid-row: span 1;
@@ -45,14 +100,20 @@
             border-bottom: 2px outset black;
             border-bottom-right-radius: 17px;
         }
+
+        /* sidebar */
+        div.actions {
+            grid-row: 1 / span 1;
+            grid-column: 1/ span 1;
+        }
         div.refs {
-            grid-row: 2/span 1;
+            grid-row: 3/span 1;
             grid-column: 1/ span 1;
         }
 
-        div.info {
-            grid-row: span 1;
-            grid-column: 2/ span 1;
+        div.backrefs {
+            grid-row: 2/span 1;
+            grid-column: 1/ span 1;
         }
 
         ul.breadcrumb, ul.breadcrumb li {
@@ -68,6 +129,157 @@
         ul h1, ul h2 {
             margin: 0;
 
+        }
+        div.show img {
+            max-width:100%;
+            margin:0;
+            vertical-align: middle;
+            border:var(--space-px) solid black;
+        }
+        div.show a {
+            text-decoration:underline;
+            text-decoration-skip-ink:auto;
+            text-decoration-skip:ink
+        }
+        div.show accr {
+            border-bottom:1px dotted var(--color-main-5)
+        }
+        div.show ul {
+            padding-left: 0;
+            list-style-position: inside;
+            list-style-type:disc
+        }
+        div.show ul ul {
+            list-style-type:circle
+        }
+        div.show ul ul ul {
+            list-style-type:square
+        }
+        div.show blockquote {
+            padding: .001rem .8rem;
+            margin: 0 0 1rem;
+            font-size: 1.1rem;
+            border-left: 5px solid #eee;
+        }
+        div.show code {
+            padding: 2px 4px;
+            font-size: 90%;
+            color: #c7254e;
+            background-color: #f9f2f4;
+            border-radius: 4px;
+        }
+        div.show pre {
+            display: block;
+            padding: 9.5px;
+            margin: 0 0 10px;
+            font-size: 13px;
+            line-height: 1.42857143;
+            color: #333;
+            word-break: break-all;
+            word-wrap: break-word;
+            background-color: #f5f5f5;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        div.show pre code {
+            padding: 0;
+            font-size: inherit;
+            color: inherit;
+            white-space: pre-wrap;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        code, kbd, pre, samp {
+            font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+        }
+        div.show dd,
+        div.show dt,
+        div.show li,
+        div.show p {
+            line-height:1.5
+        }
+        div.show h1:not(:first-child) {
+            margin-top:var(--space-m)
+        }
+        div.show h2:not(:first-child) {
+            margin-top:var(--space-m)
+        }
+        div.show h3:not(:first-child) {
+            margin-top:var(--space-s)
+        }
+        div.show h4:not(:first-child) {
+            margin-top:var(--space-xs)
+        }
+        div.show h5:not(:first-child) {
+            margin-top:var(--space-xxs)
+        }
+        div.show li>ol,
+        div.show li>ul {
+            margin-left:var(--space-s)
+        }
+        th {
+            text-align:left
+        }
+        div.show table {
+            font-variant-numeric:lining-nums tabular-nums;
+            width:100%;
+            border-collapse:collapse
+        }
+        div.show table td,
+        div.show table th {
+            vertical-align:middle;
+            padding:var(--space-s);
+            border:var(--space-px) solid
+        }
+        div.show table.bo-v td,
+        div.show table.bo-v th {
+            border-top:none;
+            border-bottom:none
+        }
+        div.show table.bo-v td:first-child,
+        div.show table.bo-v th:first-child{
+            border-left:none
+        }
+        div.show table.bo-v td:last-child,
+        div.show table.bo-v th:last-child{
+            border-right:none
+        }
+        div.show table.bo-h td,
+        div.show table.bo-h th{
+            border-left:none;
+            border-right:none
+        }
+        div.show table.bo-h tr:first-child td,
+        div.show table.bo-h tr:first-child th{
+            border-top:none
+        }
+        div.show table.bo-h tr:last-child td,
+        div.show table.bo-h tr:last-child th{
+            border-bottom:none
+        }
+        div.show table.bo-no td,
+        div.show table.bo-no th{
+            border:none
+        }
+        div.show table.auto{
+            width:auto
+        }
+        div.show table.fixed{
+            table-layout:fixed
+        }
+        div.show table.dense td,
+        div.show table.dense th{
+            padding-top:var(--space-xs);
+            padding-bottom:var(--space-xs);
+            padding-left:var(--space-xs);
+            padding-right:var(--space-xs)
+        }
+        div.show table.space td,
+        div.show table.space th{
+            padding-top:var(--space-m);
+            padding-bottom:var(--space-m);
+            padding-left:var(--space-m);
+            padding-right:var(--space-m)
         }
     </style>
 {% endblock %}
@@ -103,11 +315,6 @@
             </tr>
         </table>
     </div>
-    <div class="actions">
-        <form method="GET" action="{% url 'edit_plain_text_document_metadata' uuid=document.uuid metadata_uuid=m.uuid %}">
-            <button type="submit">edit</button>
-        </form>
-    </div>
     <div class="note">
         <input type="radio" id="formatted_radio" name="show" value="formatted" checked>
         <label tabindex="0"for="formatted_radio">show formatted</label>
@@ -120,17 +327,37 @@
             <pre>{{ text_raw|safe }}</pre>
         </div>
     </div>
-    <div class="refs">
-        <h2>refs</h2>
-        <hr>
-        {% if refs %}
-            <ol>
-                {% for r in refs %}
-                    <li><a href="{{ r.0.get_absolute_url }}">{{r.0}}</a> - <a href="{% url 'document_storage_viewer' r.0.uuid r.1.uuid %}">{{r.1}}</a></li>
-                {% endfor%}
-            </ol>
-        {% else %}
-            <p>no references found</p>
-        {% endif %}
+    <div class="sidebar">
+        <div class="actions">
+            <form method="GET" action="{% url 'edit_plain_text_document_metadata' uuid=document.uuid metadata_uuid=m.uuid %}">
+                <button type="submit">edit</button>
+            </form>
+        </div>
+        <div class="backrefs">
+            <h2>backrefs</h2>
+            <hr>
+            {% if backrefs %}
+                <ol>
+                    {% for r in backrefs %}
+                        <li><a href="{{ r.0.get_absolute_url }}">{{r.0}}</a> - <a href="{% url 'document_storage_viewer' r.0.uuid r.1.uuid %}">{{r.2.filename}}</a></li>
+                    {% endfor%}
+                </ol>
+            {% else %}
+                <p>no backreferences found</p>
+            {% endif %}
+        </div>
+        <div class="refs">
+            <h2>refs</h2>
+            <hr>
+            {% if refs %}
+                <ol>
+                    {% for r in refs %}
+                        <li><a href="{{ r.0.get_absolute_url }}">{{r.0}}</a> - <a href="{% url 'document_storage_viewer' r.0.uuid r.1.uuid %}">{{r.2.filename}}</a></li>
+                    {% endfor%}
+                </ol>
+            {% else %}
+                <p>no references found</p>
+            {% endif %}
+        </div>
     </div>
 {% endblock %}
