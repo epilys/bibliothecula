@@ -226,14 +226,16 @@ ul.filelist {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-evenly;
-  height: 100%;
-  row-gap: 5px;
-  column-gap: 2px;
+  height: min-content;
+  row-gap: 4px;
+  column-gap: 4px;
 }
 
 .tagcloud ul li {
   display: inline-block;
   padding: 0;
+  height: min-content;
+  flex: 0 0 auto;
 }
 
 a.item-tag {
@@ -247,6 +249,8 @@ a.item-tag {
   border-radius: 3px;
   padding: 0.35em 0.45em;
   border-color: #2c2e352e;
+  user-select: all;
+  flex: 0 0 auto;
 }
 
 a.item-tag:hover {
@@ -498,7 +502,7 @@ nav.breadcrumb {
 }
 
 .breadcrumb li:first-child::before {
-  content: "";
+  content: unset;
 }
 
 table {
@@ -636,28 +640,33 @@ div.header-left>* {
 
 .metadata+.uuid {
   position: absolute;
+  opacity: 0;
+  visibility: hidden;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: monospace;
+  transition: all 0 .5s linear;
+  width: 0;
+  height: 0;
+}
+
+.metadata:hover+.uuid,
+.uuid:hover {
   background: white;
+  display: block;
   color: var(--black-color);
+  opacity: 1;
+  transform: translateY(-50%);
+  transition: all 0s 1s linear;
+  height: auto;
+  visibility: visible;
+  width: initial;
+  height: initial;
   padding: .3rem .5rem;
   border: 1px solid grey;
   border-radius: 2px;
   user-select: all;
   cursor: copy;
-  display: block;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .5s .5s;
-  font-size: 0.75rem;
-  font-weight: 500;
-  font-family: monospace;
-}
-
-.metadata:hover+.uuid,
-.uuid:hover {
-  opacity: 1;
-  transition: opacity 0s 1s;
-  height: auto;
-  visibility: visible;
 }
 
 #id_null:checked~#id__type {
@@ -767,4 +776,12 @@ div.lineclamp-5 {
 div.lineclamp:hover {
   display: initial;
   overflow: initial;
+}
+
+.select-all {
+  user-select: all;
+}
+
+.monospace {
+  font-family: monospace;
 }
