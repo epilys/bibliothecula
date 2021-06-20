@@ -57,7 +57,7 @@ body {
 
 body.index {
   row-gap: 2rem;
-  row-gap: min(10vw, 2rem);
+  row-gap: min(6vw, 2rem);
 }
 
 a, a:visited {
@@ -563,6 +563,12 @@ div.repo {
 
 div.repo a:visited {
   color: white;
+}
+
+code, pre {
+  font-family: "IBM Plex Mono", "DejaVu Sans Mono", "Inconsolata", monospace;
+  font-weight: 500;
+  font-style: normal;
 }
 
 pre {
