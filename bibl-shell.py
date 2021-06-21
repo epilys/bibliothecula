@@ -485,6 +485,19 @@ class DbObject:
         """This method deletes object from database. Obviously be sure you want that."""
         ...
 
+    def as_dict(self) -> Dict[str, Optional[str]]:
+        uuid_enc = lambda u, b: u.hex if isinstance(u, uuid.UUID) else b(u)
+        none_enc = lambda n: None if n is None else str(n)
+        columns = self.__class__.COLUMNS
+        return {
+            uuid_enc(k, lambda x: str(x)): uuid_enc(v, none_enc)
+            for k, v in self.__dict__.items()
+            if k in columns
+        }
+
+    def as_json(self) -> str:
+        return json.dumps(self.as_dict(), separators=(",", ":"))
+
 
 class Document(DbObject):
     """Document class. Changes are not saved to database unless save() is called."""
