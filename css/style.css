@@ -8,7 +8,7 @@
   --blood: maroon;
   --spoiled-orange: #8a7521;
   --color-syntax-constant: #005cc5;
-  --color-syntax-keyword: #d73a49;
+  --color-syntax-keyword: var(--blood);
   --color-syntax-string: #032f62;
 }
 
@@ -23,8 +23,15 @@ ul {
 
 @font-face {
   font-family: 'Amstelvar Roman';
-  src: url('fonts/Amstelvar-Roman.woff2') format('woff2'),
-    url('fonts/Amstelvar-Roman.ttf') format('truetype');
+  src: url('fonts/Amstelvar-Roman-VF.woff2') format('woff2'),
+    url('fonts/Amstelvar-Roman.ttf') format('truetype'),
+    local("Amstelvar Roman");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.monospace {
+  font-family: "IBM Plex Mono", "DejaVu Sans Mono", "Inconsolata", monospace;
   font-weight: normal;
   font-style: normal;
 }
@@ -75,15 +82,19 @@ header {
   place-self: center;
 }
 
-header:after {
-  position: absolute;
-  color: black;
-  font-size: xx-small;
+header:before {
+  position: relative;
+  font-size: small;
+  font-weight: bolder;
+  font-style: oblique;
+  font-variation-settings: "GRAD"0.5;
+  color: #3a3433;
   margin-bottom: .5em;
   margin-bottom: min(.5vw, 1em);
   place-self: center;
   margin-left: 15vw;
-  font-style: oblique;
+  letter-spacing: 0.4px;
+  top: -2vmin;
 }
 
 h1 {
@@ -92,9 +103,6 @@ h1 {
   --cover-width: min(323px,16vw);
   --cover-height: 209px;
   --cover-bg-size: 378px;
-  --padding-tb: .3rem;
-  --padding-lr: 1rem;
-  --font-sz: .7rem;
   --column-gap: min(1vw, 0.8rem);
   font-variation-settings: "opsz"8, "GRAD"0.55;
   /* fallback */
@@ -102,7 +110,7 @@ h1 {
   /* scale with viewport width size */
   font-size: min(5vw, 3rem);
   /* Color fallback, otherwise use background-clip in the @supports block below */
-  color: var(--blood);
+  color: #7c1a1a;
   margin: 0;
   border-bottom: 0;
   text-align: center;
@@ -117,6 +125,15 @@ h1 {
     background: radial-gradient(var(--spoiled-orange) 12%, var(--blood) 22%);
     background-size: 3px 4px;
     background-clip: text;
+  }
+}
+
+@supports not (background-clip: text) {
+  h1 {
+    --dark-blood: #5c1212;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 0px var(--dark-blood), -1px -1px 0px var(--dark-blood), -2px 2px 0px var(--dark-blood);
+    font-variation-settings: "opsz"12, "GRAD"0;
   }
 }
 
@@ -143,6 +160,7 @@ h1:after {
   font-size: 0;
   font-weight: normal;
   pointer-events: none;
+  text-shadow: none;
 }
 
 .index h1:before,
@@ -153,14 +171,14 @@ h1:after {
   height: min(1vw, 0.8rem);
 }
 
-@media (hover: hover) and (any-pointer: fine) {
-  details.touch {
-    display: none;
-    width: 0;
-    height: 0;
-    pointer-events: none;
-  }
+details.touch {
+  display: none;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
 
+@media (hover: hover) and (any-pointer: fine) {
   details.touch h1 {
     display: none;
     width: 0;
@@ -177,7 +195,7 @@ h1:after {
     pointer-events: none;
   }
 
-  header:after {
+  header:before {
     content: "hover over!";
   }
 
@@ -194,7 +212,7 @@ h1:after {
       --cover-width: min(323px,50vw);
     }
 
-    header:hover h1:before { 
+    header:hover h1:before {
       grid-column: 1;
       grid-row: 2;
     }
@@ -218,8 +236,8 @@ h1:after {
   }
 }
 
-@media (hover: none) or (not (any-pointer: fine)) {
-  header:after {
+@media (not ((hover: hover) and (any-pointer: fine))), (hover: none) {
+  header:before {
     content: "click me!";
   }
 
@@ -232,6 +250,7 @@ h1:after {
     height: min-content;
     width: min-content;
     cursor: pointer;
+    pointer-events: initial;
   }
 
   details.touch>summary {
@@ -252,24 +271,24 @@ h1:after {
       --cover-width: min(323px,50vw);
     }
 
-    details.touch[open] h1:before {
+    details.touch[open] h1.touch:before {
       grid-column: 1;
       grid-row: 2;
     }
 
-    details.touch[open] h1:after {
+    details.touch[open] h1.touch:after {
       grid-column: 1;
       grid-row: 3;
     }
   }
 
   @media (min-width: 1000px) {
-    details.touch[open] h1:before {
+    details.touch[open] h1.touch:before {
       grid-column: 2 / span 1;
       grid-row: 1;
     }
 
-    details.touch[open] h1:after {
+    details.touch[open] h1.touch:after {
       grid-column: 2 / span 1;
       grid-row: 2;
     }
@@ -286,7 +305,7 @@ div.h1 {
   right: 20%;
 }
 
-header:hover h1, details.touch[open] h1 {
+header:hover h1.hover, details.touch[open] h1.touch {
   /* on hover, the left grid item is lost and the column gap is lost as well so
    * compensate with the same value used for the column gap */
   margin-left: var(--column-gap);
@@ -297,10 +316,10 @@ header:hover h1, details.touch[open] h1 {
   position: relative;
 }
 
-header:hover h1:after, details.touch[open] h1:after {
+header:hover h1.hover:after, details.touch[open] h1.touch:after {
   content: attr(title);
   border: none;
-  font-size: var(--font-sz);
+  font-size: .7rem;
   text-align: justify;
   align-self: center;
   margin: 0;
@@ -309,7 +328,7 @@ header:hover h1:after, details.touch[open] h1:after {
   background: #e6b725;
   z-index: 998;
   color: var(--fg-color);
-  padding: var(--padding-tb) var(--padding-lr);
+  padding: .7rem .6rem .5rem .7rem;
   box-sizing: border-box;
   transition: all .5s var(--hover-delay) var(--transition-fn);
   /* Create new stacking context */
@@ -319,7 +338,7 @@ header:hover h1:after, details.touch[open] h1:after {
   border-top: 2px outset #ab6a2d;
 }
 
-header:hover h1:before, details.touch[open] h1:before {
+header:hover h1.hover:before, details.touch[open] h1.touch:before {
   border: none;
   background-color: var(--bg-color);
   background-image: url(https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Dracula-First-Edition-1897.jpg/344px-Dracula-First-Edition-1897.jpg);
@@ -490,7 +509,7 @@ blockquote {
 
 @media (max-width: 66ch) {
 blockquote {
-  padding: 0rem 1rem 2rem 1rem;
+  padding: 0rem 1.5rem 2rem 1.5rem;
   grid-column: span 12;
 }
 }
@@ -559,18 +578,23 @@ p.def {
 div.repo {
   background: #000;
   color: white;
-  padding: 5px;
+  padding: .4rem .5rem .3rem .5rem;
   width: auto;
-  border-radius: 2px;
+  border-radius: .2rem;
   word-break: break-all;
   word-wrap: anywhere;
   overflow-x: hidden;
   max-width: max-content;
   hyphens: auto;
+  letter-spacing: .9px;
 }
 
-div.repo a:visited {
+div.repo a, div.repo a:visited {
   color: white;
+}
+
+abbr.gpl {
+  font-family: "IBM Plex Mono", "DejaVu Sans Mono", "Inconsolata", monospace;
 }
 
 code, pre {

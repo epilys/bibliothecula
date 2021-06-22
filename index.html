@@ -33,7 +33,7 @@
   <figure id="d3-zoom" class="zoom">
     <a class="zoom" href="#web-gui"><img width="1908" height="1384" src='./img/screenshot-d3-tag-graph.webp' alt="d3.js tag visualization" decoding="async" loading="lazy"></a>
     <figcaption>
-      <a href="https://bl.ocks.org/heybignick/3faf257bbbbc7743bb72310d03b86ee8" rel="external nofollow">d3.js</a> tag visualization (<em>click to close</em>)
+      <a href="https://bl.ocks.org/heybignick/3faf257bbbbc7743bb72310d03b86ee8" rel="external nofollow"><code>d3.js</code></a> tag visualization (<em>click to close</em>)
     </figcaption>
   </figure>
   <figure id="document-zoom" class="zoom">
@@ -45,7 +45,7 @@
     <details class="touch"><summary><h1 class="touch" title="the colorscheme of the page is inspired by the cover of the first edition of Dracula by Bram Stoker in 1897.">bibliothecula</h1></summary></details>
     <picture>
       <source srcset="./img/logo.webp" type="image/webp">
-      <img class="logo" src="./img/logo.png" alt="bibliothecula logo">
+      <img class="logo" src="../img/logo.png" alt="bibliothecula logo" title="Illustration of bat from De arte venandi cum avibus by HRE Frederick II (circa 1240s). It's a visual pun because it looks like an open book viewed from above, and also bibliothecula shares a suffix with the word Dracula.">
     </picture>
   </header>
   <blockquote>
@@ -73,206 +73,206 @@
   <div>
     <h2>what <a href="https://github.com/epilys/bibliothecula/tree/main/docs">🔗</a></h2>
     <pre>
-        <span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> NOT EXISTS <span class="pl-s"><span class="pl-pds">"</span>Documents<span class="pl-pds">"</span></span> (
-                <span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span> <span class="pl-k">CHAR</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">PRIMARY KEY</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>title<span class="pl-pds">"</span></span> <span class="pl-k">TEXT</span> <span class="pl-k">NOT NULL</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>title_suffix<span class="pl-pds">"</span></span> <span class="pl-k">TEXT</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
-                        <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>)),
-                <span class="pl-s"><span class="pl-pds">"</span>last_modified<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
-                        <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>))
-        );
-        <span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> NOT EXISTS <span class="pl-s"><span class="pl-pds">"</span>TextMetadata<span class="pl-pds">"</span></span> (
-                <span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">PRIMARY KEY</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">text</span> <span class="pl-k">NULL</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span> <span class="pl-k">text</span> <span class="pl-k">NOT NULL</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>last_modified<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span>
-        );
-        <span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> NOT EXISTS <span class="pl-s"><span class="pl-pds">"</span>DocumentHasTextMetadata<span class="pl-pds">"</span></span> (
-                <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span> <span class="pl-k">INTEGER</span> <span class="pl-k">NOT NULL</span> <span class="pl-k">PRIMARY KEY</span> AUTOINCREMENT,
-                <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">TEXT</span> <span class="pl-k">NOT NULL</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>document_uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">REFERENCES</span> <span class="pl-s"><span class="pl-pds">"</span>Documents<span class="pl-pds">"</span></span> (<span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span>) DEFERRABLE INITIALLY DEFERRED,
-                <span class="pl-s"><span class="pl-pds">"</span>metadata_uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">REFERENCES</span> <span class="pl-s"><span class="pl-pds">"</span>TextMetadata<span class="pl-pds">"</span></span> (<span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span>) DEFERRABLE INITIALLY DEFERRED,
-                <span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
-                        <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>)),
-                <span class="pl-s"><span class="pl-pds">"</span>last_modified<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
-                        <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>))
-        );
-        <span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> NOT EXISTS <span class="pl-s"><span class="pl-pds">"</span>BinaryMetadata<span class="pl-pds">"</span></span> (
-                <span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">PRIMARY KEY</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">text</span> <span class="pl-k">NULL</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span> BLOB <span class="pl-k">NOT NULL</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>last_modified<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span>
-        );
-        <span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> NOT EXISTS <span class="pl-s"><span class="pl-pds">"</span>DocumentHasBinaryMetadata<span class="pl-pds">"</span></span> (
-                <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span> <span class="pl-k">INTEGER</span> <span class="pl-k">NOT NULL</span> <span class="pl-k">PRIMARY KEY</span> AUTOINCREMENT,
-                <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">TEXT</span> <span class="pl-k">NOT NULL</span>,
-                <span class="pl-s"><span class="pl-pds">"</span>document_uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">REFERENCES</span> <span class="pl-s"><span class="pl-pds">"</span>Documents<span class="pl-pds">"</span></span> (<span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span>) DEFERRABLE INITIALLY DEFERRED,
-                <span class="pl-s"><span class="pl-pds">"</span>metadata_uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">REFERENCES</span> <span class="pl-s"><span class="pl-pds">"</span>BinaryMetadata<span class="pl-pds">"</span></span> (<span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span>) DEFERRABLE INITIALLY DEFERRED,
-                <span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
-                        <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>)),
-                <span class="pl-s"><span class="pl-pds">"</span>last_modified<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
-                        <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>))
-        );
-        <span class="pl-c"><span class="pl-c">/*</span> document_title_authors_text_view_fts(title,authors,full_text,uuid) <span class="pl-c">*/</span></span>
-        CREATE VIRTUAL TABLE document_title_authors_text_view_fts
-        USING fts5 (
-            title,
-            authors,
-            full_text,
-            uuid UNINDEXED)
-        ;
-        <span class="pl-c"><span class="pl-c">/*</span> document_title_authors(rowid,title,authors) <span class="pl-c">*/</span></span>
-        <span class="pl-k">CREATE</span> <span class="pl-k">VIEW</span> <span class="pl-en">document_title_authors</span> (
-            rowid,
-            title,
-            authors) <span class="pl-k">AS</span>
+<span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> NOT EXISTS <span class="pl-s"><span class="pl-pds">"</span>Documents<span class="pl-pds">"</span></span> (
+        <span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span> <span class="pl-k">CHAR</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">PRIMARY KEY</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>title<span class="pl-pds">"</span></span> <span class="pl-k">TEXT</span> <span class="pl-k">NOT NULL</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>title_suffix<span class="pl-pds">"</span></span> <span class="pl-k">TEXT</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
+                <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>)),
+        <span class="pl-s"><span class="pl-pds">"</span>last_modified<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
+                <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>))
+);
+<span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> NOT EXISTS <span class="pl-s"><span class="pl-pds">"</span>TextMetadata<span class="pl-pds">"</span></span> (
+        <span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">PRIMARY KEY</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">text</span> <span class="pl-k">NULL</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span> <span class="pl-k">text</span> <span class="pl-k">NOT NULL</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>last_modified<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span>
+);
+<span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> NOT EXISTS <span class="pl-s"><span class="pl-pds">"</span>DocumentHasTextMetadata<span class="pl-pds">"</span></span> (
+        <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span> <span class="pl-k">INTEGER</span> <span class="pl-k">NOT NULL</span> <span class="pl-k">PRIMARY KEY</span> AUTOINCREMENT,
+        <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">TEXT</span> <span class="pl-k">NOT NULL</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>document_uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">REFERENCES</span> <span class="pl-s"><span class="pl-pds">"</span>Documents<span class="pl-pds">"</span></span> (<span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span>) DEFERRABLE INITIALLY DEFERRED,
+        <span class="pl-s"><span class="pl-pds">"</span>metadata_uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">REFERENCES</span> <span class="pl-s"><span class="pl-pds">"</span>TextMetadata<span class="pl-pds">"</span></span> (<span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span>) DEFERRABLE INITIALLY DEFERRED,
+        <span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
+                <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>)),
+        <span class="pl-s"><span class="pl-pds">"</span>last_modified<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
+                <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>))
+);
+<span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> NOT EXISTS <span class="pl-s"><span class="pl-pds">"</span>BinaryMetadata<span class="pl-pds">"</span></span> (
+        <span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">PRIMARY KEY</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">text</span> <span class="pl-k">NULL</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span> BLOB <span class="pl-k">NOT NULL</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>last_modified<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span>
+);
+<span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> NOT EXISTS <span class="pl-s"><span class="pl-pds">"</span>DocumentHasBinaryMetadata<span class="pl-pds">"</span></span> (
+        <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span> <span class="pl-k">INTEGER</span> <span class="pl-k">NOT NULL</span> <span class="pl-k">PRIMARY KEY</span> AUTOINCREMENT,
+        <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">TEXT</span> <span class="pl-k">NOT NULL</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>document_uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">REFERENCES</span> <span class="pl-s"><span class="pl-pds">"</span>Documents<span class="pl-pds">"</span></span> (<span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span>) DEFERRABLE INITIALLY DEFERRED,
+        <span class="pl-s"><span class="pl-pds">"</span>metadata_uuid<span class="pl-pds">"</span></span> <span class="pl-k">char</span>(<span class="pl-c1">32</span>) <span class="pl-k">NOT NULL</span> <span class="pl-k">REFERENCES</span> <span class="pl-s"><span class="pl-pds">"</span>BinaryMetadata<span class="pl-pds">"</span></span> (<span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span>) DEFERRABLE INITIALLY DEFERRED,
+        <span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
+                <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>)),
+        <span class="pl-s"><span class="pl-pds">"</span>last_modified<span class="pl-pds">"</span></span> datetime <span class="pl-k">NOT NULL</span> DEFAULT (strftime (<span class="pl-s"><span class="pl-pds">'</span>%Y-%m-%d %H:%M:%f<span class="pl-pds">'</span></span>,
+                <span class="pl-s"><span class="pl-pds">'</span>now<span class="pl-pds">'</span></span>))
+);
+<span class="pl-c"><span class="pl-c">/*</span> document_title_authors_text_view_fts(title,authors,full_text,uuid) <span class="pl-c">*/</span></span>
+CREATE VIRTUAL TABLE document_title_authors_text_view_fts
+USING fts5 (
+    title,
+    authors,
+    full_text,
+    uuid UNINDEXED)
+;
+<span class="pl-c"><span class="pl-c">/*</span> document_title_authors(rowid,title,authors) <span class="pl-c">*/</span></span>
+<span class="pl-k">CREATE</span> <span class="pl-k">VIEW</span> <span class="pl-en">document_title_authors</span> (
+    rowid,
+    title,
+    authors) <span class="pl-k">AS</span>
+<span class="pl-k">SELECT</span>
+    <span class="pl-k">*</span>
+<span class="pl-k">FROM</span>
+    document_title_without_authors
+<span class="pl-k">UNION</span>
+<span class="pl-k">SELECT</span>
+    <span class="pl-k">*</span>
+<span class="pl-k">FROM</span>
+    document_title_with_authors
+;
+<span class="pl-c"><span class="pl-c">/*</span> document_title_authors_text_view(rowid,title,authors,full_text) <span class="pl-c">*/</span></span>
+<span class="pl-k">CREATE</span> <span class="pl-k">VIEW</span> <span class="pl-en">document_title_authors_text_view</span> (
+    rowid,
+    title,
+    authors,
+    full_text) <span class="pl-k">AS</span>
+<span class="pl-k">SELECT</span>
+    <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">AS</span> uuid,
+    <span class="pl-c1">d</span>.<span class="pl-c1">title</span> <span class="pl-k">AS</span> title,
+    GROUP_CONCAT (
+        <span class="pl-c1">authors</span>.<span class="pl-c1">author</span>) <span class="pl-k">AS</span> authors,
+    <span class="pl-c1">bm</span>.<span class="pl-c1">data</span> <span class="pl-k">AS</span> full_text
+<span class="pl-k">FROM</span>
+    Documents <span class="pl-k">AS</span> d,
+    DocumentHasBinaryMetadata <span class="pl-k">AS</span> dhbm,
+    BinaryMetadata <span class="pl-k">AS</span> bm,
+    (
+        <span class="pl-k">SELECT</span>
+            <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">AS</span> uuid,
+            <span class="pl-c1">tm</span>.<span class="pl-c1">data</span> <span class="pl-k">AS</span> author
+        <span class="pl-k">FROM</span>
+            Documents <span class="pl-k">AS</span> d,
+            TextMetadata <span class="pl-k">AS</span> tm,
+            DocumentHasTextMetadata <span class="pl-k">AS</span> dhtm
+        <span class="pl-k">WHERE</span>
+            <span class="pl-c1">dhtm</span>.<span class="pl-c1">document_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
+            <span class="pl-k">AND</span> <span class="pl-c1">dhtm</span>.<span class="pl-c1">metadata_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">tm</span>.<span class="pl-c1">uuid</span>
+            <span class="pl-k">AND</span> <span class="pl-c1">tm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>author<span class="pl-pds">'</span></span>) <span class="pl-k">AS</span> authors
+<span class="pl-k">WHERE</span>
+    <span class="pl-c1">bm</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">dhbm</span>.<span class="pl-c1">metadata_uuid</span>
+    <span class="pl-k">AND</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">dhbm</span>.<span class="pl-c1">document_uuid</span>
+    <span class="pl-k">AND</span> <span class="pl-c1">bm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>full-text<span class="pl-pds">'</span></span>
+    <span class="pl-k">AND</span> <span class="pl-c1">authors</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
+<span class="pl-k">GROUP BY</span>
+    <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
+;
+<span class="pl-c"><span class="pl-c">/*</span> document_title_without_authors(rowid,title,authors) <span class="pl-c">*/</span></span>
+<span class="pl-k">CREATE</span> <span class="pl-k">VIEW</span> <span class="pl-en">document_title_without_authors</span> (
+    rowid,
+    title,
+    authors) <span class="pl-k">AS</span>
+<span class="pl-k">SELECT</span>
+    <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">AS</span> uuid,
+    <span class="pl-c1">d</span>.<span class="pl-c1">title</span> <span class="pl-k">AS</span> title,
+    <span class="pl-k">NULL</span> <span class="pl-k">AS</span> authors
+<span class="pl-k">FROM</span>
+    Documents <span class="pl-k">AS</span> d
+<span class="pl-k">WHERE</span>
+    NOT EXISTS (
         <span class="pl-k">SELECT</span>
             <span class="pl-k">*</span>
         <span class="pl-k">FROM</span>
-            document_title_without_authors
-        <span class="pl-k">UNION</span>
+            TextMetadata <span class="pl-k">AS</span> t,
+            DocumentHasTextMetadata <span class="pl-k">AS</span> dt
+        <span class="pl-k">WHERE</span>
+            <span class="pl-c1">t</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>author<span class="pl-pds">'</span></span>
+            <span class="pl-k">AND</span> <span class="pl-c1">t</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">dt</span>.<span class="pl-c1">metadata_uuid</span>
+            <span class="pl-k">AND</span> <span class="pl-c1">dt</span>.<span class="pl-c1">document_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>)
+;
+<span class="pl-c"><span class="pl-c">/*</span> document_title_with_authors(rowid,title,authors) <span class="pl-c">*/</span></span>
+<span class="pl-k">CREATE</span> <span class="pl-k">VIEW</span> <span class="pl-en">document_title_with_authors</span> (
+    rowid,
+    title,
+    authors) <span class="pl-k">AS</span>
+<span class="pl-k">SELECT</span>
+    <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">AS</span> uuid,
+    <span class="pl-c1">d</span>.<span class="pl-c1">title</span> <span class="pl-k">AS</span> title,
+    GROUP_CONCAT (
+        <span class="pl-c1">authors</span>.<span class="pl-c1">author</span>) <span class="pl-k">AS</span> authors
+<span class="pl-k">FROM</span>
+    Documents <span class="pl-k">AS</span> d,
+    (
+        <span class="pl-k">SELECT</span>
+            <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">AS</span> uuid,
+            <span class="pl-c1">tm</span>.<span class="pl-c1">data</span> <span class="pl-k">AS</span> author
+        <span class="pl-k">FROM</span>
+            Documents <span class="pl-k">AS</span> d,
+            TextMetadata <span class="pl-k">AS</span> tm,
+            DocumentHasTextMetadata <span class="pl-k">AS</span> dhtm
+        <span class="pl-k">WHERE</span>
+            <span class="pl-c1">dhtm</span>.<span class="pl-c1">document_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
+            <span class="pl-k">AND</span> <span class="pl-c1">dhtm</span>.<span class="pl-c1">metadata_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">tm</span>.<span class="pl-c1">uuid</span>
+            <span class="pl-k">AND</span> <span class="pl-c1">tm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>author<span class="pl-pds">'</span></span>) <span class="pl-k">AS</span> authors
+<span class="pl-k">WHERE</span>
+    <span class="pl-c1">authors</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
+<span class="pl-k">GROUP BY</span>
+    <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
+;
+<span class="pl-k">CREATE</span> <span class="pl-k">TRIGGER</span> <span class="pl-en">delete_full_text_trigger</span> AFTER <span class="pl-k">DELETE</span> <span class="pl-k">ON</span> DocumentHasBinaryMetadata
+WHEN EXISTS (
         <span class="pl-k">SELECT</span>
             <span class="pl-k">*</span>
         <span class="pl-k">FROM</span>
-            document_title_with_authors
-        ;
-        <span class="pl-c"><span class="pl-c">/*</span> document_title_authors_text_view(rowid,title,authors,full_text) <span class="pl-c">*/</span></span>
-        <span class="pl-k">CREATE</span> <span class="pl-k">VIEW</span> <span class="pl-en">document_title_authors_text_view</span> (
-            rowid,
-            title,
-            authors,
-            full_text) <span class="pl-k">AS</span>
+            BinaryMetadata <span class="pl-k">AS</span> bm
+        <span class="pl-k">WHERE</span>
+            <span class="pl-c1">OLD</span>.<span class="pl-c1">metadata_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">bm</span>.<span class="pl-c1">uuid</span>
+            <span class="pl-k">AND</span> <span class="pl-c1">bm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>full-text<span class="pl-pds">'</span></span>)
+<span class="pl-k">BEGIN</span>
+    <span class="pl-k">DELETE</span>
+<span class="pl-k">FROM</span>
+    document_title_authors_text_view_fts
+<span class="pl-k">WHERE</span>
+    uuid <span class="pl-k">=</span> <span class="pl-c1">OLD</span>.<span class="pl-c1">document_uuid</span>;
+END;
+<span class="pl-k">CREATE</span> <span class="pl-k">TRIGGER</span> <span class="pl-en">insert_full_text_trigger</span> AFTER INSERT <span class="pl-k">ON</span> DocumentHasBinaryMetadata
+WHEN EXISTS (
         <span class="pl-k">SELECT</span>
-            <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">AS</span> uuid,
-            <span class="pl-c1">d</span>.<span class="pl-c1">title</span> <span class="pl-k">AS</span> title,
-            GROUP_CONCAT (
-                <span class="pl-c1">authors</span>.<span class="pl-c1">author</span>) <span class="pl-k">AS</span> authors,
-            <span class="pl-c1">bm</span>.<span class="pl-c1">data</span> <span class="pl-k">AS</span> full_text
+            <span class="pl-k">*</span>
         <span class="pl-k">FROM</span>
-            Documents <span class="pl-k">AS</span> d,
-            DocumentHasBinaryMetadata <span class="pl-k">AS</span> dhbm,
-            BinaryMetadata <span class="pl-k">AS</span> bm,
-            (
-                <span class="pl-k">SELECT</span>
-                    <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">AS</span> uuid,
-                    <span class="pl-c1">tm</span>.<span class="pl-c1">data</span> <span class="pl-k">AS</span> author
-                <span class="pl-k">FROM</span>
-                    Documents <span class="pl-k">AS</span> d,
-                    TextMetadata <span class="pl-k">AS</span> tm,
-                    DocumentHasTextMetadata <span class="pl-k">AS</span> dhtm
-                <span class="pl-k">WHERE</span>
-                    <span class="pl-c1">dhtm</span>.<span class="pl-c1">document_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
-                    <span class="pl-k">AND</span> <span class="pl-c1">dhtm</span>.<span class="pl-c1">metadata_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">tm</span>.<span class="pl-c1">uuid</span>
-                    <span class="pl-k">AND</span> <span class="pl-c1">tm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>author<span class="pl-pds">'</span></span>) <span class="pl-k">AS</span> authors
+            BinaryMetadata <span class="pl-k">AS</span> bm
         <span class="pl-k">WHERE</span>
-            <span class="pl-c1">bm</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">dhbm</span>.<span class="pl-c1">metadata_uuid</span>
-            <span class="pl-k">AND</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">dhbm</span>.<span class="pl-c1">document_uuid</span>
-            <span class="pl-k">AND</span> <span class="pl-c1">bm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>full-text<span class="pl-pds">'</span></span>
-            <span class="pl-k">AND</span> <span class="pl-c1">authors</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
-        <span class="pl-k">GROUP BY</span>
-            <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
-        ;
-        <span class="pl-c"><span class="pl-c">/*</span> document_title_without_authors(rowid,title,authors) <span class="pl-c">*/</span></span>
-        <span class="pl-k">CREATE</span> <span class="pl-k">VIEW</span> <span class="pl-en">document_title_without_authors</span> (
-            rowid,
-            title,
-            authors) <span class="pl-k">AS</span>
-        <span class="pl-k">SELECT</span>
-            <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">AS</span> uuid,
-            <span class="pl-c1">d</span>.<span class="pl-c1">title</span> <span class="pl-k">AS</span> title,
-            <span class="pl-k">NULL</span> <span class="pl-k">AS</span> authors
-        <span class="pl-k">FROM</span>
-            Documents <span class="pl-k">AS</span> d
-        <span class="pl-k">WHERE</span>
-            NOT EXISTS (
-                <span class="pl-k">SELECT</span>
-                    <span class="pl-k">*</span>
-                <span class="pl-k">FROM</span>
-                    TextMetadata <span class="pl-k">AS</span> t,
-                    DocumentHasTextMetadata <span class="pl-k">AS</span> dt
-                <span class="pl-k">WHERE</span>
-                    <span class="pl-c1">t</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>author<span class="pl-pds">'</span></span>
-                    <span class="pl-k">AND</span> <span class="pl-c1">t</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">dt</span>.<span class="pl-c1">metadata_uuid</span>
-                    <span class="pl-k">AND</span> <span class="pl-c1">dt</span>.<span class="pl-c1">document_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>)
-        ;
-        <span class="pl-c"><span class="pl-c">/*</span> document_title_with_authors(rowid,title,authors) <span class="pl-c">*/</span></span>
-        <span class="pl-k">CREATE</span> <span class="pl-k">VIEW</span> <span class="pl-en">document_title_with_authors</span> (
-            rowid,
-            title,
-            authors) <span class="pl-k">AS</span>
-        <span class="pl-k">SELECT</span>
-            <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">AS</span> uuid,
-            <span class="pl-c1">d</span>.<span class="pl-c1">title</span> <span class="pl-k">AS</span> title,
-            GROUP_CONCAT (
-                <span class="pl-c1">authors</span>.<span class="pl-c1">author</span>) <span class="pl-k">AS</span> authors
-        <span class="pl-k">FROM</span>
-            Documents <span class="pl-k">AS</span> d,
-            (
-                <span class="pl-k">SELECT</span>
-                    <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span> <span class="pl-k">AS</span> uuid,
-                    <span class="pl-c1">tm</span>.<span class="pl-c1">data</span> <span class="pl-k">AS</span> author
-                <span class="pl-k">FROM</span>
-                    Documents <span class="pl-k">AS</span> d,
-                    TextMetadata <span class="pl-k">AS</span> tm,
-                    DocumentHasTextMetadata <span class="pl-k">AS</span> dhtm
-                <span class="pl-k">WHERE</span>
-                    <span class="pl-c1">dhtm</span>.<span class="pl-c1">document_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
-                    <span class="pl-k">AND</span> <span class="pl-c1">dhtm</span>.<span class="pl-c1">metadata_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">tm</span>.<span class="pl-c1">uuid</span>
-                    <span class="pl-k">AND</span> <span class="pl-c1">tm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>author<span class="pl-pds">'</span></span>) <span class="pl-k">AS</span> authors
-        <span class="pl-k">WHERE</span>
-            <span class="pl-c1">authors</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
-        <span class="pl-k">GROUP BY</span>
-            <span class="pl-c1">d</span>.<span class="pl-c1">uuid</span>
-        ;
-        <span class="pl-k">CREATE</span> <span class="pl-k">TRIGGER</span> <span class="pl-en">delete_full_text_trigger</span> AFTER <span class="pl-k">DELETE</span> <span class="pl-k">ON</span> DocumentHasBinaryMetadata
-        WHEN EXISTS (
-                <span class="pl-k">SELECT</span>
-                    <span class="pl-k">*</span>
-                <span class="pl-k">FROM</span>
-                    BinaryMetadata <span class="pl-k">AS</span> bm
-                <span class="pl-k">WHERE</span>
-                    <span class="pl-c1">OLD</span>.<span class="pl-c1">metadata_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">bm</span>.<span class="pl-c1">uuid</span>
-                    <span class="pl-k">AND</span> <span class="pl-c1">bm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>full-text<span class="pl-pds">'</span></span>)
-        <span class="pl-k">BEGIN</span>
-            <span class="pl-k">DELETE</span>
-        <span class="pl-k">FROM</span>
-            document_title_authors_text_view_fts
-        <span class="pl-k">WHERE</span>
-            uuid <span class="pl-k">=</span> <span class="pl-c1">OLD</span>.<span class="pl-c1">document_uuid</span>;
-        END;
-        <span class="pl-k">CREATE</span> <span class="pl-k">TRIGGER</span> <span class="pl-en">insert_full_text_trigger</span> AFTER INSERT <span class="pl-k">ON</span> DocumentHasBinaryMetadata
-        WHEN EXISTS (
-                <span class="pl-k">SELECT</span>
-                    <span class="pl-k">*</span>
-                <span class="pl-k">FROM</span>
-                    BinaryMetadata <span class="pl-k">AS</span> bm
-                <span class="pl-k">WHERE</span>
-                    <span class="pl-c1">NEW</span>.<span class="pl-c1">metadata_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">bm</span>.<span class="pl-c1">uuid</span>
-                    <span class="pl-k">AND</span> <span class="pl-c1">bm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>full-text<span class="pl-pds">'</span></span>)
-        <span class="pl-k">BEGIN</span>
-            <span class="pl-k">INSERT INTO</span> document_title_authors_text_view_fts (
-                uuid, title, authors, full_text)
-        <span class="pl-k">SELECT</span>
-            <span class="pl-c1">d</span>.<span class="pl-c1">rowid</span> <span class="pl-k">AS</span> rowid, <span class="pl-c1">d</span>.<span class="pl-c1">title</span> <span class="pl-k">AS</span> title, <span class="pl-c1">d</span>.<span class="pl-c1">authors</span> <span class="pl-k">AS</span> authors, <span class="pl-c1">bm</span>.<span class="pl-c1">data</span> <span class="pl-k">AS</span> full_text
-        <span class="pl-k">FROM</span>
-            document_title_authors <span class="pl-k">AS</span> d
-            <span class="pl-k">JOIN</span> BinaryMetadata <span class="pl-k">AS</span> bm <span class="pl-k">ON</span> <span class="pl-c1">bm</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">NEW</span>.<span class="pl-c1">metadata_uuid</span>
-        <span class="pl-k">WHERE</span>
-            <span class="pl-c1">d</span>.<span class="pl-c1">rowid</span> <span class="pl-k">=</span> <span class="pl-c1">NEW</span>.<span class="pl-c1">document_uuid</span>
-            <span class="pl-k">AND</span> <span class="pl-c1">bm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>full-text<span class="pl-pds">'</span></span>
-            <span class="pl-k">AND</span> <span class="pl-c1">bm</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">NEW</span>.<span class="pl-c1">metadata_uuid</span>;
-        END;
-        <span class="pl-c"><span class="pl-c">/*</span> uuidtok(input,token,start,"end",position) <span class="pl-c">*/</span></span>
-        CREATE VIRTUAL TABLE uuidtok
-        USING fts3tokenize (
-            <span class="pl-s"><span class="pl-pds">'</span>unicode61<span class="pl-pds">'</span></span>,
-            <span class="pl-s"><span class="pl-pds">"</span>tokenchars=-1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ<span class="pl-pds">"</span></span>,
-            <span class="pl-s"><span class="pl-pds">"</span>separators= <span class="pl-pds">"</span></span>)
-        ;
-        </pre>
+            <span class="pl-c1">NEW</span>.<span class="pl-c1">metadata_uuid</span> <span class="pl-k">=</span> <span class="pl-c1">bm</span>.<span class="pl-c1">uuid</span>
+            <span class="pl-k">AND</span> <span class="pl-c1">bm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>full-text<span class="pl-pds">'</span></span>)
+<span class="pl-k">BEGIN</span>
+    <span class="pl-k">INSERT INTO</span> document_title_authors_text_view_fts (
+        uuid, title, authors, full_text)
+<span class="pl-k">SELECT</span>
+    <span class="pl-c1">d</span>.<span class="pl-c1">rowid</span> <span class="pl-k">AS</span> rowid, <span class="pl-c1">d</span>.<span class="pl-c1">title</span> <span class="pl-k">AS</span> title, <span class="pl-c1">d</span>.<span class="pl-c1">authors</span> <span class="pl-k">AS</span> authors, <span class="pl-c1">bm</span>.<span class="pl-c1">data</span> <span class="pl-k">AS</span> full_text
+<span class="pl-k">FROM</span>
+    document_title_authors <span class="pl-k">AS</span> d
+    <span class="pl-k">JOIN</span> BinaryMetadata <span class="pl-k">AS</span> bm <span class="pl-k">ON</span> <span class="pl-c1">bm</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">NEW</span>.<span class="pl-c1">metadata_uuid</span>
+<span class="pl-k">WHERE</span>
+    <span class="pl-c1">d</span>.<span class="pl-c1">rowid</span> <span class="pl-k">=</span> <span class="pl-c1">NEW</span>.<span class="pl-c1">document_uuid</span>
+    <span class="pl-k">AND</span> <span class="pl-c1">bm</span>.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>full-text<span class="pl-pds">'</span></span>
+    <span class="pl-k">AND</span> <span class="pl-c1">bm</span>.<span class="pl-c1">uuid</span> <span class="pl-k">=</span> <span class="pl-c1">NEW</span>.<span class="pl-c1">metadata_uuid</span>;
+END;
+<span class="pl-c"><span class="pl-c">/*</span> uuidtok(input,token,start,"end",position) <span class="pl-c">*/</span></span>
+CREATE VIRTUAL TABLE uuidtok
+USING fts3tokenize (
+    <span class="pl-s"><span class="pl-pds">'</span>unicode61<span class="pl-pds">'</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>tokenchars=-1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>separators= <span class="pl-pds">"</span></span>)
+;
+</pre>
   </div>
   <div>
     <h2>stuff</h2>
@@ -338,7 +338,7 @@ $ <span class="pl-s1">ls <span class="pl-k">~</span>/Documents/biblfs/query/jour
       <figure id="d3">
         <a href="#d3-zoom"><img src="./img/screenshot-d3-tag-graph.webp" alt="d3.js tag visualization" decoding="async" loading="lazy"></a>
         <figcaption>
-          <a href="#d3-zoom">d3.js tag visualization</a>
+          <a href="#d3-zoom"><code>d3.js</code> tag visualization</a>
         </figcaption>
       </figure>
       <figure>
@@ -350,7 +350,7 @@ $ <span class="pl-s1">ls <span class="pl-k">~</span>/Documents/biblfs/query/jour
     </div>
   </div>
   <footer>
-    <a rel="me" style="display: none;" href="https://chaos.social/@epilys"></a> <a rel="me" href="https://github.com/epilys/bibliothecula">https://github.com/epilys/bibliothecula</a> <a rel="external nofollow" href="https://www.gnu.org/licenses/gpl-3.0-standalone.html"><small><abbr title="The GNU General Public License v3.0">GPLv3</abbr></small></a>
+    <a rel="me" style="display: none;" href="https://chaos.social/@epilys"></a> <a rel="me" href="https://github.com/epilys/bibliothecula">https://github.com/epilys/bibliothecula</a> <a rel="external nofollow" href="https://www.gnu.org/licenses/gpl-3.0-standalone.html"><small><abbr class="gpl" title="The GNU General Public License v3.0">GPLv3</abbr></small></a>
   </footer>
 </body>
 </html>
