@@ -101,17 +101,25 @@ h1 {
   font-size: 3rem;
   /* scale with viewport width size */
   font-size: min(5vw, 3rem);
+  /* Color fallback, otherwise use background-clip in the @supports block below */
+  color: var(--blood);
   margin: 0;
-  color: transparent;
-  background: radial-gradient(var(--spoiled-orange) 12%, var(--blood) 22%);
-  background-size: 3px 4px;
-  background-clip: text;
   border-bottom: 0;
   text-align: center;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   grid-column-gap: var(--column-gap);
 }
+
+@supports (background-clip: text) {
+  h1 {
+    color: transparent;
+    background: radial-gradient(var(--spoiled-orange) 12%, var(--blood) 22%);
+    background-size: 3px 4px;
+    background-clip: text;
+  }
+}
+
 
 .index h1 {
   /* fallback */
