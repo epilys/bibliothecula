@@ -1,19 +1,20 @@
-/* Contents
+# The core bibliothecula schema.
 
-id                                  | summary
-------------------------------------+-------------------------------------------------------------------------
-CREATE_DOCUMENTS                    | CREATE TABLE IF NOT EXISTS "Documents" ( "uuid" CHARACTER(32) NOT...
-CREATE_TEXTMETADATA                 | CREATE TABLE IF NOT EXISTS "TextMetadata" ( "uuid" CHARACTER(32) NOT...
-CREATE_BINARYMETADATA               | CREATE TABLE IF NOT EXISTS "BinaryMetadata" ( "uuid" CHARACTER(32)...
-CREATE_DOCUMENTHASTEXTMETADATA      | CREATE TABLE IF NOT EXISTS "DocumentHasTextMetadata" ( "id" INTEGER...
-CREATE_DOCUMENTHASBINARYMETADATA    | CREATE TABLE IF NOT EXISTS "DocumentHasBinaryMetadata" ( "id" INTEGER...
-CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS | Auxiliary view for use in document_title_authors_text_view_fts index....
-FTS_CREATE_TABLE                    | Create a full-text search index using the fts5 module....
-FTS_CREATE_INSERT_TRIGGER           | Trigger to insert full text data when a DocumentHasBinaryMetadata row...
-FTS_CREATE_DELETE_TRIGGER           | Trigger to remove a document's full text from the full text search...
- */
+<table>
+<thead>
+<tr>
+<th>statement</th>
+<th>kinds</th>
+</tr>
+</thead>
+<tbody>
+            <tr><td class="doc">
 
-/* CREATE_DOCUMENTS */
+#### `CREATE_DOCUMENTS`
+
+
+
+```sql
 CREATE TABLE IF NOT EXISTS "Documents" (
         "uuid" CHARACTER(32) NOT NULL PRIMARY KEY,
         "title" TEXT NOT NULL,
@@ -21,8 +22,17 @@ CREATE TABLE IF NOT EXISTS "Documents" (
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
         "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
 );
+```
+</td>
+<td><kbd>create table</kbd></td>
+</tr>
+            <tr><td class="doc">
 
-/* CREATE_TEXTMETADATA */
+#### `CREATE_TEXTMETADATA`
+
+
+
+```sql
 CREATE TABLE IF NOT EXISTS "TextMetadata" (
         "uuid" CHARACTER(32) NOT NULL PRIMARY KEY,
         "name" TEXT NULL,
@@ -30,8 +40,17 @@ CREATE TABLE IF NOT EXISTS "TextMetadata" (
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
         "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
 );
+```
+</td>
+<td><kbd>create table</kbd></td>
+</tr>
+            <tr><td class="doc">
 
-/* CREATE_BINARYMETADATA */
+#### `CREATE_BINARYMETADATA`
+
+
+
+```sql
 CREATE TABLE IF NOT EXISTS "BinaryMetadata" (
         "uuid" CHARACTER(32) NOT NULL PRIMARY KEY,
         "name" TEXT NULL,
@@ -40,8 +59,17 @@ CREATE TABLE IF NOT EXISTS "BinaryMetadata" (
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
         "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
 );
+```
+</td>
+<td><kbd>create table</kbd></td>
+</tr>
+            <tr><td class="doc">
 
-/* CREATE_DOCUMENTHASTEXTMETADATA */
+#### `CREATE_DOCUMENTHASTEXTMETADATA`
+
+
+
+```sql
 CREATE TABLE IF NOT EXISTS "DocumentHasTextMetadata" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
         "name" TEXT NOT NULL,
@@ -52,8 +80,17 @@ CREATE TABLE IF NOT EXISTS "DocumentHasTextMetadata" (
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
         "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
 );
+```
+</td>
+<td><kbd>create table</kbd></td>
+</tr>
+            <tr><td class="doc">
 
-/* CREATE_DOCUMENTHASBINARYMETADATA */
+#### `CREATE_DOCUMENTHASBINARYMETADATA`
+
+
+
+```sql
 CREATE TABLE IF NOT EXISTS "DocumentHasBinaryMetadata" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
         "name" TEXT NOT NULL,
@@ -64,13 +101,17 @@ CREATE TABLE IF NOT EXISTS "DocumentHasBinaryMetadata" (
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
         "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
 );
+```
+</td>
+<td><kbd>create table</kbd></td>
+</tr>
+            <tr><td class="doc">
 
-/* CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS
- Auxiliary view for use in document_title_authors_text_view_fts index.
- Returns document title and a NULL byte separated string with all
- authors or NULL for all documents.
- https://sqlite.org/lang_createview.html sqlite3 reference for for
- creating views */
+#### `CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS`
+
+Auxiliary view for use in <var>document_title_authors_text_view_fts</var> index. Returns document title and a NULL byte separated string with all authors or NULL for all documents. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createview.html">sqlite3 reference for for creating views</a></cite>
+
+```sql
 CREATE VIEW document_title_authors (rowid, title, authors) AS
 SELECT uuid, title, authors
 FROM
@@ -85,18 +126,30 @@ FROM
             tm.name = 'author'
         GROUP BY
             document_uuid) AS authors ON d.uuid = authors.document_uuid;
+```
+</td>
+<td><kbd>create view</kbd></td>
+</tr>
+            <tr><td class="doc">
 
-/* FTS_CREATE_TABLE
- Create a full-text search index using the fts5 module.
- https://sqlite.org/fts5.html sqlite3 reference */
+#### `FTS_CREATE_TABLE`
+
+Create a full-text search index using the <em>fts5</em> module. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html">sqlite3 reference</a></cite>
+
+```sql
 CREATE VIRTUAL TABLE IF NOT EXISTS document_title_authors_text_view_fts
-    USING fts5(title, authors, full_text, uuid UNINDEXED);
+    USING fts5(title, authors, full_text, uuid UNINDEXED)
+```
+</td>
+<td><kbd>create table</kbd>, <kbd>index</kbd></td>
+</tr>
+            <tr><td class="doc">
 
-/* FTS_CREATE_INSERT_TRIGGER
- Trigger to insert full text data when a DocumentHasBinaryMetadata row
- for a full-text BinaryMetadata is created.
- https://sqlite.org/lang_createtrigger.html sqlite3 reference for for
- creating triggers */
+#### `FTS_CREATE_INSERT_TRIGGER`
+
+Trigger to insert full text data when a <var>DocumentHasBinaryMetadata</var> row for a full-text <var>BinaryMetadata</var> is created. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createtrigger.html">sqlite3 reference for for creating triggers</a></cite>
+
+```sql
 CREATE TRIGGER insert_full_text_trigger
     AFTER INSERT ON DocumentHasBinaryMetadata
 WHEN EXISTS (
@@ -121,16 +174,25 @@ WHERE
     AND bm.name = 'full-text'
     AND bm.uuid = NEW.metadata_uuid;
 END;
+```
+</td>
+<td><kbd>index</kbd>, <kbd>create trigger</kbd></td>
+</tr>
+            <tr><td class="doc">
 
-/* FTS_CREATE_DELETE_TRIGGER
- Trigger to remove a document's full text from the full text search
- table when the full-text binary metadata is deleted.
- https://sqlite.org/lang_createtrigger.html sqlite3 reference for for
- creating triggers */
+#### `FTS_CREATE_DELETE_TRIGGER`
+
+Trigger to remove a document's full text from the full text search table when the full-text binary metadata is deleted. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/lang_createtrigger.html">sqlite3 reference for for creating triggers</a></cite>
+
+```sql
 CREATE TRIGGER IF NOT EXISTS delete_full_text_trigger
        AFTER DELETE ON DocumentHasBinaryMetadata
         WHEN OLD.name = 'full-text'
        BEGIN
        DELETE FROM document_title_authors_text_view_fts
        WHERE uuid = OLD.document_uuid;
-END;
+END
+```
+</td>
+<td><kbd>index</kbd>, <kbd>create trigger</kbd></td>
+</tr></tbody></table>

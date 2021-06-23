@@ -299,6 +299,7 @@ class BinaryMetadata(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.TextField(null=True)
     data = models.BinaryField(null=False)
+    compressed = models.BooleanField(null=False,default=False)
     created = DateTimeField(null=False, auto_now_add=True)
     last_modified = DateTimeField(null=False, auto_now=True)
 
