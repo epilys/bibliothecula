@@ -21,7 +21,7 @@ See the [database schema](docs/schema.sql) and the [documentation](docs/).
 This repository has three small tools for this schema:
 
 - a [virtual FUSE filesystem written in Rust](biblfs/).
-- an [HTTP GUI written in python3 using Django](bibliothecula-django/).
+- an [HTTP GUI written in python3 using django](bumblebat/).
 - a [GTK3 UI in Rust](bibliothecula-gtk/) that was written early and isn't functional.
 - an interactive python shell, `bibl-shell.py`, with convenient types and methods for working with your database:
 

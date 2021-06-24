@@ -1,4 +1,4 @@
-# bibliothecula django app
+# bumblebat app
 
 ## Screenshots
 
