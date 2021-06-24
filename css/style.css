@@ -187,81 +187,11 @@ h1:after {
   height: min(1vw, 0.8rem);
 }
 
-details.touch {
-  display: none;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-@media (hover: hover) and (any-pointer: fine) {
-  details.touch h1 {
-    display: none;
-    width: 0;
-    height: 0;
-    font-size: 0;
-    pointer-events: none;
-  }
-
-  details.touch div.h1 {
-    display: none;
-    width: 0;
-    height: 0;
-    font-size: 0;
-    pointer-events: none;
-  }
-
-  header:before {
-    content: "hover over!";
-  }
-
-  header:hover:after {
-    display: none;
-  }
-
-  @media (max-width: 1000px) {
-    header {
-      margin-top: 3rem;
-    }
-
-    h1 {
-      --cover-width: min(323px,50vw);
-    }
-
-    header:hover h1:before {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
-    header:hover h1:after {
-      grid-column: 1;
-      grid-row: 3;
-    }
-  }
-
-  @media (min-width: 1000px) {
-    header:hover h1:before {
-      grid-column: 2 / span 1;
-      grid-row: 1;
-    }
-
-    header:hover h1:after {
-      grid-column: 2 / span 1;
-      grid-row: 2;
-    }
-  }
-}
-
-@media (not ((hover: hover) and (any-pointer: fine))), (hover: none) {
   header:before {
     content: "click me!";
   }
 
-  h1.hover {
-    display: none;
-  }
-
-  details.touch {
+  details.click {
     display: inline-block;
     height: min-content;
     width: min-content;
@@ -269,7 +199,7 @@ details.touch {
     pointer-events: initial;
   }
 
-  details.touch>summary {
+  details.click>summary {
     height: min-content;
     width: min-content;
     display: inline-flex;
@@ -287,29 +217,28 @@ details.touch {
       --cover-width: min(323px,50vw);
     }
 
-    details.touch[open] h1.touch:before {
+    details.click[open] h1.click:before {
       grid-column: 1;
       grid-row: 2;
     }
 
-    details.touch[open] h1.touch:after {
+    details.click[open] h1.click:after {
       grid-column: 1;
       grid-row: 3;
     }
   }
 
   @media (min-width: 1000px) {
-    details.touch[open] h1.touch:before {
+    details.click[open] h1.click:before {
       grid-column: 2 / span 1;
       grid-row: 1;
     }
 
-    details.touch[open] h1.touch:after {
+    details.click[open] h1.click:after {
       grid-column: 2 / span 1;
       grid-row: 2;
     }
   }
-}
 
 div.h1 {
   font-size: xx-small;
@@ -321,8 +250,8 @@ div.h1 {
   right: 20%;
 }
 
-header:hover h1.hover, details.touch[open] h1.touch {
-  /* on hover, the left grid item is lost and the column gap is lost as well so
+details.click[open] h1.click {
+  /* on click, the left grid item is lost and the column gap is lost as well so
    * compensate with the same value used for the column gap */
   margin-left: var(--column-gap);
   grid-template-columns: auto 1fr;
@@ -332,7 +261,7 @@ header:hover h1.hover, details.touch[open] h1.touch {
   position: relative;
 }
 
-header:hover h1.hover:after, details.touch[open] h1.touch:after {
+details.click[open] h1.click:after {
   content: attr(title);
   border: none;
   font-size: .7rem;
@@ -354,7 +283,7 @@ header:hover h1.hover:after, details.touch[open] h1.touch:after {
   border-top: 2px outset #ab6a2d;
 }
 
-header:hover h1.hover:before, details.touch[open] h1.touch:before {
+details.click[open] h1.click:before {
   border: none;
   background-color: var(--bg-color);
   background-image: url(https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Dracula-First-Edition-1897.jpg/344px-Dracula-First-Edition-1897.jpg);
