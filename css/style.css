@@ -69,6 +69,22 @@ body.index {
 
 a, a:visited {
   color: #6a0000;
+  text-decoration-style: wavy;
+  text-underline-offset: 3px;
+  text-decoration-color: #b67761;
+}
+
+a.decorate {
+  text-decoration: dotted;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-skip-ink: all;
+  text-underline-position: from-font;
+  text-underline-offset: 5px;
+}
+
+a.decorate:after {
+  content: " 🔗";
 }
 
 header {
@@ -437,6 +453,10 @@ figcaption {
   border: 5px solid #e6bd1a;
 }
 
+figcaption a {
+  text-decoration: underline;
+}
+
 body>figure.zoom {
   grid-column: 1 / span 12;
   grid-row: 1 / span 2;
@@ -556,11 +576,14 @@ footer {
 
 footer a {
   color: #999;
-  text-decoration: none;
+  text-decoration: initial;
+  text-decoration-color: #999;
 }
 
 footer a:visited {
   color: #999;
+  text-decoration: initial;
+  text-decoration-color: #999;
 }
 
 p.def {
@@ -589,18 +612,28 @@ div.repo {
   letter-spacing: .9px;
 }
 
-div.repo a, div.repo a:visited {
+a.gpl , a.gpl:visited {
   color: white;
+  text-decoration: none;
+}
+a.repo , a.repo:visited {
+  color: white;
+  text-decoration: underline;
 }
 
 abbr.gpl {
   font-family: "IBM Plex Mono", "DejaVu Sans Mono", "Inconsolata", monospace;
+  font-weight: 500;
 }
 
 code, pre {
   font-family: "IBM Plex Mono", "DejaVu Sans Mono", "Inconsolata", monospace;
   font-weight: 500;
   font-style: normal;
+}
+
+code.filename {
+  white-space: nowrap;
 }
 
 pre {
