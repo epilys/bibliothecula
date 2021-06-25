@@ -39,7 +39,7 @@
                 </div>
                 <nav>
                     <details id="add">
-                        <summary ><span class="add-label add-hidden">new document</span><span class="add-hidden"> ➕</span><span class="add-show">hide</span></summary>
+                        <summary ><span class="add-label add-hidden">new document</span><span class="add-hidden"> ➕&#xFE0E;</span><span class="add-show">hide</span></summary>
                         <form method="POST" action="/add/document/" id="add_form">
                             {% csrf_token %}
                             {% for field in add_document_form %}

@@ -16,8 +16,8 @@ def return_item(l, i):
 
 
 @register.simple_tag
-def section_url(htmlid):
-    ret = f"""<a id="header-anchor-{htmlid}" class="header-anchor" aria-hidden="true" href="#{htmlid}"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use href="#header-link-svg"></use></svg></a>"""
+def section_url(htmlid, append=''):
+    ret = f"""<a id="header-anchor-{htmlid}{append}" class="header-anchor" aria-hidden="true" href="#{htmlid}{append}"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><use href="#header-link-svg"></use></svg></a>"""
     return mark_safe(ret)
 
 

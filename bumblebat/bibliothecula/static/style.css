@@ -9,6 +9,18 @@
   --grey-color: #939393;
   --purple-color: #b381b3;
   --green-color: #00aa55;
+--color-surface: #f5f2f7;
+--color-on-surface: #29344b;
+--color-red: #fcd4d2;
+--color-on-red: #482d2c;
+--color-yellow: #f2e6b1;
+--color-on-yellow: #71673c;
+--color-blue: #cadff9;
+--color-on-blue: #4b6381;
+--color-green: #c6e7d6;
+--color-on-green: #4c695a;
+--color-purple: #e0d4f6;
+--color-on-purple: #675883;
 }
 
 * {
@@ -215,27 +227,26 @@ ul.filelist {
   flex-wrap: wrap;
   justify-content: space-evenly;
   height: 100%;
+  row-gap: 5px;
+  column-gap: 2px;
 }
 
 .tagcloud ul li {
   display: inline-block;
-  margin: 0 0.3em 0.3em 0;
   padding: 0;
 }
 
 a.item-tag {
   display: inline-block;
-  background-color: #fff;
-  border-radius: 3px;
-  border: 1px solid #80808078;
-  border-bottom: 1px solid #bbb;
+  background-color: var(--color-red);
   text-decoration: none;
-  color: var(--black-color);
-  padding: 4px 8px;
-  margin-right: 0rem;
-  margin-bottom: .3rem;
-  border-bottom: 1px solid #808080;
+  color: var(--color-on-red);
   user-select: all;
+  font-size: 0.75rem;
+  border: 1px dotted;
+  border-radius: 3px;
+  padding: 0.35em 0.45em;
+  border-color: #2c2e352e;
 }
 
 a.item-tag:hover {
@@ -305,9 +316,10 @@ div#tags {
   min-width: 0;
   max-height: 30vh;
   overflow: auto;
-  border: 1px inset gray;
-  padding: 1rem;
+  outline: 4px solid #dcdcdc;
+  padding: 8px 0px;
   resize: vertical;
+  background: var(--color-surface);
 }
 
 div#results_meta {
@@ -635,6 +647,9 @@ div.header-left>* {
   opacity: 0;
   visibility: hidden;
   transition: opacity .5s .5s;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: monospace;
 }
 
 .metadata:hover+.uuid,
