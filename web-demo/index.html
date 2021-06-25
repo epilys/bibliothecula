@@ -5,21 +5,22 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="description" content="document organizer with tags and full-text-search, in a simple and clean sqlite3 schema">
   <title>bumblebat non-interactive demo - bibliothecula</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://nessuent.xyz/bibliothecula.png">
   <meta property="og:site_name" content="bibliothecula - tagged document storage">
   <meta property="og:title" content="bibliothecula - tagged document storage">
+  <link rel="preload" href="../css/fonts/Amstelvar-Roman-VF.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" media="all" href="../css/style.css" />
 </head>
 <body>
-  <header>
-    <h1 class="hover" title="the colorscheme of the page is inspired by the cover of the first edition of Dracula by Bram Stoker in 1897.">bibliothecula</h1>
-    <details class="touch"><summary><h1 class="touch" title="the colorscheme of the page is inspired by the cover of the first edition of Dracula by Bram Stoker in 1897.">bibliothecula</h1></summary></details>
+  <header aria-label="logo and bibliothecula name">
+    <details class="click"><summary><h1 class="shadow" aria-hidden="true">bibliothecula</h1><h1 class="click" title="the colorscheme of the page is inspired by the cover of the first edition of Dracula by Bram Stoker in 1897.">bibliothecula</h1></summary></details>
     <picture>
-      <source srcset="../img/logo.webp" type="image/webp">
-      <img class="logo" src="../img/logo.png" alt="bibliothecula logo" title="Illustration of bat from De arte venandi cum avibus by HRE Frederick II (circa 1240s). It's a visual pun because it looks like an open book viewed from above, and also bibliothecula shares a suffix with the word Dracula.">
+      <source srcset="../img/logo.webp 420w" type="image/webp">
+      <img class="logo" width="420" height="418" src="../img/logo.png" alt="bibliothecula logo" title="Illustration of bat from De arte venandi cum avibus by HRE Frederick II (circa 1240s). It's a visual pun because it looks like an open book viewed from above, and also bibliothecula shares a suffix with the word Dracula.">
     </picture>
   </header>
   <div>
@@ -28,49 +29,49 @@
     <p>Some statically crawled pages:&#8202;<sup>&dagger;</sup></p>
     <div class="screenshots">
       <figure>
-        <a href="./grid.html"><img src="./thumb-grid.webp" alt="main view (as grid)"></a>
+        <a href="./grid.html"><img src="./thumb-grid.webp" width="550" height="283" alt="main view (as grid)"></a>
         <figcaption>
           <a href="./grid.html">main view (as grid)</a>
         </figcaption>
       </figure>
       <figure>
-        <a href="./table.html"><img src="./thumb-table.webp" alt="main view (as table)"></a>
+        <a href="./table.html"><img src="./thumb-table.webp" width="550" height="283" alt="main view (as table)"></a>
         <figcaption>
           <a href="./table.html">main view (as table)</a>
         </figcaption>
       </figure>
       <figure>
-        <a href="./full_text_query_grid.html"><img src="./thumb-full-grid.webp" alt="full-text (on grid)"></a>
+        <a href="./full_text_query_grid.html"><img src="./thumb-full-grid.webp" width="550" height="281" alt="full-text (on grid)"></a>
         <figcaption>
           <a href="./full_text_query_grid.html">full-text (on grid)</a>
         </figcaption>
       </figure>
       <figure>
-        <a href="./full_text_query_table.html"><img src="./thumb-full-table.webp" alt="full-text (on table)"></a>
+        <a href="./full_text_query_table.html"><img src="./thumb-full-table.webp" width="550" height="283" alt="full-text (on table)"></a>
         <figcaption>
           <a href="./full_text_query_table.html">full-text (on table)</a>
         </figcaption>
       </figure>
       <figure>
-        <a href="./document_cefc21a0-f7ab-46ae-8824-46d254ba053d.html"><img src="./thumb-document.webp" alt="document view"></a>
+        <a href="./document_cefc21a0-f7ab-46ae-8824-46d254ba053d.html"><img src="./thumb-document.webp" width="550" height="281" alt="document view"></a>
         <figcaption>
           <a href="./document_cefc21a0-f7ab-46ae-8824-46d254ba053d.html">document view</a>
         </figcaption>
       </figure>
       <figure>
-        <a href="./tags_d3.html"><img src="./thumb-tags_d3.webp" alt="dynamic tags view with d3.js"></a>
+        <a href="./tags_d3.html"><img src="./thumb-tags_d3.webp" width="550" height="283" alt="dynamic tags view with d3.js"></a>
         <figcaption>
           <a href="./tags_d3.html">dynamic tags view with <code>d3.js</code></a>
         </figcaption>
       </figure>
       <figure>
-        <a href="./tags.html"><img src="./thumb-tags.webp" alt="static tags view with matplotlib"></a>
+        <a href="./tags.html"><img src="./thumb-tags.webp" width="550" height="283" alt="static tags view with matplotlib"></a>
         <figcaption>
           <a href="./tags.html">static tags view with matplotlib</a>
         </figcaption>
       </figure>
       <figure>
-        <a href="./database_view.html"><img src="./thumb-database_view.webp" alt="database overview"></a>
+        <a href="./database_view.html"><img src="./thumb-database_view.webp" width="550" height="283" alt="database overview"></a>
         <figcaption>
           <a href="./database_view.html">database overview</a>
         </figcaption>
@@ -79,7 +80,7 @@
   </div>
   <p>&dagger;. scraped with <a href="https://gist.github.com/epilys/b78fe285a2647ece8689f7c7c1bca90c">this <code>python3</code> script</a>.</p>
   <footer>
-    <a rel="me" style="display: none;" href="https://chaos.social/@epilys"></a> <a rel="me" href="https://github.com/epilys/bibliothecula">https://github.com/epilys/bibliothecula</a> <a rel="external nofollow" href="https://www.gnu.org/licenses/gpl-3.0-standalone.html"><small><abbr class="gpl" title="The GNU General Public License v3.0">GPLv3</abbr></small></a>
+    <a rel="me" style="display: none;" href="https://chaos.social/@epilys"></a> <a rel="me" href="https://github.com/epilys/bibliothecula" class="repo">https://<wbr>github<wbr>.<wbr>com<wbr>/<wbr>epilys<wbr>/<wbr>bibliothecula</a> <a rel="external nofollow" href="https://www.gnu.org/licenses/gpl-3.0-standalone.html" class="gpl"><small><abbr class="gpl" title="The GNU General Public License v3.0">GPLv3</abbr></small></a>
   </footer>
 </body>
 </html>

@@ -5,12 +5,14 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="description" content="document organizer with tags and full-text-search, in a simple and clean sqlite3 schema">
   <title>bibliothecula</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://nessuent.xyz/bibliothecula.png">
   <meta property="og:site_name" content="bibliothecula - tagged document storage">
   <meta property="og:title" content="bibliothecula - tagged document storage">
+  <link rel="preload" href="./css/fonts/Amstelvar-Roman-VF.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" media="all" href="./css/style.css" />
 </head>
 <body class="index">
@@ -40,14 +42,14 @@
     <a class="zoom" href="#web-gui"><img width="1631" height="539" src='./img/screenshot-document-view.webp' alt="document view" decoding="async" loading="lazy"></a>
     <figcaption> document view (<em>click to close</em>) </figcaption>
   </figure>
-  <header>
-    <details class="click"><summary><h1 class="click" title="the colorscheme of the page is inspired by the cover of the first edition of Dracula by Bram Stoker in 1897.">bibliothecula</h1></summary></details>
+  <header aria-label="logo and bibliothecula name">
+    <details class="click"><summary><h1 class="shadow" aria-hidden="true">bibliothecula</h1><h1 class="click" title="the colorscheme of the page is inspired by the cover of the first edition of Dracula by Bram Stoker in 1897.">bibliothecula</h1></summary></details>
     <picture>
-      <source srcset="./img/logo.webp" type="image/webp">
-      <img class="logo" src="../img/logo.png" alt="bibliothecula logo" title="Illustration of bat from De arte venandi cum avibus by HRE Frederick II (circa 1240s). It's a visual pun because it looks like an open book viewed from above, and also bibliothecula shares a suffix with the word Dracula.">
+      <source srcset="./img/logo.webp 420w" type="image/webp">
+      <img class="logo" width="420" height="418" src="./img/logo.png" alt="bibliothecula logo" title="Illustration of bat from De arte venandi cum avibus by HRE Frederick II (circa 1240s). It's a visual pun because it looks like an open book viewed from above, and also bibliothecula shares a suffix with the word Dracula.">
     </picture>
   </header>
-  <blockquote>
+  <blockquote title="dictionary and project definitions of bibliothecula">
     <p class="def"><em>bibliothēcula</em> f (genitive <span class="nobr"><em>bibliothēculae</em>&#8202;);</span> first declension (Late Latin)</p>
     <ul>
       <li>small library</li>
@@ -66,13 +68,13 @@
   <div>
     <h2>where</h2>
     <div class="repo">
-      <strong><a rel="me" href="https://github.com/epilys/bibliothecula" class="repo">https://github.com/epilys/bibliothecula</a></strong> <a rel="external nofollow" href="https://www.gnu.org/licenses/gpl-3.0-standalone.html" class="gpl"><small><abbr class="gpl" title="The GNU General Public License v3.0">GPLv3</abbr></small></a>
+      <strong><a rel="me" href="https://github.com/epilys/bibliothecula" class="repo">https://<wbr>github<wbr>.<wbr>com<wbr>/<wbr>epilys<wbr>/<wbr>bibliothecula<wbr></a></strong> <a rel="external nofollow" href="https://www.gnu.org/licenses/gpl-3.0-standalone.html" class="gpl"><small><abbr class="gpl" title="The GNU General Public License v3.0">GPLv3</abbr></small></a>
     </div>
   </div>
   <div>
     <h2>what <a href="https://github.com/epilys/bibliothecula/tree/main/docs" class="decorate" title="bibliothecula documentation repository directory"></a></h2>
-    <p><code class="filename">schema.{<a href="https://github.com/epilys/bibliothecula/tree/main/docs/schema.sql" title="sql file with comments">sql</a>,<a href="https://github.com/epilys/bibliothecula/tree/main/docs/schema.md" title="markdown file with comments">md</a>}</code> and <code class="filename">extended-schema.{<a href="https://github.com/epilys/bibliothecula/tree/main/docs/extended-schema.sql" title="sql file with comments">sql</a>,<a href="https://github.com/epilys/bibliothecula/tree/main/docs/extended-schema.md" title="markdown file with comments">md</a>}</code></p>
-    <pre>
+    <p><code class="filename">schema.{<a href="https://github.com/epilys/bibliothecula/blob/main/docs/schema.sql" title="sql file with comments">sql</a>,<a href="https://github.com/epilys/bibliothecula/blob/main/docs/schema.md" title="markdown file with comments">md</a>}</code> and <code class="filename">extended-schema.{<a href="https://github.com/epilys/bibliothecula/blob/main/docs/extended-schema.sql" title="sql file with comments">sql</a>,<a href="https://github.com/epilys/bibliothecula/blob/main/docs/extended-schema.md" title="markdown file with comments">md</a>}</code></p>
+    <pre tabindex="0" title="SQL code that produces the bibliothecula schema" role="figure">
 /* core bibliothecula schema */
 
 /* CREATE_DOCUMENTS */
@@ -201,7 +203,7 @@ END;
   <div>
     <h2>stuff</h2>
     <h3>fuse filesystem <a href="https://github.com/epilys/bibliothecula/tree/main/biblfs" class="decorate" title="repository directory for biblfs, the virtual filesystem"></a></h3>
-    <pre>$ <span class="pl-s1">ls <span class="pl-k">~</span>/Documents/biblfs <span class="pl-k">|</span> head</span>
+    <pre tabindex="0" title="example terminal use session of the biblfs virtual filesystem" role="figure">$ <span class="pl-s1">ls <span class="pl-k">~</span>/Documents/biblfs <span class="pl-k">|</span> head</span>
 <span class="pl-c1">total 393K</span>
 <span class="pl-c1">drwxr-xr-x  2 epilys epilys     0 Jan  1  1970 ./</span>
 <span class="pl-c1">drwxrwxrwt 98 root   root    120K Jun 14 19:27 ../</span>
@@ -236,37 +238,37 @@ $ <span class="pl-s1">ls <span class="pl-k">~</span>/Documents/biblfs/query/jour
     <p><a href="./web-demo/index.html">see non-interactive, static demo here</a></p>
     <div class="screenshots">
       <figure>
-        <a href="#grid-zoom"><img src="./img/screenshot-grid-view.webp" alt="grid view" decoding="async" loading="lazy"></a>
+        <a href="#grid-zoom"><img width="1908" height="982" src='./img/screenshot-grid-view.webp' alt="grid view" decoding="async" loading="lazy"></a>
         <figcaption>
           <a href="#grid-zoom">grid view</a>
         </figcaption>
       </figure>
       <figure>
-        <a href="#full-text-grid-zoom"><img src="./img/screenshot-full-text-grid-property.webp" alt="full-text search on grid view" decoding="async" loading="lazy"></a>
+        <a href="#full-text-grid-zoom"><img width="808"  height="1006"  src='./img/screenshot-full-text-grid-property.webp' alt="full-text search on grid view" decoding="async" loading="lazy"></a>
         <figcaption>
           <a href="#full-text-grid-zoom">full-text search on grid view</a>
         </figcaption>
       </figure>
       <figure>
-        <a href="#full-text-table-zoom"><img src="./img/screenshot-full-text-table-property.webp" alt="and on table view" decoding="async" loading="lazy"></a>
+        <a href="#full-text-table-zoom"><img width="1908"  height="1010"  src='./img/screenshot-full-text-table-property.webp' alt="and on table view" decoding="async" loading="lazy"></a>
         <figcaption>
           <a href="#full-text-table-zoom">and on table view</a>
         </figcaption>
       </figure>
       <figure>
-        <a href="#database-zoom"><img src="./img/screenshot-database-view.webp" alt="database view" decoding="async" loading="lazy"></a>
+        <a href="#database-zoom"><img width="1908"  height="5765"  src='./img/screenshot-database-view.webp' alt="database view" decoding="async" loading="lazy"></a>
         <figcaption>
           <a href="#database-zoom">database view</a>
         </figcaption>
       </figure>
       <figure id="d3">
-        <a href="#d3-zoom"><img src="./img/screenshot-d3-tag-graph.webp" alt="d3.js tag visualization" decoding="async" loading="lazy"></a>
+        <a href="#d3-zoom"><img width="1908" height="1384" src='./img/screenshot-d3-tag-graph.webp' alt="d3.js tag visualization" decoding="async" loading="lazy"></a>
         <figcaption>
           <a href="#d3-zoom"><code class="filename">d3.js</code> tag visualization</a>
         </figcaption>
       </figure>
       <figure>
-        <a href="#document-zoom"><img src="./img/screenshot-document-view.webp" alt="document view" decoding="async" loading="lazy"></a>
+        <a href="#document-zoom"><img width="1631" height="539" src='./img/screenshot-document-view.webp' alt="document view" decoding="async" loading="lazy"></a>
         <figcaption>
           <a href="#document-zoom">document view</a>
         </figcaption>
@@ -276,7 +278,7 @@ $ <span class="pl-s1">ls <span class="pl-k">~</span>/Documents/biblfs/query/jour
   <div>
     <h3 id="shell">shell <a href="https://github.com/epilys/bibliothecula/blob/main/bibl-shell.py" class="decorate" title="repository directory for the shell app"></a></h3>
     <p>manage your database through the powerful <code>python3</code> or <code>IPython3</code> interactive shells with convenience wrappers around common database operations including viewing, editing, adding and removing files.</p>
-    <pre>% <span class="pl-s1">python3.7 bibl-shell.py bibliothecula.db</span>
+    <pre tabindex="0" title="banner text shown to user when starting the bibl-shell tool" role="figure">% <span class="pl-s1">python3.7 bibl-shell.py bibliothecula.db</span>
     <span class="pl-c1">python3 3.7.3 (default, Jan 22 2021, 20:04:44) [GCC 8.3.0]</span>
     <span class="pl-c1">                            bibliothecula shell 📇 📚 🏷️ 🦇</span>
     <span class="pl-c1">       (_    ,_,    _)</span>
@@ -294,7 +296,7 @@ $ <span class="pl-s1">ls <span class="pl-k">~</span>/Documents/biblfs/query/jour
     <span class="pl-c1">&gt;&gt;&gt;</span></pre>
   </div>
   <footer>
-    <a rel="me" style="display: none;" href="https://chaos.social/@epilys"></a> <a rel="me" href="https://github.com/epilys/bibliothecula" class="repo">https://github.com/epilys/bibliothecula</a> <a rel="external nofollow" href="https://www.gnu.org/licenses/gpl-3.0-standalone.html" class="gpl"><small><abbr class="gpl" title="The GNU General Public License v3.0">GPLv3</abbr></small></a>
+    <a rel="me" style="display: none;" href="https://chaos.social/@epilys"></a> <a rel="me" href="https://github.com/epilys/bibliothecula" class="repo">https://<wbr>github<wbr>.<wbr>com<wbr>/<wbr>epilys<wbr>/<wbr>bibliothecula</a> <a rel="external nofollow" href="https://www.gnu.org/licenses/gpl-3.0-standalone.html" class="gpl"><small><abbr class="gpl" title="The GNU General Public License v3.0">GPLv3</abbr></small></a>
   </footer>
 </body>
 </html>

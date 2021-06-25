@@ -63,6 +63,24 @@ you:
     then, setting the `background-clip`  to `text`: this makes the
     background visible only through text.
 
+    o lack  of support  for this  is detected  by `@supports`  CSS
+      queries, which in this case  uses a plain text color instead
+      of clipping the background.
+
+    o because the background layer of an element is below the text
+      shadow  layer, it's  impossible  to set  a `text-shadow`  on
+      the  textured title  without it  being over  the background.
+      Thankfully we can  create a "shadow" copy of  the title, put
+      it below the  actual title and put  the `text-shadow` there.
+      The elements perfectly stack on top of its other because the
+      `<summary>`  element is  has  the  CSS properties  `display:
+      inline-grid;` and `grid-template-areas: "header-stack";`. If
+      both  <h1>  elements use  the  same  grid area,  they  stack
+      according to  the grid flow  order (in this case,  the order
+      they appear on  the source code). The shadow  <h1> is hidden
+      from screen  readers by using the  `aria-hidden="true"` HTML
+      attribute.
+
   * the font-size  uses the `min()`  CSS function to set  the font
     size to a smaller value if  the viewport becomes too small: if
     the viewport's  5% of  width is less  than 3rem  (that's three
@@ -78,21 +96,21 @@ you:
     They are then set up to look like dashes on the left and right
     of the title.
 
-  * the title shows... something when you hover or activate it:
+  * the title shows... something when you click it:
 
-    o the  <h1>  grid  changes  its layout  through  the  `:hover`
-      selector  and then  one  of the  pseudo-elements becomes  an
-      image  box via  the `content`  CSS property,  and the  other
-      becomes a  caption that  takes its  text from  the heading's
-      `title` HTML property (the one that shows a tooltip when you
-      hover over the element).
-
-    o on touch  devices, a <detail>  element is used  instead that
-      shows  the  hover card  when  you  open it.  This  increases
-      complexity too much, if I knew a priori I wouldn't do it.
+    o the <h1> element is inside a <details> element that requires
+      the user to click to display further info
+    o the   <h1>    grid   changes   its   layout    through   the
+      `details.click[open] h1.click`  etcetera selectors  and then
+      one  of the  pseudo-elements becomes  an image  box via  the
+      `content` CSS property, and the other becomes a caption that
+      takes its text from the heading's `title` HTML property (the
+      one that  shows a tooltip  when you hover over  the element)
+      using the `attr()` CSS function.
 
     o Note:  the image  doesn't  load until  the pseudoelement  is
-      visible.
+      visible.  That's  because it doesn't exist in the DOM and is
+      generated with CSS only.
 
     o The image  and caption appear above  everything else because
       they create a new stacking context via CSS; that is achieved
@@ -120,3 +138,40 @@ you:
 
     o The image is scaled responsively to the viewport width using
       the `min()` function.
+
+- the screenshot  images are  lazily loaded:  by setting  the HTML
+  attribute `loading="lazy"`  they are  loaded when they  enter or
+  are close  enough to  the user's viewport  without the  need for
+  javascript. Despite that, lazy loading is turned off if you have
+  javascript disabled  in order to avoid  tracking users' location
+  within the page by purposefuly placed lazy loading elements.
+
+- the browser  is instructed to  preload the font with  the `<link
+  rel="preload" ..` HTML element to make sure it shows up faster.
+
+- the custom `@font-face` has `font-display: swap` set in order to
+  show a system  font until the custom one  has loaded, preventing
+  flashes of invisible text.
+
+- the `contain` CSS property is  used for some elements that might
+  have complex layout but do  not otherwise affect the other ones.
+  This  is a  very small  optimization that  basically allows  the
+  browser to know how much the layout changes in each redraw.
+
+- <img>  widths and  heights and  also  grid item  widths are  set
+  explicitly in order to let the browser know their size a priori.
+
+- The `outline` CSS property is  used to frame screenshots instead
+  of `border`  because borders trigger layout  changes but outline
+  do not,  since they are  not part of the  element. Additionally,
+  screenshot elements are "trimmed"  to their size since `contain`
+  is used with `paint` which means  the element is not supposed to
+  paint outside  of its  own area. Hence,  the outline  is shifted
+  inside the element by 2 pixels using `outline-offset: -2px;`.
+
+- The  <wbr>  HTML element  is  used  to hint  possible  linebreak
+  positions within  URLs. The elements  are not shown to  the user
+  and have no effect other than nice breaking of long URLs instead
+  of breaking anywhere:
+
+  https://<wbr>example<wbr>.<wbr>com<wbr>/<wbr>epilys

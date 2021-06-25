@@ -28,6 +28,7 @@ ul {
     local("Amstelvar Roman");
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 
 .monospace {
@@ -54,7 +55,7 @@ body {
   margin: 0 auto;
   min-width: 250px;
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  grid-template-columns: repeat(12, minmax(10px, 1fr));
   grid-auto-rows: min-content min-content min-content;
   row-gap: min(6vw, 0.8rem);
   width: 100%;
@@ -83,8 +84,23 @@ a.decorate {
   text-underline-offset: 5px;
 }
 
-a.decorate:after {
+a.decorate:before {
   content: " 🔗";
+}
+
+a.decorate:hover {
+  text-decoration: none;
+  text-underline-position: from-font;
+}
+
+a.decorate[href^="http://"]:hover:after,
+a.decorate[href^="https://"]:hover:after {
+  content: ' (' attr(href) ')';
+  text-decoration-style: revert;
+  text-decoration-line: underline;
+  text-decoration-style: wavy !important;
+  display: inline-block;
+  margin-left: 1ch;
 }
 
 header {
@@ -133,18 +149,22 @@ h1 {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   grid-column-gap: var(--column-gap);
+  grid-area: header-stack;
 }
 
-@supports (background-clip: text) {
+@supports (background-clip: text) or (-webkit-background-clip: text)  {
   h1 {
     color: transparent;
     background: radial-gradient(var(--spoiled-orange) 12%, var(--blood) 22%);
     background-size: 3px 4px;
+    /* -webkit-background-clip clips the background of the element to the text */
+    -webkit-text-fill-color: transparent; /* overrides the white text color in webkit browsers */
+    -webkit-background-clip: text;
     background-clip: text;
   }
 }
 
-@supports not (background-clip: text) {
+@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
   h1 {
     --dark-blood: #5c1212;
     letter-spacing: 2px;
@@ -153,12 +173,23 @@ h1 {
   }
 }
 
+h1.shadow {
+  color: transparent;
+  background: none;
+  text-shadow: 1px 1px #484848;
+  -webkit-text-fill-color: transparent;
+}
+
 
 .index h1 {
   /* fallback */
   font-size: 6rem;
   /* scale with viewport width size */
   font-size: min(10vw, 6rem);
+}
+
+.index h1.shadow {
+  text-shadow: 2px 2px #484848;
 }
 
 h1:before,
@@ -202,9 +233,9 @@ h1:after {
   details.click>summary {
     height: min-content;
     width: min-content;
-    display: inline-flex;
-    flex-direction: row;
-    row-gap: 0;
+    display: inline-grid;
+    grid-template-areas: "header-stack";
+    gap: 0;
     place-items:center;
   }
 
@@ -281,6 +312,8 @@ details.click[open] h1.click:after {
   top: 0;
   border: 2px double #d49a1e;
   border-top: 2px outset #ab6a2d;
+  -webkit-text-fill-color: black;
+  -webkit-background-clip: none;
 }
 
 details.click[open] h1.click:before {
@@ -314,6 +347,7 @@ body>header img.logo {
   width: 7rem;
   width: min(15vw, 7rem);
   max-width: max-content;
+  height: auto;
   image-rendering: optimizequality;
 }
 
@@ -328,12 +362,13 @@ body>* {
   max-width: 100%;
 }
 
+body>div {
+  width: 100%;
+}
+
 div.screenshots {
   text-align: center;
   height: min-content;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
   place-content: center;
   display: grid;
   row-gap: 1rem;
@@ -353,12 +388,17 @@ div.screenshots>figure {
   grid-auto-flow: row;
   height: max-content;
   gap: 0;
+  contain: layout paint;
+  width:100%;
 }
 
 div.screenshots>figure>a {
   grid-row: span 1;
   grid-column: span 1;
   place-self: center;
+  width: 100%;
+  height: auto;
+  contain: layout paint;
 }
 
 div.screenshots>figure img {
@@ -370,7 +410,9 @@ div.screenshots>figure img {
   max-width: 100%;
   overflow-y: hidden;
   max-height: 11rem;
-  border: 1px ridge #8a752170;
+  outline: 2px solid #8a752170;
+  outline-offset: -2px;
+  contain: layout paint;
 }
 
 figcaption {
@@ -379,7 +421,7 @@ figcaption {
   width: max-content;
   margin: 0 auto;
   background: #e6bd1a;
-  border: 5px solid #e6bd1a;
+  padding: 5px;
 }
 
 figcaption a {
@@ -389,6 +431,7 @@ figcaption a {
 body>figure.zoom {
   grid-column: 1 / span 12;
   grid-row: 1 / span 2;
+  contain: layout paint;
 }
 
 figure.zoom, figure.zoom img, a.zoom {
@@ -533,7 +576,6 @@ div.repo {
   padding: .4rem .5rem .3rem .5rem;
   width: auto;
   border-radius: .2rem;
-  word-break: break-all;
   word-wrap: anywhere;
   overflow-x: hidden;
   max-width: max-content;
@@ -544,6 +586,7 @@ div.repo {
 a.gpl , a.gpl:visited {
   color: white;
   text-decoration: none;
+  word-break: break-all;
 }
 a.repo , a.repo:visited {
   color: white;
@@ -573,7 +616,9 @@ pre {
   background-color: #f6f8fa;
   border-radius: 6px;
   height: 10rem;
+  width: 100%;
   resize: vertical;
+  contain: strict;
 }
 
 .pl-c1,
