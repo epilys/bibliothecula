@@ -53,7 +53,7 @@
             min-width: 288pt;
         }
 
-        div.db-items ol li + li {
+        div.triggers ol li + li {
             margin-top:1rem;
             border-top: 2px outset black;
             padding-top: 1rem;
@@ -75,12 +75,13 @@
         }
 
         td.keywords span {
-            border: 1px solid gray;
-            background: white;
-            padding: 2px 5px;
-            display: inline-block;
-            height: min-content;
-            width: max-content;
+          padding: 1px 4px;
+          border-radius: 3px;
+          border: 1px solid rgb(187, 187, 187);
+          text-decoration: none;
+          font-size: x-small;
+          background: white;
+          width: max-content;
         }
 
         td.keywords span + span {
@@ -214,187 +215,100 @@
                 <ul>
                     <li><a href="#overview">overview</a>
                         <ul>
-                            <li><a href="#schema-health">SQL schema health</a></li>
-                            <li><a href="#db-items">list of database items</a></li>
-                            <li><a href="#table-sizes">Analytical table sizes</a></li>
+                            {% for t in toc %}
+                            {% if t.0 > 1 %}
+                              <ul>
+                            <li><a href="#{{t.1}}">{{t.2}}</a></li>
+                            </ul>
+                            {% else %}
+                            <li><a href="#{{t.1}}">{{t.2}}</a></li>
+                            {% endif %}
+                            {% endfor %}
                         </ul>
                     </li>
                 </ul>
             </details>
         </nav>
     </aside>
-    <nav>
-      <ul class="menu">
-        <li><a href="{% url 'database_index' %}">index management</a></li>
-        <li><a href="{% url 'database_docs' %}">schema reference</a></li>
-      </ul>
-    </nav>
 
     <h1 id="overview">{%section_url "overview" %}database overview</h1>
     <hr/>
+    {% for k, c in statements %}
     <div class="wrapper">
-        <table>
-            <caption></caption>
-            <colgroup>
-                <col span="1">
-                <col span="1">
-            </colgroup>
-            <thead>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>total size</td>
-                    <td>{{ total_size|filesizeformat }}</td>
-                </tr>
-                <tr>
-                    <td>total tags</td>
-                    <td>{{ total_tags }}</td>
-                </tr>
-                <tr>
-                    <td>total documents</td>
-                    <td>{{ total_documents }}</td>
-                </tr>
-                <tr>
-                    <td>has full-text-search</td>
-                    <td>{{ fts5_table_exists|yesno:"yes,no,unknown" }}{% if fts5_table_exists %}, {{ fts5_indexed_documents_no }} indexed document{{ fts5_indexed_documents_no|pluralize }}{% endif %}</td>
-                </tr>
-                <tr>
-                    <td>top 5 tags</td>
-                    <td style="padding:0;">
-                        <table style="width: 100%;">
-                            <tbody>
-                                {% for t in top_tags %}
-                                    <tr>
-                                        <td><a class="item-tag" rel="tag" href="{% url 'view_collection' %}?tags={{ t.0|urlencode }}">{{ t.0 }} <span>{{ t.1 }}</span></a></td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        {% cache 300 treesizes %}
-            {% autoescape off %}
-                {{ treemap|safe }}
-            {% endautoescape %}
-        {% endcache %}
-    </div>
-    <div class="wrapper">
-      <div>
-        <h2 id="schema-health">{% section_url "schema-health" %}Schema health check</h2>
-        <table style="width: 100%;">
-          <caption></caption>
-          <colgroup>
-            <col>
-            <col>
-          </colgroup>
-          <thead>
-            <tr>
-              <th>name</th>
-              <th>result</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th>supports core schema</th>
-              <td>?</td>
-            </tr>
-            <tr>
-              <th>has undolog</th>
-              <td>?</td>
-            </tr>
-            <tr>
-              <th>has last_modified update triggers</th>
-              <td>?</td>
-            </tr>
-            <tr>
-              <th>has backrefs index</th>
-              <td>?</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="db-items">
-      <h2 id="db-items">{% section_url "db-items" %}database items</h2>
-      <form id="drop-item-form"></form>
-      <table style="width: 100%;">
-        <caption></caption>
-        <colgroup>
-          <col>
-          <col>
-          <col>
-          <col>
-        </colgroup>
-        <thead>
-          <tr>
-            <th>type</th>
-            <th>name</th>
-            <th>sql</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in db_items %}
-          <tr>
-            <td>
-              <h3>{{ item.0}}</h3>
-            </td>
-            <td><var>{{item.1}}</var></td>
-            <td>
-              <code class="sql">{{item.4|safe|linebreaksbr}}</code>
-            </td>
-            <td>
-              <button form="drop-item-form" formaction="{% url 'database_drop_item' item.1 %}" formmethod="get" type="submit">delete item</button>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <h2 id="table-sizes">{% section_url "table-sizes" %}Analytical table sizes</h2>
-    <div class="wrapper">
-        <table>
-            <caption>Size of each table and index.</caption>
-            <thead>
-                <tr>
-                    <th colspan="2">Tables</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for tbl in tables %}
+        <div>
+          <h2 id="{{k}}">{% section_url k %}{{c.title}}</h2>
+            <table style="width: 100%;">
+              <caption>{{ c.caption }}.</caption>
+                <thead>
                     <tr>
-                        <td><var>{{ tbl.0 }}</var></td>
-                        <td>{{ tbl.1|filesizeformat }}</td>
+                        <th>topics</th>
+                        <th>name</th>
+                        <th>documentation</th>
+                        <th>value</th>
+                        <th>options</th>
                     </tr>
-                {% endfor %}
-                    <tr class="total">
-                        <th scope="row">tables totals</th>
-                        <td>{{ tables_sum|filesizeformat }}</td>
-                    </tr>
-            </tbody>
-            <tbody>
-                <tr>
-                    <th colspan="2">Indices</th>
-                </tr>
-                {% for idx in indexes %}
+                </thead>
+                <tbody>
+                        {% for s in c.statements.main %}
+                            <tr>
+                                <td class="keywords">{% spaceless %}
+                                    <div>
+                                        {% for k in s.keywords %}
+                                            <span class="keyword-{{ k.0.value }}">{{ k.1 }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endspaceless %}
+                                </td>
+                                <th class="blue">{{ s.get_id }}</th>
+                                <td class="doc">{{ s.doc|safe}}</td>
+                                <td class="sql"><code class="sql">{{ s.html|safe|linebreaksbr }}</code></td>
+                                {% if s.callable_ %}
+                                    <td><button form="run-query-form" formaction="{% url 'database_run_query' s.get_id %}" formmethod="get" type="submit">run statement</button></td>
+                                {% else %}
+                                    <td><button disabled style="color: rgba(0,0,0,0);">run statement</button></td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+            {% if c.statements.appendix|length != 0 %}
+          <h2 id="{{k}}">{% section_url k "-APPENDIX" %}{{c.title}} Appendix</h2>
+            <table style="width: 100%;">
+              <caption>Appendix {{ c.caption }}.</caption>
+                <thead>
                     <tr>
-                        <td><var>{{ idx.0 }}</var></td>
-                        <td>{{ idx.1|filesizeformat }}</td>
+                        <th>topics</th>
+                        <th>name</th>
+                        <th>documentation</th>
+                        <th>value</th>
+                        <th>options</th>
                     </tr>
-                {% endfor %}
-                    <tr class="total">
-                        <th scope="row">indices totals</th>
-                        <td>{{ indexes_sum|filesizeformat }}</td>
-                    </tr>
-            </tbody>
-            <tfoot>
-                    <tr class="total">
-                        <th scope="row">all</th>
-                        <td>{{ total_size|filesizeformat }}</td>
-                    </tr>
-            </tfoot>
-        </table>
+                </thead>
+                <tbody>
+                        {% for s in c.statements.appendix %}
+                            <tr>
+                                <td class="keywords">{% spaceless %}
+                                    <div>
+                                        {% for k in s.keywords %}
+                                            <span class="keyword-{{ k.0.value }}">{{ k.1 }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endspaceless %}
+                                </td>
+                                <th class="blue">{{ s.get_id }}</th>
+                                <td class="doc">{{ s.doc|safe}}</td>
+                                <td class="sql"><code class="sql">{{ s.html|safe|linebreaksbr }}</code></td>
+                                {% if s.callable_ %}
+                                    <td><button form="run-query-form" formaction="{% url 'database_run_query' s.get_id %}" formmethod="get" type="submit">run statement</button></td>
+                                {% else %}
+                                    <td><button disabled style="color: rgba(0,0,0,0);">run statement</button></td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
     </div>
+    {% endfor%}
 {% endblock %}

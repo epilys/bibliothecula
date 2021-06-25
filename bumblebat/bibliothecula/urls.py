@@ -24,6 +24,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", views.view_collection, name="view_collection"),
     path("database/", views.database_overview, name="database_overview"),
+    path("database/docs/", views.database_docs, name="database_docs"),
     path("database/index/", views.database_index, name="database_index"),
     path(
         "database/index/<document_uuid>",
@@ -32,9 +33,9 @@ urlpatterns = [
     ),
     path("database/run/<query>/", views.database_run_query, name="database_run_query"),
     path(
-        "database/drop/<trigger>/",
-        views.database_drop_trigger,
-        name="database_drop_trigger",
+        "database/drop/<item>/",
+        views.database_drop_item,
+        name="database_drop_item",
     ),
     path("add/document/", views.add_document, name="add_document"),
     path("document/<uuid>/", views.view_document, name="view_document"),

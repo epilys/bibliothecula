@@ -141,6 +141,7 @@ def database_overview(request):
     fts5_indexed_documents_no = 0
     fts5_size = None
     triggers = []
+    db_items = []
     tables = []
     indexes = []
     with connections["bibliothecula"].cursor() as cursor:
@@ -169,6 +170,7 @@ def database_overview(request):
                 table_names.append(r[1])
             else:
                 index_names.append(r[1])
+            db_items.append(list(r))
         for tbl in table_names:
             cursor.execute(f"SELECT SUM(pgsize) FROM dbstat WHERE name = '{tbl}'")
             size = cursor.fetchone()[0]
@@ -232,6 +234,7 @@ def database_overview(request):
         "indexes": indexes,
         "indexes_sum": sum(t[1] for t in indexes if t[1]),
         "triggers": triggers,
+        "db_items": db_items,
         "fts5_table_exists": fts5_table_exists,
         "fts5_indexed_documents_no": fts5_indexed_documents_no,
         "schema": schema,
@@ -280,32 +283,32 @@ def database_run_query(request, query):
 
 
 @staff_member_required
-def database_drop_trigger(request, trigger):
+def database_drop_item(request, item):
     response = None
     errored = False
     with connections["bibliothecula"].cursor() as cursor:
         cursor.execute(
             "SELECT * FROM sqlite_master WHERE type = 'trigger' AND name = %s",
-            [trigger],
+            [item],
         )
         response = cursor.fetchone()
         if response is None:
-            raise Http404(f"Trigger named {trigger} not found.")
+            raise Http404(f"Trigger named {item} not found.")
         try:
-            cursor.execute(f"DROP TRIGGER IF EXISTS {trigger};")
+            cursor.execute(f"DROP TRIGGER IF EXISTS {item};")
             response = cursor.fetchone()
         except Exception as exc:
             errored = True
             messages.add_message(
-                request, messages.ERROR, f"{trigger} error: database raised {exc}"
+                request, messages.ERROR, f"{item} error: database raised {exc}"
             )
     if response:
         messages.add_message(
-            request, messages.INFO, f"{trigger}: Database replied with {response}"
+            request, messages.INFO, f"{item}: Database replied with {response}"
         )
     elif not errored:
         messages.add_message(
-            request, messages.INFO, f"{trigger}: Trigger deleted successfuly."
+            request, messages.INFO, f"{item}: Trigger deleted successfuly."
         )
     return HttpResponseRedirect(reverse("database_overview"))
 
@@ -476,4 +479,33 @@ def database_index(request, document_uuid=None):
         "index_stats_fn": index_stats_fn,
     }
     template = loader.get_template("database_index.html")
+    return HttpResponse(template.render(context, request))
+
+
+def database_docs(request):
+    (exports, extended_exports) = sql_statements.get_exports()
+    toc = []
+    d = {
+        "CORE_SCHEMA": {
+            "title": "The core bibliothecula schema.",
+            "caption": "",
+            "statements": exports,
+        },
+        "EXTENDED_SCHEMA": {
+            "title": "Extra useful flair.",
+            "caption": "A list of utility SQL statements for use with the bibliothecula schema.",
+            "statements": extended_exports,
+        },
+    }
+
+    for k in d:
+        toc.append((1, k, d[k]["title"]))
+        if len(d[k]["statements"]["appendix"]) > 0:
+            toc.append((2, f"{k}-APPENDIX", f"Appendix {d[k]['title']}"))
+
+    context = {
+        "statements": [(k, d[k]) for k in d],
+        "toc": toc,
+    }
+    template = loader.get_template("database_doc.html")
     return HttpResponse(template.render(context, request))
