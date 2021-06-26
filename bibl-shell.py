@@ -26,9 +26,10 @@ import json
 import uuid
 import pathlib
 import mimetypes
+import itertools
 from collections import OrderedDict
 from abc import abstractmethod
-from typing import Type, Dict, List, Any, Set, Union, Optional
+from typing import Type, Dict, List, Any, Set, Union, Optional, Callable
 from pathlib import Path
 
 SHELL_BANNER = """                            bibliothecula shell 📇 📚 🏷️  🦇
@@ -108,11 +109,67 @@ class Database:
     Holds the database path and the sqlite3 connection.
     """
 
-    def __init__(self, conn: sqlite3.Connection, options: argparse.Namespace):
-        self.options = options
-        self.name = options.db_name
+    def __init__(
+        self, conn: sqlite3.Connection, db_name: Union[str, Path], verbose: bool = False
+    ):
+        self.name = db_name
         self.conn = conn
+        self.verbose = verbose
         self.cur = self.conn.cursor()
+
+    @staticmethod
+    def from_path(
+        path: Union[str, Path],
+        autocommit=False,
+        flags=None,
+        detect_types=sqlite3.PARSE_COLNAMES | sqlite3.PARSE_DECLTYPES,
+        verbose: bool = False,
+    ):
+        conn = sqlite3.connect(
+            path,
+            detect_types=detect_types,
+            isolation_level=None if autocommit else "DEFERRED",
+        )
+        conn.row_factory = sqlite3.Row
+        return Database(conn, path, verbose=verbose)
+
+    def import_items(self, objects: List[AnyDatabaseObject]):
+        count = 0
+        with self.conn as conn:
+            groups: Dict[Type[AnyDatabaseObject], List[AnyDatabaseObject]] = {
+                Document: [],
+                TextMetadata: [],
+                BinaryMetadata: [],
+                DocumentHasTextMetadata: [],
+                DocumentHasBinaryMetadata: [],
+            }
+            for obj in objects:
+                _class = obj.__class__
+                groups[_class].append(obj)
+            classes: List[Type[AnyDatabaseObject]] = [
+                Document,
+                TextMetadata,
+                BinaryMetadata,
+                DocumentHasTextMetadata,
+                DocumentHasBinaryMetadata,
+            ]
+            for group in classes:
+                table_name = group.TABLE_NAME
+                columns = ",".join(group.COLUMNS)
+                values_placeholder = ",".join(["?"] * len(group.COLUMNS))
+                sql = f"INSERT OR IGNORE INTO {table_name} ({columns}) VALUES ({values_placeholder})"
+                if self.verbose:
+                    print(sql)
+                items = [
+                    list(map(lambda col: obj.as_dict()[col], group.COLUMNS))
+                    for obj in groups[group]
+                ]
+                conn.executemany(sql, items)
+                if self.verbose:
+                    print("Inserted ", len(groups[group]), "items of kind", group)
+                count += len(groups[group])
+        if self.verbose:
+            print("Total inserted ", count, " items")
 
     def __str__(self):
         return f"<Database {repr(self.name)}>"
@@ -132,7 +189,7 @@ class Database:
         elif _class is DocumentHasTextMetadata:
             return self.convert_has_text_metadata(r)
         elif _class is DocumentHasBinaryMetadata:
-            return self.convert_binary_metadata(r)
+            return self.convert_has_binary_metadata(r)
 
     def convert_document(self, r: sqlite3.Row) -> "Document":
         """
@@ -264,7 +321,12 @@ class Database:
 
     def stats(self) -> Dict[str, Any]:
         """Returns stats about database"""
-        stats = {"path": self.name}
+        stats: Dict[str, Any] = {
+            "path": self.name,
+            "counts": {},
+            "total_size": 0,
+            "total_size_human": "",
+        }
         self.cur.execute(
             "SELECT type, COUNT(*) as count FROM sqlite_master GROUP BY type",
         )
@@ -416,7 +478,8 @@ class Database:
 class DbObject:
     """Abstract class for database objectsa"""
 
-    COLUMNS: Set[str]
+    TABLE_NAME: str
+    COLUMNS: List[str]
 
     def __init__(
         self,
@@ -486,11 +549,14 @@ class DbObject:
         ...
 
     def as_dict(self) -> Dict[str, Optional[str]]:
-        uuid_enc = lambda u, b: u.hex if isinstance(u, uuid.UUID) else b(u)
-        none_enc = lambda n: None if n is None else str(n)
+        uuid_enc = lambda u, b: u.hex if isinstance(u, uuid.UUID) else b(u, bytes_enc)
+        bytes_enc: Callable[[Any], Union[bytes, str]] = (
+            lambda n: n if isinstance(n, bytes) else str(n)
+        )
+        none_enc = lambda n, b: None if n is None else b(n)
         columns = self.__class__.COLUMNS
         return {
-            uuid_enc(k, lambda x: str(x)): uuid_enc(v, none_enc)
+            uuid_enc(k, lambda x, _b: str(x)): uuid_enc(v, none_enc)
             for k, v in self.__dict__.items()
             if k in columns
         }
@@ -502,7 +568,8 @@ class DbObject:
 class Document(DbObject):
     """Document class. Changes are not saved to database unless save() is called."""
 
-    COLUMNS = set(["uuid", "title", "title_suffix", "created", "last_modified"])
+    TABLE_NAME = "Documents"
+    COLUMNS = ["uuid", "title", "title_suffix", "created", "last_modified"]
 
     def __init__(
         self,
@@ -673,6 +740,55 @@ class Document(DbObject):
             for r in self.db.cur.fetchall()
         ]
 
+    def all_metadata(
+        self,
+    ) -> Dict[
+        str,
+        List[
+            Union[
+                "DocumentHasTextMetadata",
+                "DocumentHasBinaryMetadata",
+                "TextMetadata",
+                "BinaryMetadata",
+            ]
+        ],
+    ]:
+        """Return all metadata objects"""
+        self.db.cur.execute(
+            f"SELECT m.* FROM TextMetadata as m, DocumentHasTextMetadata as has WHERE document_uuid = '{self.uuid.hex}' AND metadata_uuid = m.uuid ORDER BY last_modified DESC"
+        )
+        text_metadata = [
+            self.db.__convert_dispatch__(TextMetadata, r)
+            for r in self.db.cur.fetchall()
+        ]
+        self.db.cur.execute(
+            f"SELECT * FROM DocumentHasTextMetadata WHERE document_uuid = '{self.uuid.hex}' ORDER BY last_modified DESC"
+        )
+        has_text = [
+            self.db.__convert_dispatch__(DocumentHasTextMetadata, r)
+            for r in self.db.cur.fetchall()
+        ]
+        self.db.cur.execute(
+            f"SELECT m.* FROM BinaryMetadata as m, DocumentHasBinaryMetadata as has WHERE document_uuid = '{self.uuid.hex}' AND metadata_uuid = m.uuid ORDER BY last_modified DESC"
+        )
+        binary_metadata = [
+            self.db.__convert_dispatch__(BinaryMetadata, r)
+            for r in self.db.cur.fetchall()
+        ]
+        self.db.cur.execute(
+            f"SELECT * FROM DocumentHasBinaryMetadata WHERE document_uuid = '{self.uuid.hex}' ORDER BY last_modified DESC"
+        )
+        has_binary = [
+            self.db.__convert_dispatch__(DocumentHasBinaryMetadata, r)
+            for r in self.db.cur.fetchall()
+        ]
+        return {
+            "TextMetadata": text_metadata,
+            "DocumentHasTextMetadata": has_text,
+            "BinaryMetadata": binary_metadata,
+            "DocumentHasBinaryMetadata": has_binary,
+        }
+
     def __str__(self):
         return f"<Document {repr(self.title)}{'' if self.title_suffix else ''}{self.title_suffix if self.title_suffix else ''}>"
 
@@ -689,15 +805,14 @@ class Document(DbObject):
 class TextMetadata(DbObject):
     """TextMetadata class. Changes are not saved to database unless save() is called."""
 
-    COLUMNS = set(
-        [
-            "uuid",
-            "name",
-            "data",
-            "created",
-            "last_modified",
-        ]
-    )
+    TABLE_NAME = "TextMetadata"
+    COLUMNS = [
+        "uuid",
+        "name",
+        "data",
+        "created",
+        "last_modified",
+    ]
 
     def __init__(
         self, db: Database, uuid: uuid.UUID, name: str, data: str, *args, **kwargs
@@ -754,15 +869,14 @@ class TextMetadata(DbObject):
 class BinaryMetadata(DbObject):
     """BinaryMetadata class. Changes are not saved to database unless save() is called."""
 
-    COLUMNS = set(
-        [
-            "uuid",
-            "name",
-            "data",
-            "created",
-            "last_modified",
-        ]
-    )
+    TABLE_NAME = "BinaryMetadata"
+    COLUMNS = [
+        "uuid",
+        "name",
+        "data",
+        "created",
+        "last_modified",
+    ]
 
     def __init__(self, db, uuid: uuid.UUID, name: str, data: bytes, *args, **kwargs):
         self.db = db
@@ -899,47 +1013,42 @@ class BinaryMetadata(DbObject):
 class DocumentHasTextMetadata(DbObject):
     """DocumentHasTextMetadata class. Changes are not saved to database unless save() is called."""
 
-    COLUMNS = set(
-        [
-            "id",
-            "name",
-            "document_uuid",
-            "metadata_uuid",
-            "created",
-            "last_modified",
-        ]
-    )
+    TABLE_NAME = "DocumentHasTextMetadata"
+    COLUMNS = [
+        "id",
+        "name",
+        "document_uuid",
+        "metadata_uuid",
+        "created",
+        "last_modified",
+    ]
 
     def __init__(
         self,
         db: Database,
         _id: int,
         name: str,
-        document: Union[Document, uuid.UUID],
-        metadata: Union[TextMetadata, uuid.UUID],
+        document_uuid: uuid.UUID,
+        metadata_uuid: uuid.UUID,
         *args,
         **kwargs,
     ):
         self.db = db
         self.name = name
-        if isinstance(document, Document):
-            self.document = document
-        elif isinstance(document, uuid.UUID):
-            raise NotImplementedError("")
+        if isinstance(document_uuid, uuid.UUID):
+            self.document_uuid = document_uuid
         else:
-            raise TypeError("document must be either Document or a uuid.UUID.")
-        if isinstance(metadata, TextMetadata):
-            self.metadata = metadata
-        elif isinstance(metadata, uuid.UUID):
-            raise NotImplementedError("")
+            raise TypeError("document_uuid must be a Document uuid.UUID.")
+        if isinstance(metadata_uuid, uuid.UUID):
+            self.metadata_uuid = metadata_uuid
         else:
-            raise TypeError("metadata must be either TextMetadata or a uuid.UUID.")
-        self._id = _id
+            raise TypeError("metadata_uuid must be a TextMetadata uuid.UUID.")
+        self.id = _id
         super(DocumentHasTextMetadata, self).__init__(*args, **kwargs)
 
     def pk(self) -> int:
         """Returns the column value used as primary key"""
-        return self._id
+        return self.id
 
     def __str__(self):
         return f"<DocumentHasTextMetadata {repr(self.name)}>"
@@ -970,47 +1079,42 @@ class DocumentHasTextMetadata(DbObject):
 class DocumentHasBinaryMetadata(DbObject):
     """DocumentHasBinaryMetadata class. Changes are not saved to database unless save() is called."""
 
-    COLUMNS = set(
-        [
-            "id",
-            "name",
-            "document_uuid",
-            "metadata_uuid",
-            "created",
-            "last_modified",
-        ]
-    )
+    TABLE_NAME = "DocumentHasBinaryMetadata"
+    COLUMNS = [
+        "id",
+        "name",
+        "document_uuid",
+        "metadata_uuid",
+        "created",
+        "last_modified",
+    ]
 
     def __init__(
         self,
         db: Database,
         _id: int,
         name: str,
-        document: Union[Document, uuid.UUID],
-        metadata: Union[BinaryMetadata, uuid.UUID],
+        document_uuid: uuid.UUID,
+        metadata_uuid: uuid.UUID,
         *args,
         **kwargs,
     ):
         self.db = db
         self.name = name
-        if isinstance(document, Document):
-            self.document = document
-        elif isinstance(document, uuid.UUID):
-            raise NotImplementedError("")
+        if isinstance(document_uuid, uuid.UUID):
+            self.document_uuid = document_uuid
         else:
-            raise TypeError("document must be either Document or a uuid.UUID.")
-        if isinstance(metadata, BinaryMetadata):
-            self.metadata = metadata
-        elif isinstance(metadata, uuid.UUID):
-            raise NotImplementedError("")
+            raise TypeError("document_uuid must be a Document uuid.UUID.")
+        if isinstance(metadata_uuid, uuid.UUID):
+            self.metadata_uuid = metadata_uuid
         else:
-            raise TypeError("metadata must be either BinaryMetadata or a uuid.UUID.")
-        self._id = _id
+            raise TypeError("metadata_uuid must be a BinaryMetadata uuid.UUID.")
+        self.id = _id
         super(DocumentHasBinaryMetadata, self).__init__(*args, **kwargs)
 
     def pk(self) -> int:
         """Returns the column value used as primary key"""
-        return self._id
+        return self.id
 
     def __str__(self):
         return f"<DocumentHasBinaryMetadata {repr(self.name)}>"
@@ -1048,13 +1152,19 @@ class Shell:
         self.conn = None
         self.database = None
 
+        def adapt_uuid(u):
+            return u.hex
+
+        sqlite3.register_adapter(uuid.UUID, adapt_uuid)
         self.conn = sqlite3.connect(
             self.options.db_name,
             detect_types=sqlite3.PARSE_COLNAMES | sqlite3.PARSE_DECLTYPES,
             isolation_level=None if self.options.autocommit else "DEFERRED",
         )
         self.conn.row_factory = sqlite3.Row
-        self.database = Database(self.conn, self.options)
+        self.database = Database(
+            self.conn, self.options.db_name, verbose=options.verbose
+        )
 
     def __enter__(self):
         return self
@@ -1096,6 +1206,7 @@ class Shell:
             "subprocess": subprocess,
             "uuid": uuid,
             "datetime": datetime,
+            "itertools": itertools,
             "os": os,
         }
         return imported_objects
