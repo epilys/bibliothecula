@@ -10,7 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
-from pathlib import Path
+from pathlib import Path, PurePath
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -74,6 +75,16 @@ WSGI_APPLICATION = "bibliothecula.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+bdb = None
+if 'BIBLIOTHECULA_DB' in os.environ:
+    path = PurePath(os.environ['BIBLIOTHECULA_DB'])
+    if not path.is_absolute():
+        bdb = BASE_DIR / os.environ['BIBLIOTHECULA_DB']
+    else:
+        bdb = os.environ['BIBLIOTHECULA_DB']
+else:
+    bdb = BASE_DIR / "bibliothecula.db"
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -81,7 +92,7 @@ DATABASES = {
     },
     "bibliothecula": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "bibliothecula.db",
+        "NAME": bdb
     },
 }
 DATABASE_ROUTERS = [

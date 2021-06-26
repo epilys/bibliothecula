@@ -48,8 +48,24 @@ Requires:
 
 ## Use
 
+The database's location is assumed to be named `bibliothecula.db` and in the same directory as the `manage.py` script, otherwise define the environment variable `BIBLIOTHECULA_DB` with a path relative to `manage.py` or an absolute path like in the following examples:
+
+### Using `./bibliothecula.db`
+
 ```shell
 python3.7 manage.py runserver
+```
+
+### Using `../art.db`
+
+```shell
+BIBLIOTHECULA_DB=../art.db python3.7 manage.py runserver
+```
+
+### Using `/home/user/Documents/business_papers.db`
+
+```shell
+BIBLIOTHECULA_DB=~/Documents/business_papers.db python3.7 manage.py runserver
 ```
 
 ## Example scripts
