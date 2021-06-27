@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.template import loader
 from django.db import transaction
 from django.db.models.functions import Lower
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.expressions import RawSQL
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
@@ -187,7 +187,7 @@ def view_collection(request):
         try:
             with connections["bibliothecula"].cursor() as cursor:
                 cursor.execute(
-                    f"select uuid, snippet({FTS_NAME},-1,'<b>','</b>','\u200a[…]\u200a',36) as snippet from {FTS_NAME}('\"{escaped}\"')"
+                    f"select uuid, snippet({FTS_NAME},-1,'<mark>','</mark>','\u200a[…]\u200a',36) as snippet from {FTS_NAME}('\"{escaped}\"')"
                 )
                 snippets = {uuid.UUID(i[0]): i[1] for i in cursor.fetchall()}
         except Exception as exc:
@@ -208,7 +208,11 @@ def view_collection(request):
             collection = collection.filter(uuid__in=metadata_objects)
         # print("col len is ", len(collection))
     if query_string and not full_text_flag:
-        collection = collection.filter(title__icontains=query_string)
+        collection = collection.filter(
+            Q(title__icontains=query_string)
+            | Q(text_metadata__metadata__data__icontains=query_string)
+            | Q(binary_metadata__metadata__name__icontains=query_string)
+        ).distinct()
     if layout_preference == "grid":
         template = loader.get_template("collection_grid.html")
     elif layout_preference == "table":
