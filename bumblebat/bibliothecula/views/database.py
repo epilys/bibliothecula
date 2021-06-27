@@ -29,61 +29,68 @@ def make_treemap(q, trees):
 def make_treemap_svg(request, fts5_size):
     import multiprocessing, queue
 
-    labels = "embedded files", "linked files"
-    no_linked_size = (
-        DocumentHasBinaryMetadata.objects.all()
-        .filter(name=STORAGE_NAME, metadata__name=PATH_NAME)
-        .count()
-    )
-    no_total_storages = (
-        DocumentHasBinaryMetadata.objects.all().filter(name=STORAGE_NAME).count()
-    )
-    if no_total_storages > 0:
-        no_embedded_size = no_total_storages - no_linked_size
-    else:
-        no_linked_size = 0
-        no_embedded_size = 0
-
-    size_linked_size = sum(
-        has.metadata.size()
-        for has in DocumentHasBinaryMetadata.objects.all().filter(
-            name=STORAGE_NAME, metadata__name=PATH_NAME
-        )
-    )
-    size_total_storages = sum(
-        has.metadata.size()
-        for has in DocumentHasBinaryMetadata.objects.all().filter(name=STORAGE_NAME)
-    )
-    if size_total_storages > 0:
-        size_embedded_size = size_total_storages - size_linked_size
-    else:
-        size_linked_size = 0
-        size_embedded_size = 0
-
     dbg("Make treemap called!")
-    no_tree = (no_embedded_size, no_linked_size)
-    if fts5_size and fts5_size > 0:
-        size_tree = (size_embedded_size, size_linked_size, fts5_size)
-    else:
-        size_tree = (size_embedded_size, size_linked_size)
-    size_l = {size_tree[0]: "embedded files size", size_tree[1]: "linked files size"}
-    if fts5_size and fts5_size > 0:
-        size_l[fts5_size] = "fts5 size"
+    try:
+        labels = "embedded files", "linked files"
+        no_linked_size = (
+            DocumentHasBinaryMetadata.objects.all()
+            .filter(name=STORAGE_NAME, metadata__name=PATH_NAME)
+            .count()
+        )
+        no_total_storages = (
+            DocumentHasBinaryMetadata.objects.all().filter(name=STORAGE_NAME).count()
+        )
+        if no_total_storages > 0:
+            no_embedded_size = no_total_storages - no_linked_size
+        else:
+            no_linked_size = 0
+            no_embedded_size = 0
 
-    size_sizes = {
-        size_tree[0]: filesizeformat(size_embedded_size),
-        size_tree[1]: filesizeformat(size_linked_size),
-    }
-    if fts5_size and fts5_size > 0:
-        size_sizes[fts5_size] = filesizeformat(fts5_size)
+        size_linked_size = sum(
+            has.metadata.size()
+            for has in DocumentHasBinaryMetadata.objects.all().filter(
+                name=STORAGE_NAME, metadata__name=PATH_NAME
+            )
+        )
+        size_total_storages = sum(
+            has.metadata.size()
+            for has in DocumentHasBinaryMetadata.objects.all().filter(name=STORAGE_NAME)
+        )
+        if size_total_storages > 0:
+            size_embedded_size = size_total_storages - size_linked_size
+        else:
+            size_linked_size = 0
+            size_embedded_size = 0
 
-    no_l = {no_tree[0]: "embedded files", no_tree[1]: "linked files"}
-    no_sizes = {no_tree[0]: no_embedded_size, no_tree[1]: no_linked_size}
+        no_tree = (no_embedded_size, no_linked_size)
+        if fts5_size and fts5_size > 0:
+            size_tree = (size_embedded_size, size_linked_size, fts5_size)
+        else:
+            size_tree = (size_embedded_size, size_linked_size)
+        size_l = {size_tree[0]: "embedded files size", size_tree[1]: "linked files size"}
+        if fts5_size and fts5_size > 0:
+            size_l[fts5_size] = "fts5 size"
 
-    trees = [
-        ("no. of files", no_sizes, (no_tree,), no_l),
-        ("total sizes", size_sizes, (size_tree,), size_l),
-    ]
+        size_sizes = {
+            size_tree[0]: filesizeformat(size_embedded_size),
+            size_tree[1]: filesizeformat(size_linked_size),
+        }
+        if fts5_size and fts5_size > 0:
+            size_sizes[fts5_size] = filesizeformat(fts5_size)
+
+        no_l = {no_tree[0]: "embedded files", no_tree[1]: "linked files"}
+        no_sizes = {no_tree[0]: no_embedded_size, no_tree[1]: no_linked_size}
+
+        trees = [
+            ("no. of files", no_sizes, (no_tree,), no_l),
+            ("total sizes", size_sizes, (size_tree,), size_l),
+        ]
+    except Exception as exc:
+        dbg(exc)
+        messages.add_message(
+            request, messages.ERROR, f"Treemap process returned exception: {exc}"
+        )
+        return None
 
     q = multiprocessing.Queue()
     timeout = 10

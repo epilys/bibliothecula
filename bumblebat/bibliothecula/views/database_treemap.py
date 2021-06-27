@@ -2,6 +2,7 @@ import matplotlib
 
 matplotlib.use("Agg")  # Use pixel canvas backend instead of GUI backend
 matplotlib.rcParams["hatch.linewidth"] = 0.9
+matplotlib.rcParams['svg.fonttype'] = 'none'
 from matplotlib import pylab
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
