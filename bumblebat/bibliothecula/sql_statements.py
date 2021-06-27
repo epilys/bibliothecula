@@ -171,7 +171,8 @@ CREATE_DOCUMENTS = SqlStatement(
         "title" TEXT NOT NULL,
         "title_suffix" TEXT DEFAULT NULL, -- disambiguate documents with matching titles
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT unique_title UNIQUE ("title", "title_suffix")
 );""",
     doc="",
     kind=StatementKind.TABLE,
@@ -185,7 +186,8 @@ CREATE_TEXTMETADATA = SqlStatement(
         "name" TEXT NULL,
         "data" TEXT NOT NULL,
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "data")
 );""",
     doc="",
     kind=StatementKind.TABLE,
@@ -200,7 +202,8 @@ CREATE_BINARYMETADATA = SqlStatement(
         "data" BLOB NOT NULL,
         "compressed" BOOLEAN NOT NULL DEFAULT (0),
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "data")
 );""",
     doc="",
     kind=StatementKind.TABLE,
@@ -217,7 +220,8 @@ CREATE_DOCUMENTHASBINARYMETADATA = SqlStatement(
         "metadata_uuid" CHARACTER(32) NOT NULL
             REFERENCES "BinaryMetadata" ("uuid") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "document_uuid", "metadata_uuid")
 );""",
     doc="",
     kind=StatementKind.TABLE,
@@ -235,7 +239,8 @@ CREATE_DOCUMENTHASTEXTMETADATA = SqlStatement(
         "metadata_uuid" CHARACTER(32) NOT NULL
             REFERENCES "TextMetadata" ("uuid") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "document_uuid", "metadata_uuid")
 );""",
     doc="",
     kind=StatementKind.TABLE,
@@ -413,6 +418,15 @@ UNDOLOG_DELETE_BIG_ENTRIES = SqlStatement(
     "UNDOLOG_DELETE_BIG_ENTRIES",
     """DELETE FROM undolog WHERE length(sql AS BLOB) > 1000000;""",
     doc="Delete big binary files (> 1MiB) from undolog to free up space",
+    kind=StatementKind.EXAMPLE,
+    callable_=True,
+    dependencies=[CREATE_UNDOLOG],
+)
+
+UNDOLOG_QUERY_SIZE = SqlStatement(
+    "UNDOLOG_QUERY_SIZE",
+    """SELECT SUM(pgsize) FROM dbstat WHERE name = 'undolog'""",
+    doc="Query total size of <code>undolog</code> table.",
     kind=StatementKind.EXAMPLE,
     callable_=True,
     dependencies=[CREATE_UNDOLOG],
@@ -888,6 +902,7 @@ FTS_SCHEMA = [
 UNDO_SCHEMA = [
     CREATE_UNDOLOG,
     UNDOLOG_DELETE_BIG_ENTRIES,
+    UNDOLOG_QUERY_SIZE,
     UNDOLOG_CREATE_TRIGGER_DOCUMENTS_INSERT,
     UNDOLOG_CREATE_TRIGGER_DOCUMENTS_UPDATE,
     UNDOLOG_CREATE_TRIGGER_DOCUMENTS_DELETE,

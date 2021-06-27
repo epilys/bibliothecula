@@ -544,6 +544,18 @@ DELETE FROM undolog WHERE length(sql AS BLOB) > 1000000;
 </tr>
             <tr><td class="doc">
 
+#### `UNDOLOG_QUERY_SIZE`
+
+Query total size of <code>undolog</code> table.
+
+```sql
+SELECT SUM(pgsize) FROM dbstat WHERE name = 'undolog'
+```
+</td>
+<td><kbd>example</kbd></td>
+</tr>
+            <tr><td class="doc">
+
 #### `FTS_INTEGRITY_CHECK`
 
 This command is used to verify that the full-text index is internally consistent. <cite><a rel="external nofollow noreferrer" href="https://sqlite.org/fts5.html#the_integrity_check_command">sqlite3 reference</a></cite>

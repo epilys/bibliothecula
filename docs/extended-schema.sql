@@ -37,6 +37,7 @@ CLI_INSERT_FILE                | The sqlite3 CLI has some special I/O function t
 CLI_VIEW_FILE                  | View any binary BLOB with the edit() function in the CLI by ignoring...
 REMOVE_DUPLICATE_ROWS          | If you need to remove duplicate rows, adapt this statement to your...
 UNDOLOG_DELETE_BIG_ENTRIES     | Delete big binary files (> 1MiB) from undolog to free up space
+UNDOLOG_QUERY_SIZE             | Query total size of undolog table.
 FTS_INTEGRITY_CHECK            | This command is used to verify that the full-text index is internally...
 FTS_OPTIMIZE                   | This command merges all individual b-trees that currently make up the...
 FTS_REBUILD                    | This command first deletes the entire full-text index, then rebuilds...
@@ -358,6 +359,13 @@ DELETE FROM table WHERE rowid NOT IN
  Delete big binary files (> 1MiB) from undolog to free up space
 
 DELETE FROM undolog WHERE length(sql AS BLOB) > 1000000; */
+
+
+/* UNDOLOG_QUERY_SIZE
+
+ Query total size of undolog table.
+
+SELECT SUM(pgsize) FROM dbstat WHERE name = 'undolog'; */
 
 
 /* FTS_INTEGRITY_CHECK

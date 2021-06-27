@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS "Documents" (
         "title" TEXT NOT NULL,
         "title_suffix" TEXT DEFAULT NULL, -- disambiguate documents with matching titles
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT unique_title UNIQUE ("title", "title_suffix")
 );
 
 /* CREATE_TEXTMETADATA */
@@ -28,7 +29,8 @@ CREATE TABLE IF NOT EXISTS "TextMetadata" (
         "name" TEXT NULL,
         "data" TEXT NOT NULL,
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "data")
 );
 
 /* CREATE_BINARYMETADATA */
@@ -38,7 +40,8 @@ CREATE TABLE IF NOT EXISTS "BinaryMetadata" (
         "data" BLOB NOT NULL,
         "compressed" BOOLEAN NOT NULL DEFAULT (0),
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "data")
 );
 
 /* CREATE_DOCUMENTHASTEXTMETADATA */
@@ -50,7 +53,8 @@ CREATE TABLE IF NOT EXISTS "DocumentHasTextMetadata" (
         "metadata_uuid" CHARACTER(32) NOT NULL
             REFERENCES "TextMetadata" ("uuid") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "document_uuid", "metadata_uuid")
 );
 
 /* CREATE_DOCUMENTHASBINARYMETADATA */
@@ -62,7 +66,8 @@ CREATE TABLE IF NOT EXISTS "DocumentHasBinaryMetadata" (
         "metadata_uuid" CHARACTER(32) NOT NULL
             REFERENCES "BinaryMetadata" ("uuid") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
         "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "document_uuid", "metadata_uuid")
 );
 
 /* CREATE_VIEW_DOCUMENTS_TITLE_AUTHORS
