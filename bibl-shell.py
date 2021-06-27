@@ -732,8 +732,13 @@ class Document(DbObject):
 
     def tags(self) -> List["TextMetadata"]:
         """Return all tags"""
+        return self.text_metadata("tag")
+
+    def text_metadata(self, name: str) -> List["TextMetadata"]:
+        """Return all text metadata with given name"""
         self.db.cur.execute(
-            f"SELECT m.* FROM TextMetadata as m, DocumentHasTextMetadata as has WHERE document_uuid = '{self.uuid.hex}' AND metadata_uuid = m.uuid AND has.name = 'tag' ORDER BY last_modified DESC"
+            f"SELECT m.* FROM TextMetadata as m, DocumentHasTextMetadata as has WHERE document_uuid = '{self.uuid.hex}' AND metadata_uuid = m.uuid AND has.name = ? ORDER BY last_modified DESC",
+            (name,),
         )
         return [
             self.db.__convert_dispatch__(TextMetadata, r)
