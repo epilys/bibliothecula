@@ -476,7 +476,10 @@ class DocumentHasTextMetadata(models.Model):
         return self.last_modified
 
     def __str__(self):
-        return f"{self.document}->{self.metadata}"
+        try:
+            return f"{self.document}->{self.metadata}"
+        except:
+            return str(self.id)
 
     class Meta:
         db_table = "DocumentHasTextMetadata"
@@ -517,7 +520,10 @@ class DocumentHasBinaryMetadata(models.Model):
         return self.metadata.contents_as_str()
 
     def __str__(self):
-        return f"{self.document}->{self.metadata}"
+        try:
+            return f"{self.document}->{self.metadata}"
+        except:
+            return str(self.id)
 
     class Meta:
         db_table = "DocumentHasBinaryMetadata"
