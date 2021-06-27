@@ -12,6 +12,8 @@
         }
 
         div.wrapper > div {
+          --bg-color: #9b9494;
+          background: var(--bg-color);
           contain: layout paint;
         }
 
@@ -51,10 +53,13 @@
           padding: .4rem;
           box-sizing: border-box;
           background-color: white;
+          background-clip: content-box;
           display: grid;
           grid-template-rows: auto min-content;
           max-height: 170px;
           overflow: hidden;
+          background: linear-gradient( var(--bg-color), transparent), linear-gradient( 90deg, var(--avg-color), transparent), linear-gradient( -90deg, var(--avg-color), transparent);
+          background-blend-mode: overlay;
         }
 
         div.tagcloud {
@@ -76,9 +81,10 @@
           display: inline-block;
           height: auto;
           width: 100%;
-          align-self: center;
+          align-self: start;
           object-fit: cover;
-          object-position: top;
+          object-position: revert;
+          outline: 4px solid #979797ab;
         }
 
         figcaption {
@@ -154,7 +160,7 @@
                     {% with thumbnail=doc.get_thumbnail %}
                     <div>
                         <a href="{{ doc.get_absolute_url }}">
-                            <figure class="document-thumbnail">
+                          <figure class="document-thumbnail" style="{% if thumbnail %}--avg-color: {{thumbnail.2}}; background-color: var(--avg-color);{%endif%}">
                                 {% if thumbnail %}
                                     <img width="118" height="150" src="{{ thumbnail.0 }}" alt="{{ doc }}" />
                                 {% else %}

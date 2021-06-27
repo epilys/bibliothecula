@@ -23,6 +23,7 @@ from .thumbnails import (
     generate_pdf_thumbnail,
     generate_epub_thumbnail,
     generate_image_thumbnail,
+    average_color,
 )
 from .text_extract import get_pdf_text, get_epub_text
 
@@ -103,7 +104,11 @@ class Document(models.Model):
         ):
             return None
         thumb = self.binary_metadata.all().get(metadata__name=THUMBNAIL_NAME)
-        return (thumb.metadata.contents_as_str(), thumb.metadata.uuid)
+        data_url = thumb.metadata.contents_as_str()
+        color = average_color(data_url)
+        if color is None:
+            print("self is ", self)
+        return (data_url, thumb.metadata.uuid, color)
 
     def total_metadata(self):
         return self.text_metadata.all().count()
@@ -327,7 +332,7 @@ class BinaryMetadata(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.TextField(null=True)
     data = models.BinaryField(null=False)
-    compressed = models.BooleanField(null=False,default=False)
+    compressed = models.BooleanField(null=False, default=False)
     created = DateTimeField(null=False, auto_now_add=True)
     last_modified = DateTimeField(null=False, auto_now=True)
 

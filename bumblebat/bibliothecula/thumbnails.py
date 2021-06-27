@@ -34,6 +34,21 @@ def generate_image_thumbnail(path, blob=None):
             return page.data_url()
 
 
+def average_color(data_url):
+    import urllib.request
+
+    blob = urllib.request.urlopen(data_url).read()
+    try:
+        with Image(format="webp", blob=blob) as img:
+            # print(img)
+            img.resize(width=1, height=1)
+            color = img.export_pixels(x=0, y=0)
+            return "#{:02x}{:02x}{:02x}".format(*color)
+    except Exception as exc:
+        print(exc)
+        return None
+
+
 def generate_pdf_thumbnail(path, blob=None):
     if blob is None:
         with subprocess.Popen(
