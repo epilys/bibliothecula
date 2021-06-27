@@ -644,11 +644,73 @@ class Document(DbObject):
                 new_name = json.dumps(d, separators=(",", ":"))
                 return self.add_blob(new_name, new_data, "storage")
 
-    def add_blob(self, name: str, data: bytes, has_name: str) -> "BinaryMetadata":
-        self.db.cur.execute(f"SAVEPOINT insert_blob_{self.pk().hex}")
-        try:
+    def add_text_metadata(
+        self, name: str, data: str, has_name: Optional[str] = None
+    ) -> "TextMetadata":
+        """
+
+        :param name: str
+        :param data: bytes
+        :param has_name: name for the DocumentHasTextMetadata row (if None, same from name parameter)
+
+        """
+        if has_name is None:
+            has_name = name
+        with self.db.conn as conn:
             m_uuid = uuid.uuid4()
-            self.db.cur.execute(
+            cur = conn.cursor()
+            cur.execute(
+                f"INSERT OR IGNORE INTO TextMetadata (uuid, name, data, created, last_modified) VALUES (?, ?, ?, ?, ?)",
+                [
+                    m_uuid.hex,
+                    name,
+                    data,
+                    datetime.datetime.now(),
+                    datetime.datetime.now(),
+                ],
+            )
+            cur.execute(
+                "SELECT * FROM TextMetadata WHERE name = ? and data = ?", (name, data)
+            )
+            new_rows = cur.fetchall()
+            if len(new_rows) == 0:
+                raise Exception(
+                    f"Insert TextMetadata returned {len(new_rows)} items: {[r.keys() for r in new_rows]}"
+                )
+            if len(new_rows) != 1:
+                print(
+                    f"Insert TextMetadata returned {len(new_rows)} items: {[r.keys() for r in new_rows]}"
+                )
+
+            new_text_metadata = self.db.convert_text_metadata(new_rows[0])
+            cur.execute(
+                f"INSERT OR IGNORE INTO DocumentHasTextMetadata (name, document_uuid, metadata_uuid, created, last_modified) VALUES (?, ?, ?, ?, ?)",
+                [
+                    has_name,
+                    self.pk().hex,
+                    new_text_metadata.pk().hex,
+                    datetime.datetime.now(),
+                    datetime.datetime.now(),
+                ],
+            )
+            return new_text_metadata
+
+    def add_blob(
+        self, name: str, data: bytes, has_name: Optional[str] = None
+    ) -> "BinaryMetadata":
+        """
+
+        :param name: str
+        :param data: bytes
+        :param has_name: name for the DocumentHasBinaryMetadata row (if None, same from name parameter)
+
+        """
+        if has_name is None:
+            has_name = name
+        with self.db.conn as conn:
+            m_uuid = uuid.uuid4()
+            cur = conn.cursor()
+            cur.execute(
                 f"INSERT OR ABORT INTO BinaryMetadata (uuid, name, data, created, last_modified) VALUES (?, ?, ?, ?, ?)",
                 [
                     m_uuid.hex,
@@ -658,17 +720,15 @@ class Document(DbObject):
                     datetime.datetime.now(),
                 ],
             )
-            self.db.cur.execute(
-                f"SELECT * FROM BinaryMetadata WHERE uuid = '{m_uuid.hex}'"
-            )
-            new_rows = self.db.cur.fetchall()
+            cur.execute(f"SELECT * FROM BinaryMetadata WHERE uuid = '{m_uuid.hex}'")
+            new_rows = cur.fetchall()
             if len(new_rows) == 1:
                 new_file = self.db.convert_binary_metadata(new_rows[0])
             else:
                 raise Exception(
                     f"Insert BinaryMetadata returned {len(new_rows)} items: {[r.keys() for r in new_rows]}"
                 )
-            self.db.cur.execute(
+            cur.execute(
                 f"INSERT OR ABORT INTO DocumentHasBinaryMetadata (name, document_uuid, metadata_uuid, created, last_modified) VALUES (?, ?, ?, ?, ?)",
                 [
                     has_name,
@@ -678,11 +738,7 @@ class Document(DbObject):
                     datetime.datetime.now(),
                 ],
             )
-            self.db.cur.execute(f"RELEASE SAVEPOINT insert_blob_{self.pk().hex}")
             return new_file
-        except Exception as e:
-            self.db.cur.execute(f"ROLLBACK TO SAVEPOINT insert_blob_{self.pk().hex}")
-            raise e from None
 
     def add_file(
         self,
