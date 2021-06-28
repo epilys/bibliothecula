@@ -112,6 +112,7 @@ class Database:
     def __init__(
         self, conn: sqlite3.Connection, db_name: Union[str, Path], verbose: bool = False
     ):
+        conn.execute("PRAGMA foreign_keys = ON;")
         self.name = db_name
         self.conn = conn
         self.verbose = verbose
