@@ -28,17 +28,33 @@ ul {
 }
 
 @font-face {
+  font-family: "DejaVu Serif";
+  src: local(DejaVu Serif);
+  size-adjust: 89.85%;
+  ascent-override: 98%;
+  descent-override: 25%;
+}
+
+@font-face {
+  font-family: "Header DejaVu Serif";
+  src: local(DejaVu Serif Bold);
+  size-adjust: 84.2%;
+  ascent-override: 88%;
+  descent-override: 35%;
+}
+
+@font-face {
   font-family: 'Amstelvar Roman';
   src: url('fonts/Amstelvar-Roman-VF.woff2') format('woff2'),
-    url('fonts/Amstelvar-Roman.ttf') format('truetype'),
-    local("Amstelvar Roman");
+  url('fonts/Amstelvar-Roman.ttf') format('truetype'),
+  local("Amstelvar Roman");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
 .monospace {
-  font-family: "IBM Plex Mono", "DejaVu Sans Mono", "Inconsolata", monospace;
+  font-family: "DejaVu Sans Mono", "Inconsolata", monospace;
   font-weight: normal;
   font-style: normal;
 }
@@ -53,7 +69,7 @@ html {
 body {
   background: var(--bg-color);
   color: var(--fg-color);
-  font-family: "Amstelvar Roman", "IBM Plex Serif", serif;
+  font-family: "Amstelvar Roman", "DejaVu Serif", serif;
   font-size: 1rem;
   font-kerning: none;
   font-stretch: 92.4%;
@@ -147,6 +163,7 @@ h1 {
   font-size: 3rem;
   /* scale with viewport width size */
   font-size: min(5vw, 3rem);
+  font-family: "Amstelvar Roman", "Header DejaVu Serif", serif;
   /* Color fallback, otherwise use background-clip in the @supports block below */
   color: #7c1a1a;
   margin: 0;
@@ -230,6 +247,7 @@ h1:after {
     width: min-content;
     cursor: pointer;
     pointer-events: initial;
+    contain: layout;
   }
 
   details.click>summary {
@@ -595,12 +613,12 @@ a.repo , a.repo:visited {
 }
 
 abbr.gpl {
-  font-family: "IBM Plex Mono", "DejaVu Sans Mono", "Inconsolata", monospace;
+  font-family: "DejaVu Sans Mono", monospace;
   font-weight: 500;
 }
 
 code, pre {
-  font-family: "IBM Plex Mono", "DejaVu Sans Mono", "Inconsolata", monospace;
+  font-family: "DejaVu Sans Mono", monospace;
   font-weight: 500;
   font-style: normal;
 }
