@@ -12,6 +12,12 @@
   --color-syntax-string: #032f62;
 }
 
+p {
+  hyphens: auto;
+  text-align: justify;
+  white-space: pre-wrap;
+}
+
 span.nobr {
   white-space: nowrap;
 }
@@ -186,10 +192,6 @@ h1.shadow {
   font-size: 6rem;
   /* scale with viewport width size */
   font-size: min(10vw, 6rem);
-}
-
-.index h1.shadow {
-  text-shadow: 2px 2px #484848;
 }
 
 h1:before,
@@ -579,7 +581,6 @@ div.repo {
   word-wrap: anywhere;
   overflow-x: hidden;
   max-width: max-content;
-  hyphens: auto;
   letter-spacing: .9px;
 }
 
@@ -605,19 +606,31 @@ code, pre {
 }
 
 code.filename {
-  white-space: nowrap;
+  /*white-space: nowrap;*/
 }
 
 pre {
   padding: 16px;
-  overflow: auto;
   font-size: 85%;
   line-height: 1.45;
   background-color: #f6f8fa;
   border-radius: 6px;
-  height: 10rem;
   width: 100%;
+}
+
+pre.scrollbox {
+  overflow: auto;
   resize: vertical;
+  contain: strict;
+  height: 10rem;
+  overflow: auto;
+  width: 100%;
+  background: linear-gradient(#fff 30%, #fff0), linear-gradient(#fff0, #fff 70%) 0 100%, linear-gradient(#0004 10%, #fff 70%), linear-gradient(#fff 10%, #0004 70%) 0 100%;
+  background-repeat: no-repeat;
+  background-color: white;
+  background-size: 100% 80px, 100% 80px, 100% 40px, 100% 40px;
+  background-attachment: local, local, scroll, scroll;
+  border: 3px solid #b8b8b8;
   contain: strict;
 }
 
