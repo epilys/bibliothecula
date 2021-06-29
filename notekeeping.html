@@ -1,0 +1,232 @@
+<!-- Hello. see /doc.txt for explanations on the used CSS/HTML5 techniques
+  without javascript. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="description" content="document organizer with tags and full-text-search, in a simple and clean sqlite3 schema">
+  <title>Using sqlite3 as a notekeeping document graph with automatic reference indexing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://nessuent.xyz/bibliothecula.png">
+  <meta property="og:site_name" content="bibliothecula - tagged document storage">
+  <meta property="og:title" content="bibliothecula - tagged document storage">
+  <link rel="preload" href="./css/fonts/Amstelvar-Roman-VF.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./css/style.css" as="style">
+  <link rel="stylesheet" media="all" href="./css/style.css" />
+</head>
+<body>
+  <header aria-label="logo and bibliothecula name">
+    <details class="click"><summary><h1 role="none" class="banner shadow" aria-hidden="true">bibliothecula</h1><h1 role="none" class="banner click" title="the colorscheme of the page is inspired by the cover of the first edition of Dracula by Bram Stoker in 1897.">bibliothecula</h1></summary></details>
+    <picture>
+      <source srcset="./img/logo.webp 420w" type="image/webp">
+      <img class="logo" width="420" height="418" src="./img/logo.png" alt="bibliothecula logo" title="Illustration of bat from De arte venandi cum avibus by HRE Frederick II (circa 1240s). It's a visual pun because it looks like an open book viewed from above, and also bibliothecula shares a suffix with the word Dracula.">
+    </picture>
+  </header>
+  <article>
+<h1 id="using-sqlite3-as-a-notekeeping graph">Using <code>sqlite3</code> as a notekeeping document graph with automatic reference indexing</h1>
+<header>
+<small><time datetime="2021-06-29 19:00" class="monospace">2021 June 29</time></small><address> by <a rel="author" href="https://chaos.social/@epilys">epilys</a></address> <a href="./index.html">go back</a>
+</header>
+<aside>
+  <p>
+  <em>TL;DR</em>:
+  </p>
+  <ul>
+    <li><p>The full schema required for this article’s examples is <a href="./web-demo/zettel.sql">here</a></p></li>
+<li>There’s a <a href="./web-demo/zettel.html">web demo</a> of <a rel="external nofollow" href="https://en.wikipedia.org/wiki/Niklas_Luhmann#Note-taking_system_(Zettelkasten)">sociologist Niklas Luhmann's zettelkasten</a> you can explore online using <code>sql.js</code>, <code>sqlite3</code> compiled to webassembly (total compressed asset size: <code>16MB</code>). <a href="https://github.com/epilys/bibliothecula/blob/cc3c4e4ccd85210c993a57df0c4012b3a027cdba/web-demo/zettel.html">source code</a></li>
+  </ul>
+</aside>
+<p>The full-text functionality of <code>sqlite3</code> along with the powerful SQL indexing and trigger features allows us to easily keep notes with references in an <code>sqlite3</code> database. In this document I present a workflow for doing so.</p>
+<p>First, let’s examine the pros and cons of this workflow:</p>
+<p>Pros:</p>
+<ul>
+<li>Your notes are kept in one file, and are portable on every OS and CPU architecture <code>sqlite3</code> supports.</li>
+<li>You can write your notes in any kind of plain text format, for example <code>troff</code> or <code>markdown</code>.</li>
+<li>You can compose, edit, download your files with the <code>sqlite3</code> CLI and your editor of choice.</li>
+<li>You get reference link calculations for free.</li>
+<li>You get full-text search for free.</li>
+<li>You can group notes into collections.</li>
+<li>You can optionally tag your notes with keywords.</li>
+<li>You can attach any (binary or not) file to those collections and refer to them from your notes.</li>
+</ul>
+<p>Cons:</p>
+<ul>
+<li>Your database may get corrupted (versus one note file getting corrupted) but it’s mostly recoverable. Always backup in anything you do.</li>
+<li>You will need familiarity with the command line and SQL, but with the proper mindset this shouldn’t be a problem.</li>
+<li>References in text files do not obey <code>FOREIGN KEY</code> constraints; if you delete a note, the dangling reference in text and in indices remains. You can easily search for and fix them in <code>AFTER INSERT</code> triggers, of course.</li>
+</ul>
+<h2 id="the-schema">The schema</h2>
+  <aside>
+  <p><strong>side-note</strong>: How to create a new database by reading the creation statements from a file:</p>
+<pre class="scrollbox shell"><code>$ sqlite3 notes.db # create new database
+sqlite&gt; .read schema.sql
+sqlite&gt; -- inspect the new schema:
+sqlite&gt; .schema
+</code></pre>
+</aside>
+<p>You can use anything you like as long as it has a basic property: <em>your <code>notes</code> table must have a unique id that you can reference in plain text</em>.</p>
+<p>For this demo, I use the <code>bibliothecula</code> schema which has UUIDs for primary keys and allows you to tag or add other arbitrary metadata (and files) to each document. In this model, the document is our notes collection and the files of this document can include plain text ones that are our notes.</p>
+<aside>
+<p><strong>side-note</strong>: <code>sqlite3</code> doesn’t have a built-in way to produce UUIDs. There’s an official <code>uuid.c</code> extension you can compile and load but that’s all. There might be a way to generate UUIDs natively using the provided randomness functions.</p>
+<p>The <a href="https://sqlite.org/lang_corefunc.html#randomblob"><code>sqlite3</code> documentation for <code>randomblob</code> states</a>:</p>
+<pre class="scrollbox"><code>randomblob(N)
+
+The randomblob(N) function return an N-byte blob containing
+pseudo-random bytes. If N is less than 1 then a 1-byte
+random blob is returned.
+
+Hint: applications can generate globally unique
+identifiers using this function together with
+hex() and/or lower() like this:
+
+  hex(randomblob(16))
+
+  lower(hex(randomblob(16)))</code></pre>
+<p>Keep in mind that this is NOT a UUID. UUIDs are not just random numbers, they have some structure. You can easily generate UUIDs with stock <code>python3</code>:</p>
+<pre class="scrollbox shell"><code>$ python3
+&gt;&gt;&gt; from uuid import *
+&gt;&gt;&gt; uuid4().hex # we don&#39;t want hyphens in our UUIDs
+&#39;f1272b12b2174e3aa0e7c05610592ac0&#39;</code></pre>
+</aside>
+<p>The table used for files in <code>bibliothecula</code> is <code>BinaryMetadata</code>; since it’s binary it can also hold plain text data. This is the <code>CREATE</code> statement for <code>BinaryMetadata</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">CREATE</span> <span class="kw">TABLE</span> <span class="cf">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> <span class="ot">&quot;BinaryMetadata&quot;</span> (</a>
+<a class="sourceLine" id="cb3-2" title="2"><span class="ot">&quot;uuid&quot;</span> <span class="dt">CHARACTER</span>(<span class="dv">32</span>) <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,</a>
+<a class="sourceLine" id="cb3-3" title="3"><span class="ot">&quot;name&quot;</span> TEXT <span class="kw">NULL</span>,</a>
+<a class="sourceLine" id="cb3-4" title="4"><span class="ot">&quot;data&quot;</span> <span class="dt">BLOB</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,</a>
+<a class="sourceLine" id="cb3-5" title="5"><span class="ot">&quot;compressed&quot;</span> <span class="dt">BOOLEAN</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> (<span class="dv">0</span>),</a>
+<a class="sourceLine" id="cb3-6" title="6"><span class="ot">&quot;created&quot;</span> DATETIME <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> (strftime (<span class="st">&#39;%Y-%m-%d %H:%M:%f&#39;</span>, <span class="st">&#39;now&#39;</span>)),</a>
+<a class="sourceLine" id="cb3-7" title="7"><span class="ot">&quot;last_modified&quot;</span> DATETIME <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> (strftime (<span class="st">&#39;%Y-%m-%d %H:%M:%f&#39;</span>, <span class="st">&#39;now&#39;</span>)),</a>
+<a class="sourceLine" id="cb3-8" title="8"><span class="kw">CONSTRAINT</span> uniqueness <span class="kw">UNIQUE</span> (<span class="ot">&quot;name&quot;</span>, <span class="ot">&quot;data&quot;</span>)</a>
+<a class="sourceLine" id="cb3-9" title="9">);</a></code></pre></div>
+  <p>The <code>name</code> column can hold our filename. What about mime type? Furthermore, what if I want to know the size of a file, do I have to calculate the <code>data</code> length every time?&#8202;<sup>&dagger;</sup></p>
+<aside>
+<p>&dagger;. By the way, doing <code>LENGTH(data)</code> for non-<code>BLOB</code> columns is wrong, because they may include NUL bytes. Always do <code>LENGTH(CAST(col AS BLOB))</code> for <code>TEXT</code>.</p>
+</aside>
+  <p>The default <code>sqlite</code> distribution includes the <code>JSON1</code> extension which allows us to place structured data in a column, so I chose to store filename, mime type and size in bytes in the <code>name</code> column. Examples:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode json"><code class="sourceCode json"><a class="sourceLine" id="cb4-1" title="1"><span class="ot">[</span><span class="fu">{</span><span class="dt">&quot;content_type&quot;</span><span class="fu">:</span><span class="st">&quot;text/markdown&quot;</span><span class="fu">,</span><span class="dt">&quot;filename&quot;</span><span class="fu">:</span><span class="st">&quot;2021-06-20.md&quot;</span><span class="fu">,</span><span class="dt">&quot;size&quot;</span><span class="fu">:</span><span class="dv">0</span><span class="fu">}</span><span class="ot">,</span></a>
+<a class="sourceLine" id="cb4-2" title="2"><span class="fu">{</span><span class="dt">&quot;content_type&quot;</span><span class="fu">:</span><span class="st">&quot;text/markdown&quot;</span><span class="fu">,</span><span class="dt">&quot;filename&quot;</span><span class="fu">:</span><span class="st">&quot;dataintegrity.md&quot;</span><span class="fu">,</span><span class="dt">&quot;size&quot;</span><span class="fu">:</span><span class="dv">566</span><span class="fu">}</span><span class="ot">,</span></a>
+<a class="sourceLine" id="cb4-3" title="3"><span class="fu">{</span><span class="dt">&quot;content_type&quot;</span><span class="fu">:</span><span class="st">&quot;text/markdown&quot;</span><span class="fu">,</span><span class="dt">&quot;filename&quot;</span><span class="fu">:</span><span class="st">&quot;exports.md&quot;</span><span class="fu">,</span><span class="dt">&quot;size&quot;</span><span class="fu">:</span><span class="dv">34</span><span class="fu">}</span><span class="ot">,</span></a>
+<a class="sourceLine" id="cb4-4" title="4"><span class="fu">{</span><span class="dt">&quot;content_type&quot;</span><span class="fu">:</span><span class="st">&quot;text/markdown&quot;</span><span class="fu">,</span><span class="dt">&quot;filename&quot;</span><span class="fu">:</span><span class="st">&quot;generate_tool.md&quot;</span><span class="fu">,</span><span class="dt">&quot;size&quot;</span><span class="fu">:</span><span class="dv">229</span><span class="fu">}</span><span class="ot">,</span></a>
+<a class="sourceLine" id="cb4-5" title="5"><span class="fu">{</span><span class="dt">&quot;content_type&quot;</span><span class="fu">:</span><span class="st">&quot;text/markdown&quot;</span><span class="fu">,</span><span class="dt">&quot;filename&quot;</span><span class="fu">:</span><span class="st">&quot;shell.md&quot;</span><span class="fu">,</span><span class="dt">&quot;size&quot;</span><span class="fu">:</span><span class="dv">240</span><span class="fu">}</span><span class="ot">,</span></a>
+<a class="sourceLine" id="cb4-6" title="6"><span class="fu">{</span><span class="dt">&quot;content_type&quot;</span><span class="fu">:</span><span class="st">&quot;text/plain&quot;</span><span class="fu">,</span><span class="dt">&quot;filename&quot;</span><span class="fu">:</span><span class="st">&quot;&quot;</span><span class="fu">,</span><span class="dt">&quot;size&quot;</span><span class="fu">:</span><span class="dv">97632</span><span class="fu">}</span><span class="ot">,</span></a>
+<a class="sourceLine" id="cb4-7" title="7"><span class="fu">{</span><span class="dt">&quot;content_type&quot;</span><span class="fu">:</span><span class="st">&quot;text/plain&quot;</span><span class="fu">,</span><span class="dt">&quot;filename&quot;</span><span class="fu">:</span><span class="st">&quot;test.txt&quot;</span><span class="fu">,</span><span class="dt">&quot;size&quot;</span><span class="fu">:</span><span class="dv">91</span><span class="fu">}</span> <span class="ot">]</span></a></code></pre></div>
+<p>Again, this is only for convenience. Our notes don’t have to have filenames if they already have a unique identifier, and there’s no restriction for filename <code>UNIQUENESS</code> anywhere.</p>
+<p>You can create JSON objects with the <code>json_object</code> SQL function, and extract fields with the <code>json_extract</code> SQL function:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">SELECT</span> json_extract(name, <span class="st">&#39;$.content_type&#39;</span>) <span class="kw">FROM</span> BinaryMetadata <span class="kw">WHERE</span> json_valid(name) <span class="kw">LIMIT</span> <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb5-2" title="2"><span class="kw">INSERT</span> <span class="kw">INTO</span> BinaryMetadata(uuid,name,<span class="kw">data</span>) <span class="kw">VALUES</span> (<span class="st">&#39;623fec5beac242fcb0b0d17ada20e2b5&#39;</span>,json_object(<span class="st">&#39;content_type&#39;</span>,<span class="st">&#39;text/plain&#39;</span>,<span class="st">&#39;filename&#39;</span>,<span class="st">&#39;file.txt&#39;</span>,<span class="st">&#39;size&#39;</span>,<span class="fu">LENGTH</span>(readfile(<span class="st">&#39;file.txt&#39;</span>))),readfile(<span class="st">&#39;file.txt&#39;</span>));</a></code></pre></div>
+<p>Note the use of <code>json_valid</code> to ignore non-JSON names, and also the use of <code>readfile</code>: this is a CLI-only function allowing you to read files as <code>BLOB</code>s. We can use it to quickly attach files to our note database.</p>
+<h2 id="the-indices">The indices</h2>
+<h3 id="full-text-search">Full-text search</h3>
+<p>I will use the <code>fts5</code> extension, included by default nowadays in <code>sqlite3</code>. To create an <code>fts5</code> index, I issue:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb6-1" title="1"><span class="kw">CREATE</span> VIRTUAL <span class="kw">TABLE</span> <span class="cf">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> zettel_fts <span class="kw">USING</span> fts5(title, filename, full_text, uuid UNINDEXED);</a></code></pre></div>
+<p>Note that this doesn’t seem limited to our text notes; indeed I can produce the full text of other attached binary files like PDFs and index them too, or maybe at a dedicated <code>fts5</code> table as well.</p>
+<p>The <code>fts5</code> index needs to be filled manually by us, and we can use SQL triggers to automate this.</p>
+<p>An <code>INSERT</code> trigger for <code>BinaryMetadata</code> might look like:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb7-1" title="1"><span class="kw">CREATE</span> <span class="kw">TRIGGER</span> fts_insert</a>
+<a class="sourceLine" id="cb7-2" title="2">    <span class="kw">AFTER</span> <span class="kw">INSERT</span> <span class="kw">ON</span> BinaryMetadata</a>
+<a class="sourceLine" id="cb7-3" title="3"><span class="cf">WHEN</span> json_valid(<span class="kw">NEW</span>.name)</a>
+<a class="sourceLine" id="cb7-4" title="4"><span class="cf">BEGIN</span></a>
+<a class="sourceLine" id="cb7-5" title="5">    <span class="kw">INSERT</span> <span class="kw">INTO</span></a>
+<a class="sourceLine" id="cb7-6" title="6">    zettel_fts(uuid, title, filename, full_text)</a>
+<a class="sourceLine" id="cb7-7" title="7">    <span class="kw">VALUES</span> (<span class="kw">NEW</span>.uuid, <span class="kw">NEW</span>.name, json_extract(<span class="kw">NEW</span>.name, <span class="st">&#39;$.filename&#39;</span>), <span class="kw">NEW</span>.<span class="kw">data</span>);</a>
+<a class="sourceLine" id="cb7-8" title="8"><span class="cf">END</span>;</a></code></pre></div>
+<p>I insert some dummy values:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb8-1" title="1"><span class="kw">INSERT</span> <span class="kw">INTO</span></a>
+<a class="sourceLine" id="cb8-2" title="2">BinaryMetadata(uuid,name,<span class="kw">data</span>)</a>
+<a class="sourceLine" id="cb8-3" title="3"><span class="kw">VALUES</span></a>
+<a class="sourceLine" id="cb8-4" title="4"></a>
+<a class="sourceLine" id="cb8-5" title="5">(<span class="st">&#39;623fec5beac242fcb0b0d17ada20e2b5&#39;</span>,</a>
+<a class="sourceLine" id="cb8-6" title="6">json_object(<span class="st">&#39;content_type&#39;</span>,<span class="st">&#39;text/plain&#39;</span>,<span class="st">&#39;filename&#39;</span>,<span class="st">&#39;file.txt&#39;</span>,<span class="st">&#39;size&#39;</span>,<span class="dv">5</span>),</a>
+<a class="sourceLine" id="cb8-7" title="7"><span class="st">&#39;sun bicycle trigger journal&#39;</span>),</a>
+<a class="sourceLine" id="cb8-8" title="8"></a>
+<a class="sourceLine" id="cb8-9" title="9">(<span class="st">&#39;37a3ff02c8cd4d7fb3280e5b160d1389&#39;</span>,</a>
+<a class="sourceLine" id="cb8-10" title="10">json_object(<span class="st">&#39;content_type&#39;</span>,<span class="st">&#39;text/plain&#39;</span>,<span class="st">&#39;filename&#39;</span>,<span class="st">&#39;book_ref.md&#39;</span>,<span class="st">&#39;size&#39;</span>,<span class="dv">1</span>),</a>
+<a class="sourceLine" id="cb8-11" title="11"><span class="st">&#39;I have no references and I must scream&#39;</span>),</a>
+<a class="sourceLine" id="cb8-12" title="12"></a>
+<a class="sourceLine" id="cb8-13" title="13">(<span class="st">&#39;b0697d8d76ae41bf8e942d505aff8963&#39;</span>,</a>
+<a class="sourceLine" id="cb8-14" title="14">json_object(<span class="st">&#39;content_type&#39;</span>,<span class="st">&#39;text/plain&#39;</span>,<span class="st">&#39;filename&#39;</span>,<span class="st">&#39;note.md&#39;</span>,<span class="st">&#39;size&#39;</span>,<span class="dv">1</span>),</a>
+<a class="sourceLine" id="cb8-15" title="15"><span class="st">&#39;I refer to 623fec5b-eac2-42fc-b0b0-d17ada20e2b5 and also 37a3ff02c8cd4d7fb3280e5b160d1389&#39;</span>);</a></code></pre></div>
+<p>Querying the index is as simple as <code>SELECT</code>ing from it:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb9-1" title="1"><span class="kw">SELECT</span> uuid, snippet(zettel_fts, <span class="op">-</span><span class="dv">1</span>, <span class="st">&#39;&lt;mark&gt;&#39;</span>, <span class="st">&#39;&lt;/mark&gt;&#39;</span>, <span class="st">&#39;[...]&#39;</span>, <span class="dv">10</span>) <span class="kw">AS</span> snippet <span class="kw">FROM</span> zettel_fts(<span class="st">&#39;journal&#39;</span>);</a>
+<a class="sourceLine" id="cb9-2" title="2">uuid                              snippet</a>
+<a class="sourceLine" id="cb9-3" title="3"><span class="co">--------------------------------  ----------------------------------------</span></a>
+<a class="sourceLine" id="cb9-4" title="4">623fec5beac242fcb0b0d17ada20e2b5  sun bicycle <span class="kw">trigger</span> <span class="op">&lt;</span>mark<span class="op">&gt;</span>journal<span class="op">&lt;/</span>mark<span class="op">&gt;</span></a></code></pre></div>
+<p>Read the <code>fts5</code> documentation <a href="https://sqlite.org/fts5.html">here</a>.</p>
+<h3 id="reference-index">Reference index</h3>
+<p>First we need a way to recognize UUIDs in text. For this purpose I create a text tokenizer using the <code>fts3</code> text tokenizers that spouts tokens that look like UUIDs:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb10-1" title="1"><span class="kw">CREATE</span> VIRTUAL <span class="kw">TABLE</span> <span class="cf">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> uuidtok <span class="kw">USING</span> fts3tokenize(</a>
+<a class="sourceLine" id="cb10-2" title="2">    <span class="st">&#39;unicode61&#39;</span>,</a>
+<a class="sourceLine" id="cb10-3" title="3">    <span class="ot">&quot;tokenchars=-1234567890abcdefABCDEF&quot;</span>,</a>
+<a class="sourceLine" id="cb10-4" title="4">    <span class="ot">&quot;separators= &quot;</span></a>
+<a class="sourceLine" id="cb10-5" title="5">);</a></code></pre></div>
+<p>The UUIDs are spouted when you query the tokenizer. Querying a tokenizer in general is done with a special <code>SELECT</code>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb11-1" title="1"><span class="kw">SELECT</span> token <span class="kw">FROM</span> uuidtok <span class="kw">where</span> input <span class="op">=</span> <span class="st">&#39;sun bicycle trigger journal&#39;</span>;</a></code></pre></div>
+<pre><code>token
+-------
+sun
+bicycle
+trigger
+journal</code></pre>
+<p>Now, to get stuff that look like UUIDs from the tokenizer:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb13-1" title="1"><span class="kw">SELECT</span> <span class="kw">DISTINCT</span> <span class="kw">REPLACE</span>(token, <span class="st">&#39;-&#39;</span>, <span class="st">&#39;&#39;</span>) <span class="kw">as</span> <span class="fu">ref</span> <span class="kw">FROM</span> uuidtok</a>
+<a class="sourceLine" id="cb13-2" title="2">    <span class="kw">WHERE</span> input <span class="op">=</span></a>
+<a class="sourceLine" id="cb13-3" title="3">    (<span class="kw">SELECT</span> <span class="kw">data</span> <span class="kw">FROM</span> BinaryMetadata <span class="kw">WHERE</span> uuid <span class="op">=</span></a>
+<a class="sourceLine" id="cb13-4" title="4">    <span class="st">&#39;b0697d8d76ae41bf8e942d505aff8963&#39;</span>)</a>
+<a class="sourceLine" id="cb13-5" title="5">    <span class="kw">AND</span> <span class="fu">LENGTH</span>(<span class="kw">REPLACE</span>(token, <span class="st">&#39;-&#39;</span>, <span class="st">&#39;&#39;</span>)) <span class="op">=</span> <span class="dv">32</span></a></code></pre></div>
+<p>This returns:</p>
+<pre><code>ref
+--------------------------------
+623fec5beac242fcb0b0d17ada20e2b5
+37a3ff02c8cd4d7fb3280e5b160d1389</code></pre>
+<p>Note the use of <code>REPLACE</code> to exclude any hyphens from our processing.</p>
+<p>Now we can create a reference index that we can update on insert/update/delete with triggers:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb15-1" title="1"><span class="kw">CREATE</span> VIRTUAL <span class="kw">TABLE</span> refs_fts <span class="kw">USING</span> fts5(referrer, target);</a></code></pre></div>
+<p>We can make triggers that use the <code>SELECT DISTINCT</code> above along with a check that the reference target exists by adding</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb16-1" title="1"><span class="kw">AND</span> <span class="kw">EXISTS</span> (<span class="kw">select</span> <span class="dv">1</span> <span class="kw">from</span> BinaryMetadata <span class="kw">WHERE</span> uuid <span class="op">=</span> <span class="kw">REPLACE</span>(token, <span class="st">&#39;-&#39;</span>, <span class="st">&#39;&#39;</span>))</a></code></pre></div>
+<p>By having two columns in <code>refs_fts</code>, <code>referrer</code> and <code>target</code> we can get all references inside a note and all back references from other notes.</p>
+<h4 id="examples">Examples</h4>
+<div class="sourceCode" id="cb17"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb17-1" title="1"><span class="kw">INSERT</span> <span class="kw">INTO</span> refs_fts(target, referrer)</a>
+<a class="sourceLine" id="cb17-2" title="2"><span class="kw">SELECT</span> <span class="kw">DISTINCT</span> <span class="kw">REPLACE</span>(tok.token, <span class="st">&#39;-&#39;</span>, <span class="st">&#39;&#39;</span>) <span class="kw">AS</span> target,</a>
+<a class="sourceLine" id="cb17-3" title="3">                b.uuid <span class="kw">AS</span> referrer</a>
+<a class="sourceLine" id="cb17-4" title="4"><span class="kw">FROM</span> uuidtok <span class="kw">AS</span> tok,</a>
+<a class="sourceLine" id="cb17-5" title="5">(<span class="kw">SELECT</span> uuid,</a>
+<a class="sourceLine" id="cb17-6" title="6">        <span class="kw">data</span>,</a>
+<a class="sourceLine" id="cb17-7" title="7">        json_extract(name, <span class="st">&#39;$.content_type&#39;</span>) <span class="kw">AS</span> _type</a>
+<a class="sourceLine" id="cb17-8" title="8"> <span class="kw">FROM</span> BinaryMetadata</a>
+<a class="sourceLine" id="cb17-9" title="9"> <span class="kw">WHERE</span> json_valid(name)</a>
+<a class="sourceLine" id="cb17-10" title="10">   <span class="kw">AND</span> _type <span class="kw">LIKE</span> <span class="ot">&quot;%text/%&quot;</span>) <span class="kw">AS</span> b</a>
+<a class="sourceLine" id="cb17-11" title="11"><span class="kw">WHERE</span> tok.input<span class="op">=</span>b.<span class="kw">data</span></a>
+<a class="sourceLine" id="cb17-12" title="12">  <span class="kw">AND</span> <span class="fu">LENGTH</span>(<span class="kw">REPLACE</span>(tok.token, <span class="st">&#39;-&#39;</span>, <span class="st">&#39;&#39;</span>)) <span class="op">=</span> <span class="dv">32</span></a>
+<a class="sourceLine" id="cb17-13" title="13">  <span class="kw">AND</span> <span class="kw">EXISTS</span> (<span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> BinaryMetadata <span class="kw">WHERE</span> uuid <span class="op">=</span> <span class="kw">REPLACE</span>(tok.token, <span class="st">&#39;-&#39;</span>, <span class="st">&#39;&#39;</span>));</a></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb18-1" title="1"><span class="kw">SELECT</span> <span class="kw">DISTINCT</span> referrer <span class="kw">FROM</span> refs_fts <span class="kw">WHERE</span> target <span class="op">=</span> <span class="st">&#39;623fec5beac242fcb0b0d17ada20e2b5&#39;</span>;</a></code></pre></div>
+<pre><code>referrer
+--------------------------------
+b0697d8d76ae41bf8e942d505aff8963</code></pre>
+<div class="sourceCode" id="cb20"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb20-1" title="1"><span class="kw">SELECT</span> <span class="kw">DISTINCT</span> target <span class="kw">FROM</span> refs_fts <span class="kw">WHERE</span> referrer <span class="op">=</span> <span class="st">&#39;b0697d8d76ae41bf8e942d505aff8963&#39;</span>;</a></code></pre></div>
+<pre><code>target
+--------------------------------
+623fec5beac242fcb0b0d17ada20e2b5
+37a3ff02c8cd4d7fb3280e5b160d1389</code></pre>
+<h2 id="miscellanea">Miscellanea</h2>
+<ul>
+<li><p>We can read text from the <code>sqlite3</code> CLI by just <code>SELECT</code>ing the data. To save the data, text or any binary into a file use the <code>writefile</code> CLI function:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb22-1" title="1"><span class="kw">SELECT</span> writefile(json_extract(name, <span class="st">&#39;$.filename&#39;</span>),<span class="kw">data</span>) <span class="kw">FROM</span> BinaryMetadata <span class="kw">WHERE</span> uuid <span class="op">=</span> <span class="st">&#39;623fec5beac242fcb0b0d17ada20e2b5&#39;</span>;</a></code></pre></div>
+<p>To insert a file as a <code>BLOB</code>, use the <code>readfile</code> CLI function (example from <a href="https://www.sqlite.org/cli.html#file_i_o_functions"><code>sqlite3</code> documentation</a>:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb23-1" title="1"><span class="kw">INSERT</span> <span class="kw">INTO</span> images(name,<span class="kw">type</span>,img) <span class="kw">VALUES</span>(<span class="st">&#39;icon&#39;</span>,<span class="st">&#39;jpeg&#39;</span>,readfile(<span class="st">&#39;icon.jpg&#39;</span>));</a></code></pre></div>
+<p>To edit a file, use <code>edit()</code> (again, CLI only):</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode sql"><code class="sourceCode sql"><a class="sourceLine" id="cb24-1" title="1"><span class="kw">UPDATE</span> pics <span class="kw">SET</span> img<span class="op">=</span>edit(img,<span class="st">&#39;gimp&#39;</span>) <span class="kw">WHERE</span> <span class="kw">id</span><span class="op">=</span><span class="st">&#39;pic-1542&#39;</span>;</a></code></pre></div>
+<p>Yes, that means you can use your editor of choice without problem. You can also just view any file with <code>edit()</code> by selecting it without doing any <code>UPDATE</code>.</p></li>
+<li><code>sqlite</code> supports Common Table Expressions, an SQL standard that allows you to query hierarchical relationships like nodes in a graph. That means you can easily find all the notes you can reach with references and back references. For info see the <a href="https://sqlite.org/lang_with.html#hierarchical_query_examples">documentation</a></li>
+<li><p>The full schema required for this article’s examples is <a href="./web-demo/zettel.sql">here</a></p></li>
+<li><p>There’s a <a href="./web-demo/zettel.html">web demo</a> of <a rel="external nofollow" href="https://en.wikipedia.org/wiki/Niklas_Luhmann#Note-taking_system_(Zettelkasten)">sociologist Niklas Luhmann's zettelkasten</a> you can explore online using <code>sql.js</code>, <code>sqlite3</code> compiled to webassembly (total compressed asset size: <code>16MB</code>). <a href="https://github.com/epilys/bibliothecula/blob/cc3c4e4ccd85210c993a57df0c4012b3a027cdba/web-demo/zettel.html">source code</a></p></li>
+</ul>
+<h2 id="epilogue">Epilogue</h2>
+<p>You can check out the <code>bibliothecula</code> project if you are interested in small tools to support tagged storage inside <code>sqlite3</code> databases.</p>
+  </article>
+  <footer>
+    <a rel="me" style="display: none;" href="https://chaos.social/@epilys"></a> <a rel="me" href="https://github.com/epilys/bibliothecula" class="repo">https://<wbr>github<wbr>.<wbr>com<wbr>/<wbr>epilys<wbr>/<wbr>bibliothecula</a> <a rel="external nofollow" href="https://www.gnu.org/licenses/gpl-3.0-standalone.html" class="gpl"><small><abbr class="gpl" title="The GNU General Public License v3.0">GPLv3</abbr></small></a>
+  </footer>
+</body>
+</html>

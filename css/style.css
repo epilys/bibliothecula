@@ -22,15 +22,6 @@ span.nobr {
   white-space: nowrap;
 }
 
-ul {
-  margin: 0;
-  list-style: square;
-}
-
-li p {
-  margin: 0;
-}
-
 @font-face {
   font-family: "DejaVu Serif";
   src: local(DejaVu Serif);
@@ -129,7 +120,7 @@ a.decorate[href^="https://"]:hover:after {
   margin-left: 1ch;
 }
 
-header {
+body>header {
   grid-row: 1 / span 1;
   grid-column: 2 / span 10;
   display: flex;
@@ -140,7 +131,7 @@ header {
   place-self: center;
 }
 
-header:before {
+body>header:before {
   position: relative;
   font-size: small;
   font-weight: bolder;
@@ -242,7 +233,7 @@ h1.banner:after {
   height: min(1vw, 0.8rem);
 }
 
-  header:before {
+  body>header:before {
     content: "click me!";
   }
 
@@ -265,7 +256,7 @@ h1.banner:after {
   }
 
   @media (max-width: 1000px) {
-    header {
+    body>header {
       margin-top: 3rem;
     }
 
@@ -364,7 +355,7 @@ details.click[open] h1.click:before {
   z-index: 2;
 }
 
-h2:first-child {
+h1:first-child, h2:first-child {
   margin-top: 0;
 }
 
@@ -710,4 +701,22 @@ aside {
   background: #80808021;
   padding: .005rem 1rem;
   border-radius: 5px;
+}
+
+aside ul {
+  margin: revert;
+}
+
+address {
+  display: inline;
+}
+
+address a{
+  text-decoration: none;
+}
+
+
+article>header{
+  margin-block-start: 1em;
+margin-block-end: 1em;
 }
