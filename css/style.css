@@ -15,7 +15,7 @@
 p {
   hyphens: auto;
   text-align: justify;
-  white-space: pre-wrap;
+  white-space: initial;
 }
 
 span.nobr {
@@ -25,6 +25,10 @@ span.nobr {
 ul {
   margin: 0;
   list-style: square;
+}
+
+li p {
+  margin: 0;
 }
 
 @font-face {
@@ -151,7 +155,7 @@ header:before {
   top: -2vmin;
 }
 
-h1 {
+h1.banner {
   --hover-delay: .15s;
   --transition-fn: cubic-bezier(.19,1,.22,1);
   --cover-width: min(323px,16vw);
@@ -163,6 +167,7 @@ h1 {
   font-size: 3rem;
   /* scale with viewport width size */
   font-size: min(5vw, 3rem);
+  font-size: clamp(5vw, 3rem, 10vw);
   font-family: "Amstelvar Roman", "Header DejaVu Serif", serif;
   /* Color fallback, otherwise use background-clip in the @supports block below */
   color: #7c1a1a;
@@ -176,7 +181,7 @@ h1 {
 }
 
 @supports (background-clip: text) or (-webkit-background-clip: text)  {
-  h1 {
+  h1.banner {
     color: transparent;
     background: radial-gradient(var(--spoiled-orange) 12%, var(--blood) 22%);
     background-size: 3px 4px;
@@ -188,7 +193,7 @@ h1 {
 }
 
 @supports not ((background-clip: text) or (-webkit-background-clip: text)) {
-  h1 {
+  h1.banner {
     --dark-blood: #5c1212;
     letter-spacing: 2px;
     text-shadow: 1px 1px 0px var(--dark-blood), -1px -1px 0px var(--dark-blood), -2px 2px 0px var(--dark-blood);
@@ -204,15 +209,15 @@ h1.shadow {
 }
 
 
-.index h1 {
+.index h1.banner {
   /* fallback */
   font-size: 6rem;
   /* scale with viewport width size */
   font-size: min(10vw, 6rem);
 }
 
-h1:before,
-h1:after {
+h1.banner:before,
+h1.banner:after {
   content: "";
   align-self: center;
   border: 1px outset var(--spoiled-orange);
@@ -229,8 +234,8 @@ h1:after {
   text-shadow: none;
 }
 
-.index h1:before,
-.index h1:after {
+.index h1.banner:before,
+.index h1.banner:after {
   width: 3rem;
   width: min(6vw, 3rem);
   height: 0.8rem;
@@ -264,7 +269,7 @@ h1:after {
       margin-top: 3rem;
     }
 
-    h1 {
+    h1.banner {
       --cover-width: min(323px,50vw);
     }
 
@@ -291,7 +296,7 @@ h1:after {
     }
   }
 
-div.h1 {
+div.h1.banner {
   font-size: xx-small;
   width: max-content;
   height: min-content;
@@ -359,13 +364,14 @@ details.click[open] h1.click:before {
   z-index: 2;
 }
 
-h2 {
+h2:first-child {
   margin-top: 0;
 }
 
 body>header img.logo {
   width: 7rem;
   width: min(15vw, 7rem);
+  width: clamp(10vw, 7rem, 15vw);
   max-width: max-content;
   height: auto;
   image-rendering: optimizequality;
@@ -631,15 +637,29 @@ pre {
   padding: 16px;
   font-size: 85%;
   line-height: 1.45;
-  background-color: #f6f8fa;
+  background-color: #fffbe7;
   border-radius: 6px;
   width: 100%;
+  border: 3px solid #ebe8da;
+  color: black;
+}
+pre code, pre a {
+  color: black;
+}
+pre.sourceCode {
+  white-space: pre-line;
+  word-break: break-all;
+  display: flex;
+}
+pre.sourceCode code {
+  font-size: 80%;
+  display: inline-block;
+  text-align: left;
 }
 
 pre.scrollbox {
   overflow: auto;
   resize: vertical;
-  contain: strict;
   height: 10rem;
   overflow: auto;
   width: 100%;
@@ -648,16 +668,15 @@ pre.scrollbox {
   background-color: white;
   background-size: 100% 80px, 100% 80px, 100% 40px, 100% 40px;
   background-attachment: local, local, scroll, scroll;
-  border: 3px solid #b8b8b8;
   contain: strict;
 }
 
 .pl-c1,
-.pl-s .pl-v {
+.pl-s .pl-v, .dv {
   color: var(--color-syntax-constant);
 }
 
-.pl-k {
+.pl-k, .kw, .cf, .fu{
   color: var(--color-syntax-keyword);
 }
 
@@ -667,6 +686,28 @@ pre.scrollbox {
 .pl-sr,
 .pl-sr .pl-cce,
 .pl-sr .pl-sra,
-.pl-sr .pl-sre {
+.pl-sr .pl-sre, .ot, .st {
   color: var(--color-syntax-string);
+}
+
+
+article {
+  --bg-color: #fff6d0;
+  background: var(--bg-color);
+  border: 5px solid var(--bg-color);
+  padding: clamp(1vmin, 2rem, 3vmin);
+  border-radius: 3px;
+  width: 100ch;
+  place-self: center;
+  text-align: justify;
+  hyphens: auto;
+  white-space: initial;
+  grid-column: 1 / span 12;
+}
+
+
+aside {
+  background: #80808021;
+  padding: .005rem 1rem;
+  border-radius: 5px;
 }
