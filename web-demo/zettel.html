@@ -1,634 +1,603 @@
 <!doctype html>
 <html class="no-js" lang="en">
-
-    <head>
-        <meta charset="utf-8">
-        <title>sqlite demo</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-
-        <meta property="og:title" content="">
-        <meta property="og:type" content="">
-        <meta property="og:url" content="">
-        <meta property="og:image" content="">
-
-        <link rel="stylesheet" type="text/css" href="../css/normalize.css">
-
-        <meta name="theme-color" content="#fafafa">
-        <style>
+  <head>
+    <meta charset="utf-8">
+    <title>sqlite demo</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+    <link rel="preload" href="./zettel.db.gz" as="fetch" crossorigin>
+    <link rel="preload" href="./pako.min.js" as="script">
+    <link rel="preload" href="./sql-wasm.js" as="script">
+    <style>
 * {
   box-sizing: border-box;
 }
 html {
-  font-size: 18px;
+  font-size: 16px;
   margin: 0;
   padding: 0;
   height: 100%;
 }
-
 body {
   font-size: 1rem;
 }
-
-
-            .visuallyhidden {
-                border: 0;
-                clip: rect(0 0 0 0);
-                height: auto;
-                margin: 0;
-                overflow: hidden;
-                padding: 0;
-                position: absolute;
-                width: 1px;
-                white-space: nowrap;
+.visuallyhidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: auto;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  white-space: nowrap;
+}
+html,
+body,
+main {
+  width: 100%;
+  height: 100%;
+}
+body {
+  display: flex;
+}
+table,
+td {
+  border: 1px solid #333;
+}
+caption {
+  overflow: auto;
+  text-align: left;
+  padding: 5px;
+}
+code {
+  user-select: all;
+}
+small {
+  font-size: .7rem;
+  display: inline-block;
+}
+thead {
+  position: sticky;
+  top: 0;
+}
+thead,
+tfoot {
+  background-color: #333;
+  color: #fff;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-block-end: .5rem;
+}
+.no-js main {
+  display: none;
+}
+main {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(10px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 1rem;
+  place-self: center;
+  align-self: auto;
+  padding: 1rem;
+  height: 95vh;
+}
+div.window {
+  font-size: 80%;
+  background: #fff;
+  overflow: auto;
+  border-radius: 5px;
+  padding: 5px;
+  outline: 5px solid #000000a1;
+}
+div#documents {
+  grid-column: 1 / span 3;
+  grid-row: 2/span 1;
+}
+div#notes {
+  grid-column: 4/ span 6;
+  grid-row: 1 / span 1;
+  max-height: 12rem;
+  overflow: auto;
+}
+div#notes>ol {
+  column-count: 3;
+  column-rule: 1px solid #4b464a;
+}
+div#loading {
+  grid-column: 4 / span 6;
+  display: flex;
+  gap: 1rem;
+  place-content: center;
+}
+div#loading>* {
+  align-self: center;
+}
+div#history {
+  grid-column: 1/span 3;
+  grid-row: 1 /span 1;
+  max-height: 12rem;
+  overflow: auto;
+}
+div#history ol {
+  display: flex;
+  flex-direction: column-reverse;
+}
+div#note {
+  grid-column: 4 / span 6;
+  grid-row: 2/ span 3;
+  overflow: auto;
+  display: none;
+  /*! position: absolute; */
+  top: 0;
+  font-size: initial;
+  padding: 0px 17px;
+  max-height: 100vh;
+  z-index: 1;
+}
+div#note .show {
+  max-height: 40vh;
+  overflow: auto;
+}
+div#results {
+  grid-column: 10/span 3;
+  grid-row: 3 / span 1;
+}
+div#tables {
+  grid-column: 10/span 3;
+  grid-row: 1 / span 1;
+  max-width: 100%;
+  width: 100%;
+  overflow: auto;
+}
+.input {
+  font-size: 70% !important;
+  grid-row: 2/ span 1;
+  grid-column: 10/span 3;
+}
+nav {
+  display: flex;
+  justify-content: center;
+  margin: .3rem;
+  gap: .3rem;
+}
+nav p {
+  margin: 0;
+}
+.pagination {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  column-gap: 2px;
+}
+.reflink {
+  outline: 2px solid #ff000047;
+  background-color: #ff000047;
+}
+    </style>
+    <script src="./pako.min.js"></script>
+    <script src="./sql-wasm.js"></script>
+    <script>
+document.documentElement.classList.remove('no-js');
+window.addEventListener('hashchange', function (event) {
+  event.preventDefault();
+  open_reflink(event);
+}, false);
+function getSchema(db) {
+  var request = new XMLHttpRequest();
+  request.open('GET', './schema.sql', true);
+  request.send(null);
+  request.onreadystatechange = function () {
+    if (request.readyState === 4 && request.status === 200) {
+      var type = request.getResponseHeader('Content-Type');
+      if (type.indexOf("text") !== 1) {
+        //console.log(request.responseText);
+        db.run(request.responseText);
+        console.dir(db);
+        return request.responseText;
+      }
+    }
+  }
+}
+var tableCreate = function () {
+  function valconcat(huh, tagName) {
+    if (huh.length === 0) return '';
+    var open = '<' + tagName + '>',
+      close = '</' + tagName + '>';
+    return open + huh.join(close + open) + close;
+  }
+  return function (sql, columns, values) {
+    var tbl = document.createElement('table');
+    var html = '<caption><code>' + sql + '</code>  ' + values.length + ' rows</caption>';
+    html += '<thead>' + valconcat(columns, 'th') + '</thead>';
+    var rows = values.map(function (v) {
+      return valconcat(v, 'td');
+    });
+    html += '<tbody>' + valconcat(rows, 'tr') + '</tbody>';
+    tbl.innerHTML = html;
+    return tbl;
+  }
+}();
+function make_reflink(uuid, name) {
+  var a = document.createElement('a');
+  a.title = uuid;
+  a.href = "#" + uuid;
+  a.innerText = name;
+  a.addEventListener('click', open_reflink);
+  return a;
+}
+function open_reflink(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  var backrefs_list = document.querySelector('#note ul.backrefs');
+  var note_id = document.querySelector('#note .note-id');
+  var note = document.querySelector('#note div.show');
+  uuid = event.target ? event.target.title : null || location.hash.split('#')[1];
+  if (!uuid || uuid.length == 0) {
+    delete location.hash;
+    return;
+  }
+  backrefs_list.innerHTML = '';
+  console.log("open", uuid);
+  location.hash = uuid;
+  var query = "select cast(data as text),json_extract(name, '$.filename') as name from BinaryMetadata where uuid = '" + uuid + "';";
+  document.querySelector('#note .note-query')
+    .innerText = query;
+  var [columns, values] = run_query(db, query);
+  var name = values[0][1];
+  note_id.innerHTML = name + ' <code>' + uuid + '</code>';
+  document.querySelector('#note h4.title')
+    .innerHTML = values[0][1];
+  var data = values[0][0];
+  var query = "SELECT json_extract(name, '$.filename') as name, referrer from BinaryMetadata, refs_fts WHERE target = '" + uuid + "' and referrer = uuid;";
+  document.querySelector('#note .backrefs-query')
+    .innerText = query;
+  var [columns, values] = run_query(db, query);
+  var backrefs = values;
+  if (backrefs.length == 0) {
+    backrefs_list.innerHTML = '<li>None.</li>';
+  }
+  var query = "SELECT json_extract(name, '$.filename') as name, target from BinaryMetadata, refs_fts WHERE referrer = '" + uuid + "' and target = uuid;";
+  document.querySelector('#note .refs-query')
+    .innerText = query;
+  var [columns, values] = run_query(db, query);
+  var refs = values;
+  refs.forEach(r => {
+    data = data.replaceAll(r[1], '<a class="reflink" title="' + r[1] + '" href="#' + r[1] + '">' + r[0] + '</a>');
+  });
+  backrefs.forEach(r => {
+    var li = document.createElement('li');
+    li.appendChild(make_reflink(r[1], r[0]));
+    backrefs_list.appendChild(li);
+  });
+  note.innerHTML = data;
+  note.querySelectorAll("a.reflink")
+    .forEach(link => {
+      link.addEventListener('click', open_reflink);
+    });
+  document.querySelector('#note')
+    .style.display = 'block';
+  var history = document.querySelector("#history ol");
+  var notes = history.getElementsByTagName('li');
+  if (notes.length > 0) {
+    var last_note = notes[notes.length - 1];
+    if (last_note.firstChild.title == uuid) {
+      return;
+    }
+  }
+  var li = document.createElement('li');
+  li.appendChild(make_reflink(uuid, name));
+  li.appendChild(document.createTextNode((new Date())
+    .toLocaleTimeString()));
+  history.appendChild(li);
+}
+var items = null;
+var db = null;
+document.addEventListener('DOMContentLoaded', (event) => {
+  var oReq = new XMLHttpRequest();
+  var progress = document.querySelector('#progress');
+  var progress_label = document.querySelector('#loading label');
+  oReq.onprogress = function (event) {
+    progress.max = event.total;
+    progress.value = event.loaded;
+    if (event.total == event.loaded) {
+      progress_label.innerText = "Reading database";
+    }
+  };
+  oReq.open("GET", "./zettel.db.gz", true);
+  oReq.responseType = "arraybuffer";
+  oReq.onload = function (oEvent) {
+    //console.log(oEvent);
+    //console.log(oReq);
+    var arrayBuffer = oReq.response; // Note: not oReq.responseText
+    config = {
+      locateFile: filename => `./${filename}`
+    }
+    // The `initSqlJs` function is globally provided by all of the main dist files if loaded in the browser.
+    // We must specify this locateFile function if we are loading a wasm file from anywhere other than the current html page's folder.
+    initSqlJs(config)
+      .then(function (SQL) {
+        if (arrayBuffer) {
+          var byteArray = new Uint8Array(arrayBuffer);
+          output = pako.ungzip(byteArray);
+          //Create the database
+          db = new SQL.Database(output);
+          document.querySelector('#loading')
+            .style.display = 'none';
+          //console.dir(db);
+          var tbl_query = "select name as table_name, sql from sqlite_schema where type = 'table'";
+          var [columns, values] = run_query(db, tbl_query);
+          var counts = values.map(table => {
+            if (table[0] == 'uuidtok') {
+              return 0;
             }
-
-            html,
-            body,
-            main {
-                width: 100%;
-                height: 100%;
+            try {
+              stmt = "select count(*) as count from " + table[0];
+              var [columns, values] = run_query(db, stmt);
+              return values[0];
+            } catch {
+              return 0;
             }
-
-            body {
-                display: flex;
-            }
-
-            table,
-            td {
-                border: 1px solid #333;
-            }
-
-            caption {
-                overflow: auto;
-                text-align: left;
-                padding: 5px;
-            }
-
-            code {
-                user-select: all;
-            }
-
-            small {
-                font-size: .7rem;
-                display: inline-block;
-            }
-
-            thead {
-                position: sticky;
-                top: 0;
-            }
-
-            thead,
-            tfoot {
-                background-color: #333;
-                color: #fff;
-            }
-
-            h1,
-            h2,
-            h3,
-            h4,
-            h5,
-            h6 {
-                margin-block-end: .5rem;
-            }
-
-            .no-js main {
-                display: none;
-            }
-
-            main {
-                display: grid;
-                grid-template-columns: repeat(12, minmax(10px, 1fr));
-                grid-auto-rows: 1fr;
-                gap: 1rem;
-                place-self: center;
-                align-self: auto;
-                padding: 1rem;
-                height: 95vh;
-            }
-
-            div.window {
-                font-size: 80%;
-                background: #fff;
-                overflow: auto;
-                border-radius: 5px;
-                padding: 5px;
-                outline: 5px solid #000000a1;
-            }
-
-            div#documents {
-                grid-column: 1 / span 3;
-                grid-row: 2/span 1;
-            }
-
-            div#notes {
-                grid-column: 4/ span 6;
-                grid-row: 1 / span 1;
-                max-height: 12rem;
-                overflow: auto;
-            }
-
-            div#notes>ol {
-                column-count: 3;
-                column-rule: 1px solid #4b464a;
-            }
-
-            div#history {
-                grid-column: 1/span 3;
-                grid-row: 1 /span 1;
-                max-height: 12rem;
-                overflow: auto;
-            }
-
-            div#history ol {
-                display: flex;
-                flex-direction: column-reverse;
-            }
-
-
-            div#note {
-                grid-column: 4 / span 6;
-                grid-row: 2/ span 3;
-                overflow: auto;
-                display: none;
-                /*! position: absolute; */
-                top: 0;
-                font-size: initial;
-                padding: 0px 17px;
-                max-height: 100vh;
-                z-index: 1;
-            }
-
-            div#note .show {
-                max-height: 40vh;
-                overflow: auto;
-            }
-
-
-            div#results {
-                grid-column: 10/span 3;
-                grid-row: 3 / span 1;
-            }
-
-            div#tables {
-                grid-column: 10/span 3;
-                grid-row: 1 / span 1;
-                max-width: 100%;
-                width: 100%;
-                overflow: auto;
-            }
-
-            .input {
-                grid-row: 2/ span 1;
-                grid-column: 10/span 3;
-            }
-
-            nav {
-                display: flex;
-                justify-content: center;
-                margin: .3rem;
-                gap: .3rem;
-            }
-
-            nav p {
-                margin: 0;
-            }
-
-            .pagination {
-                list-style: none;
-                margin: 0;
-                padding: 0;
-                display: flex;
-                column-gap: 2px;
-            }
-
-            .reflink {
-                outline: 2px solid #ff000047;
-                background-color: #ff000047;
-            }
-
-        </style>
-        <script src='./pako.min.js'></script>
-        <script src='./sql-wasm.js'></script>
-        <script>
-            window.addEventListener('hashchange', function (event) {
-                event.preventDefault();
-                open_reflink(event);
-            }, false);
-
-            function getSchema(db) {
-                var request = new XMLHttpRequest();
-                request.open('GET', './schema.sql', true);
-                request.send(null);
-                request.onreadystatechange = function () {
-                    if (request.readyState === 4 && request.status === 200) {
-                        var type = request.getResponseHeader('Content-Type');
-                        if (type.indexOf("text") !== 1) {
-                            //console.log(request.responseText);
-                            db.run(request.responseText);
-                            console.dir(db);
-                            return request.responseText;
-                        }
-                    }
-                }
-            }
-
-            var tableCreate = function () {
-                function valconcat(huh, tagName) {
-                    if (huh.length === 0) return '';
-                    var open = '<' + tagName + '>',
-                        close = '</' + tagName + '>';
-                    return open + huh.join(close + open) + close;
-                }
-                return function (sql, columns, values) {
-                    var tbl = document.createElement('table');
-                    var html = '<caption><code>' + sql + '</code>  ' + values.length + ' rows</caption>';
-                    html += '<thead>' + valconcat(columns, 'th') + '</thead>';
-                    var rows = values.map(function (v) {
-                        return valconcat(v, 'td');
-                    });
-                    html += '<tbody>' + valconcat(rows, 'tr') + '</tbody>';
-                    tbl.innerHTML = html;
-                    return tbl;
-                }
-            }();
-
-            function make_reflink(uuid, name) {
-                var a = document.createElement('a');
-                a.title = uuid;
-                a.href = "#" + uuid;
-                a.innerText = name;
-                a.addEventListener('click', open_reflink);
-                return a;
-            }
-
-            function open_reflink(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                var backrefs_list = document.querySelector('#note ul.backrefs');
-                var note_id = document.querySelector('#note .note-id');
-                var note = document.querySelector('#note div.show');
-                uuid = event.target ? event.target.title : null || location.hash.split('#')[1];
-                if (!uuid || uuid.length == 0) {
-                    delete location.hash;
-                    return;
-                }
-                backrefs_list.innerHTML = '';
-                console.log("open", uuid);
-                location.hash = uuid;
-                var query = "select cast(data as text),json_extract(name, '$.filename') as name from BinaryMetadata where uuid = '" + uuid + "';";
-                document.querySelector('#note .note-query')
-                    .innerText = query;
-                var [columns, values] = run_query(db, query);
-                var name = values[0][1];
-                note_id.innerHTML = name + ' <code>' + uuid + '</code>';
-                document.querySelector('#note h4.title')
-                    .innerHTML = values[0][1];
-                var data = values[0][0];
-                var query = "SELECT json_extract(name, '$.filename') as name, referrer from BinaryMetadata, refs_fts WHERE target = '" + uuid + "' and referrer = uuid;";
-                document.querySelector('#note .backrefs-query')
-                    .innerText = query;
-                var [columns, values] = run_query(db, query);
-                var backrefs = values;
-                if (backrefs.length == 0) {
-                    backrefs_list.innerHTML = '<li>None.</li>';
-                }
-                var query = "SELECT json_extract(name, '$.filename') as name, target from BinaryMetadata, refs_fts WHERE referrer = '" + uuid + "' and target = uuid;";
-                document.querySelector('#note .refs-query')
-                    .innerText = query;
-                var [columns, values] = run_query(db, query);
-                var refs = values;
-                refs.forEach(r => {
-                    data = data.replaceAll(r[1], '<a class="reflink" title="' + r[1] + '" href="#' + r[1] + '">' + r[0] + '</a>');
-
-
-                });
-                backrefs.forEach(r => {
-                    var li = document.createElement('li');
-                    li.appendChild(make_reflink(r[1], r[0]));
-                    backrefs_list.appendChild(li);
-                });
-                note.innerHTML = data;
-                note.querySelectorAll("a.reflink")
-                    .forEach(link => {
-                        link.addEventListener('click', open_reflink);
-                    });
-                document.querySelector('#note')
-                    .style.display = 'block';
-                var history = document.querySelector("#history ol");
-                var notes = history.getElementsByTagName('li');
-                if (notes.length > 0) {
-                    var last_note = notes[notes.length - 1];
-                    if (last_note.firstChild.title == uuid) {
-                        return;
-                    }
-                }
-                var li = document.createElement('li');
-                li.appendChild(make_reflink(uuid, name));
-                li.appendChild(document.createTextNode((new Date())
-                    .toLocaleTimeString()));
-                history.appendChild(li);
-            }
-
-
-            var db = null;
-            var oReq = new XMLHttpRequest();
-            oReq.open("GET", "./zettel.db.gz", true);
-            oReq.responseType = "arraybuffer";
-
-            oReq.onload = function (oEvent) {
-                document.documentElement.classList.remove('no-js');
-
-                //console.log(oEvent);
-                //console.log(oReq);
-                var arrayBuffer = oReq.response; // Note: not oReq.responseText
-                config = {
-                    locateFile: filename => `./${filename}`
-                }
-                // The `initSqlJs` function is globally provided by all of the main dist files if loaded in the browser.
-                // We must specify this locateFile function if we are loading a wasm file from anywhere other than the current html page's folder.
-                initSqlJs(config)
-                    .then(function (SQL) {
-                        if (arrayBuffer) {
-                            var byteArray = new Uint8Array(arrayBuffer);
-                            output = pako.ungzip(byteArray);
-                            //Create the database
-                            db = new SQL.Database(output);
-                            //console.dir(db);
-                            var tbl_query = "select name as table_name, sql from sqlite_schema where type = 'table'";
-                            var [columns, values] = run_query(db, tbl_query);
-                            var counts = values.map(table => {
-                                try {
-                                    stmt = "select count(*) as count from " + table[0];
-                                    var [columns, values] = run_query(db, stmt);
-                                    return values[0];
-                                } catch {
-                                    return 0;
-                                }
-                            });
-                            columns.push("count");
-                            var i = 0;
-                            var values = values.map(table => {
-                                table.push(counts[i]);
-                                i += 1;
-                                return table;
-                            });
-
+          });
+          columns.push("count");
+          var i = 0;
+          var values = values.map(table => {
+            table.push(counts[i]);
+            i += 1;
+            return table;
+          });
                     [
                         ["select * from Documents;", "Documents"],
                         ["select uuid, json_extract(name, '$.filename') as name from BinaryMetadata where json_valid(name);", "Notes"]
                     ].forEach(([sql, name]) => {
-                                //console.log("name", name);
-                                //console.log("sql", sql);
-                                var [columns, values] = run_query(db, sql);
-                                //console.dir(columns);
-                                //console.dir(values);
-
-                                if (name == "Documents") {
-                                    documents.appendChild(tableCreate(sql, columns, values));
-                                } else {
-                                    document.querySelector('#notes .notes-query')
-                                        .innerText = sql;
-                                    var size_span = document.querySelector('span.notes-size');
-                                    size_span.innerHTML = values.length;
-                                    var ol = document.createElement('ol');
-                                  ol.start = '1';
-                                    values.map(v => {
-                                            var li = document.createElement('li');
-                                            var a = make_reflink(v[0], v[1]);
-                                            li.style.display = 'none';
-                                            li.appendChild(a);
-                                            return li;
-                                        })
-                                        .forEach(li => {
-                                            ol.appendChild(li);
-                                        });
-                                    notes.appendChild(ol);
-                                    //notes.appendChild(tableCreate(sql, columns, values));
-                                    items = Array.from(document.querySelectorAll('div#notes ol li'));
-                                    totalPages = Math.ceil(items.length / 2000);
-                                    ul = document.querySelector('div#notes ul.pagination');
-                                    ul.innerHTML = '';
-                                    var i = 0;
-                                    for (i = 0; i < totalPages; i++) {
-                                      var li = document.createElement('li');
-                                      var a = document.createElement('a');
-                                      a.href = '';
-                                      a.dataset.page = (i+1);
-                                      a.innerText = (i+1).toString();
-                                      a.addEventListener('click', open_page);
-                                      li.appendChild(a);
-                                      ul.appendChild(li);
-                                    }
-                                    var pag = paginator(items, 1, 2000);
-                                    pag.data.forEach(i => {
-                                        i.style.display = 'list-item';
-                                    });
-                                }
-
-                            });
-
-                            tables.appendChild(tableCreate(tbl_query, columns, values));
-                            location.hash = 'bd0491452c0a5e7681dc50efed94e950';
-                            open_reflink(new Event(''));
-                        } else {
-                            console.dir("response was ", requestData);
-                        }
-                    });
-            }
-            oReq.send(null);
-
-            function open_page(event) {
-              event.preventDefault();
-              num = parseInt(event.target.dataset.page, 10);
-              console.log(num);
-              items = document.querySelectorAll('div#notes ol li');
+            //console.log("name", name);
+            //console.log("sql", sql);
+            var [columns, values] = run_query(db, sql);
+            //console.dir(columns);
+            //console.dir(values);
+            if (name == "Documents") {
+              documents.appendChild(tableCreate(sql, columns, values));
+            } else {
+              document.querySelector('#notes .notes-query')
+                .innerText = sql;
+              var size_span = document.querySelector('span.notes-size');
+              size_span.innerHTML = values.length;
+              var ol = document.createElement('ol');
+              ol.start = '1';
+              notes.appendChild(ol);
+              items = values;
               totalPages = Math.ceil(items.length / 2000);
-              if (!num || isNaN(num) || num > totalPages || num < 1) {
-                return;
+              ul = document.querySelector('div#notes ul.pagination');
+              ul.innerHTML = '';
+              var i = 0;
+              for (i = 0; i < totalPages; i++) {
+                var li = document.createElement('li');
+                var a = document.createElement('a');
+                a.href = '';
+                a.dataset.page = (i + 1);
+                a.innerText = (i + 1)
+                  .toString();
+                a.addEventListener('click', open_page);
+                li.appendChild(a);
+                ul.appendChild(li);
               }
-              items.forEach(i => {
-                i.style.display = 'none';
-              });
-              var pag = paginator(items, num, 2000);
-               document.querySelector('div#notes ol').start = pag.offset+1;
-              pag.data.forEach(i => {
-                i.style.display = 'list-item';
-              });
+              open_page(new Event(''));
             }
-
-
-            // Run a query without reading the results
-            //db.run("CREATE TABLE test (col1, col2);");
-            // Insert two rows: (1,111) and (2,222)
-            //db.run("INSERT INTO test VALUES (?,?), (?,?)", [1,111,2,222]);
-
-            // Prepare a statement
-            //var stmt = db.prepare("SELECT * FROM test WHERE col1 BETWEEN $start AND $end");
-            //stmt.getAsObject({$start:1, $end:1}); // {col1:1, col2:111}
-
-            // Bind new values
-            //stmt.bind({$start:1, $end:2});
-            //while(stmt.step()) { //
-            //var row = stmt.getAsObject();
-            //console.log('Here is a row: ' + JSON.stringify(row));
-            //}
-
-            if (document.readyState === 'loading') { // Loading hasn't finished yet
-                document.addEventListener('DOMContentLoaded', add_listeners);
-            } else { // `DOMContentLoaded` has already fired
-                add_listeners();
-            }
-
-            function run_query(db, stmt) {
-                var stmt = db.prepare(stmt);
-                var columns = null;
-                var values = Array();
-                while (stmt.step()) { //
-                    var row = stmt.getAsObject();
-                    values.push(Object.values(row));
-                    columns = Object.keys(row);
-                }
-                stmt.free();
-                return [columns, values];
-            }
-
-            function paginator(items, current_page, per_page_items) {
-                let page = current_page || 1,
-                    per_page = per_page_items || 10,
-                    offset = (page - 1) * per_page,
-
-                    paginatedItems = Array.prototype.slice.call(Array.prototype.slice.call(items, offset), 
-                    0, per_page_items),
-                    total_pages = Math.ceil(items.length / per_page);
-
-                return {
-                    page: page,
-                  offset: offset,
-                    per_page: per_page,
-                    pre_page: page - 1 ? page - 1 : null,
-                    next_page: (total_pages > page) ? page + 1 : null,
-                    total: items.length,
-                    total_pages: total_pages,
-                    data: paginatedItems
-                };
-            }
-
-            function add_listeners() {
-                const button = document.querySelector('#submit');
-                const tables = document.querySelector('#tables');
-                const documents = document.querySelector('#documents');
-                const notes = document.querySelector('#notes');
-                const note = document.querySelector('#note div.show');
-                const input = document.querySelector('#input');
-                const results = document.querySelector('#results');
-                button.addEventListener('click', event => {
-                    let table = document.createElement("table");
-                    let tbody = document.createElement("tbody");
-                    //table.appendChild(tbody);
-
-                    results.innerHTML = "";
-                    //results.appendChild(table);
-                    var sql = input.value;
-                    try {
-                        var [columns, values] = run_query(db, sql);
-                        console.dir(columns);
-                        console.dir(values);
-                        if (values.length == 0) {
-                            let p = document.createElement("p");
-                            p.style.color = "red";
-                            let inner = document.createTextNode("No results.");
-                            p.appendChild(inner);
-                            results.appendChild(p);
-                            return;
-                        }
-
-                        //let tr = document.createElement("tr");
-                        //let td = document.createElement("td");
-                        //let inner = document.createTextNode(JSON.stringify(row));
-                        //td.appendChild(inner);
-                        //tr.appendChild(td);
-                        //tbody.appendChild(tr);
-                        results.appendChild(tableCreate(sql, columns, values));
-                    } catch (error) {
-                        console.error(error);
-                        let p = document.createElement("p");
-                        p.style.color = "red";
-                        let inner = document.createTextNode(error.toString());
-                        p.appendChild(inner);
-                        results.appendChild(p);
-                    }
-                });
-            }
-
-        </script>
-    </head>
-
-    <body>
-        <noscript>
-            This demo loads a <a href="./zettel.db.gz">compressed sqlite database</a> and runs sqlite on your browser using <a rel="external nofollow" href="https://sql.js.org/">sql.js</a>. Enable javascript if you must, and proceed.
-        </noscript>
-        <main>
-            <div id="tables" class="window">
-                <h3>SQL tables</h3>
-                <hr />
-
-            </div>
-            <div id="history" class="window">
-                <h3>Navigation history</h3>
-                <hr />
-                <ol>
-                </ol>
-            </div>
-            <div class="input window">
-                <h3>execute SQL</h3>
-                <textarea id="input" placeholder="sql query" rows=5 cols="80">select d.*,  group_concat(m.data) as tags from TextMetadata as m, DocumentHasTextMetadata as has, Documents as d where has.document_uuid = d.uuid and has.metadata_uuid = m.uuid and has.name = 'tag' group by d.uuid;</textarea>
-                <button id="submit" type="button">submit</button>
-            </div>
-            <div id="results" class="window">
-                <h3>SQL results</h3>
-            </div>
-            <div id="documents" class="window">
-                <h3>Documents</h3>
-                <hr />
-                <ol id="document-list">
-                </ol>
-
-            </div>
-            <div id="notes" class="window">
-                <h3>Notes <small class="notes-size"><span class="notes-size">0</span> notes</small></h3>
-                <hr />
-                <small><code class="notes-query"></code></small>
-                <nav aria-label="pagination">
-                    <ul class="pagination">
-                        <li><a href=""><span aria-hidden="true">«</span><span class="visuallyhidden">previous set of pages</span></a></li>
-                        <li><a href=""><span class="visuallyhidden">page </span>1</a></li>
-                        <li><a href="" aria-current="page"><span class="visuallyhidden">page </span>2</a></li>
-                        <li><a href=""><span class="visuallyhidden">page </span>3</a></li>
-                        <li><a href=""><span class="visuallyhidden">page </span>4</a></li>
-                        <li><a href=""><span class="visuallyhidden">next set of pages</span><span aria-hidden="true">»</span></a></li>
-                    </ul>
-                    <p>4000 per page</p>
-                </nav>
-
-            </div>
-            <div id="note" class="window">
-                <h3>Note <small class="note-id"></small></h3>
-                <hr />
-                <small><code class="note-query"></code></small>
-                <h4 class="title"></h4>
-                <hr />
-                <div class="show">
-                </div>
-                <hr />
-                <small style="display: none;"><code class="refs-query"></code></small>
-                <h4>backreflinks</h4>
-                <small><code class="backrefs-query"></code></small>
-                <ul class="backrefs">
-                </ul>
-            </div>
-        </main>
-    </body>
+          });
+          tables.appendChild(tableCreate(tbl_query, columns, values));
+          location.hash = 'bd0491452c0a5e7681dc50efed94e950';
+          try {
+            open_reflink(new Event(''));
+          } catch (err) {
+            console.log(err);
+            let p = document.createElement("p");
+            p.style.color = "red";
+            let inner = document.createTextNode(err.toString());
+            p.appendChild(inner);
+            results.appendChild(p);
+          }
+        } else {
+          console.dir("response was ", requestData);
+        }
+      });
+  }
+  oReq.send(null);
+});
+function open_page(event) {
+  event.preventDefault();
+  if (!items) {
+    return;
+  }
+  num = event.target ? parseInt(event.target.dataset.page, 10) : 1;
+  console.log(num);
+  var ol = document.querySelector('div#notes ol');
+  ol.innerHTML = '';
+  totalPages = Math.ceil(items.length / 2000);
+  if (!num || isNaN(num) || num > totalPages || num < 1) {
+    return;
+  }
+  var pag = paginator(items, num, 2000);
+  ol.start = pag.offset + 1;
+  pag.data.forEach(i => {
+    var li = document.createElement('li');
+    var a = make_reflink(i[0], i[1]);
+    li.appendChild(a);
+    ol.appendChild(li);
+  });
+}
+// Run a query without reading the results
+//db.run("CREATE TABLE test (col1, col2);");
+// Insert two rows: (1,111) and (2,222)
+//db.run("INSERT INTO test VALUES (?,?), (?,?)", [1,111,2,222]);
+// Prepare a statement
+//var stmt = db.prepare("SELECT * FROM test WHERE col1 BETWEEN $start AND $end");
+//stmt.getAsObject({$start:1, $end:1}); // {col1:1, col2:111}
+// Bind new values
+//stmt.bind({$start:1, $end:2});
+//while(stmt.step()) { //
+//var row = stmt.getAsObject();
+//console.log('Here is a row: ' + JSON.stringify(row));
+//}
+if (document.readyState === 'loading') { // Loading hasn't finished yet
+  document.addEventListener('DOMContentLoaded', add_listeners);
+} else { // `DOMContentLoaded` has already fired
+  add_listeners();
+}
+function run_query(db, sql) {
+  var stmt = db.prepare(sql);
+  var columns = null;
+  var values = Array();
+  try {
+    while (stmt.step()) { //
+      var row = stmt.getAsObject();
+      values.push(Object.values(row));
+      columns = Object.keys(row);
+    }
+    stmt.free();
+    return [columns, values];
+  } catch (err) {
+    console.log(sql);
+    console.log(err);
+    let p = document.createElement("p");
+    p.style.color = "red";
+    let inner = document.createTextNode(err.toString());
+    p.appendChild(inner);
+    results.appendChild(p);
+    throw err;
+  }
+}
+function paginator(items, current_page, per_page_items) {
+  let page = current_page || 1,
+    per_page = per_page_items || 10,
+    offset = (page - 1) * per_page,
+    paginatedItems = Array.prototype.slice.call(Array.prototype.slice.call(items, offset), 0, per_page_items),
+    total_pages = Math.ceil(items.length / per_page);
+  return {
+    page: page,
+    offset: offset,
+    per_page: per_page,
+    pre_page: page - 1 ? page - 1 : null,
+    next_page: (total_pages > page) ? page + 1 : null,
+    total: items.length,
+    total_pages: total_pages,
+    data: paginatedItems
+  };
+}
+function add_listeners() {
+  const button = document.querySelector('#submit');
+  const tables = document.querySelector('#tables');
+  const documents = document.querySelector('#documents');
+  const notes = document.querySelector('#notes');
+  const note = document.querySelector('#note div.show');
+  const input = document.querySelector('#input');
+  const results = document.querySelector('#results');
+  button.addEventListener('click', event => {
+    let table = document.createElement("table");
+    let tbody = document.createElement("tbody");
+    //table.appendChild(tbody);
+    results.innerHTML = "";
+    //results.appendChild(table);
+    var sql = input.value;
+    try {
+      var [columns, values] = run_query(db, sql);
+      console.dir(columns);
+      console.dir(values);
+      if (values.length == 0) {
+        let p = document.createElement("p");
+        p.style.color = "red";
+        let inner = document.createTextNode("No results.");
+        p.appendChild(inner);
+        results.appendChild(p);
+        return;
+      }
+      //let tr = document.createElement("tr");
+      //let td = document.createElement("td");
+      //let inner = document.createTextNode(JSON.stringify(row));
+      //td.appendChild(inner);
+      //tr.appendChild(td);
+      //tbody.appendChild(tr);
+      results.appendChild(tableCreate(sql, columns, values));
+    } catch (err) {
+      console.log(err);
+      let p = document.createElement("p");
+      p.style.color = "red";
+      let inner = document.createTextNode(err.toString());
+      p.appendChild(inner);
+      results.appendChild(p);
+    }
+  });
+}
+    </script>
+  </head>
+  <body>
+    <noscript> This demo loads a <a href="./zettel.db.gz">compressed sqlite database</a> and runs sqlite on your browser using <a rel="external nofollow" href="https://sql.js.org/">sql.js</a>. Enable javascript if you must, and proceed. </noscript>
+    <main>
+      <div id="tables" class="window">
+        <h3>SQL tables</h3>
+        <hr />
+      </div>
+      <div id="history" class="window">
+        <h3>Navigation history</h3>
+        <hr />
+        <ol>
+        </ol>
+      </div>
+      <div class="input window">
+        <h3>execute SQL</h3>
+        <textarea id="input" placeholder="sql query" rows=5 cols="80">select d.*,  group_concat(m.data) as tags from TextMetadata as m, DocumentHasTextMetadata as has, Documents as d where has.document_uuid = d.uuid and has.metadata_uuid = m.uuid and has.name = 'tag' group by d.uuid;</textarea>
+        <button id="submit" type="button">submit</button>
+      </div>
+      <div id="results" class="window">
+        <h3>SQL results</h3>
+      </div>
+      <div id="documents" class="window">
+        <h3>Documents</h3>
+        <hr />
+        <ol id="document-list">
+        </ol>
+      </div>
+      <div id="notes" class="window">
+        <h3>Notes <small class="notes-size"><span class="notes-size">0</span> notes</small></h3>
+        <hr />
+        <small><code class="notes-query"></code></small>
+        <nav aria-label="pagination">
+          <ul class="pagination">
+            <li><a href=""><span aria-hidden="true">«</span><span class="visuallyhidden">previous set of pages</span></a></li>
+            <li><a href=""><span class="visuallyhidden">page </span>1</a></li>
+            <li><a href="" aria-current="page"><span class="visuallyhidden">page </span>2</a></li>
+            <li><a href=""><span class="visuallyhidden">page </span>3</a></li>
+            <li><a href=""><span class="visuallyhidden">page </span>4</a></li>
+            <li><a href=""><span class="visuallyhidden">next set of pages</span><span aria-hidden="true">»</span></a></li>
+          </ul>
+          <p>2000 per page</p>
+        </nav>
+      </div>
+      <div id="loading" class="window">
+        <label for="progress">Loading:</label>
+        <progress id="progress" max="100" value="0">0%</progress>
+      </div>
+      <div id="note" class="window">
+        <h3>Note <small class="note-id"></small></h3>
+        <hr />
+        <small><code class="note-query"></code></small>
+        <h4 class="title"></h4>
+        <hr />
+        <div class="show">
+        </div>
+        <hr />
+        <small style="display: none;"><code class="refs-query"></code></small>
+        <h4>backreflinks</h4>
+        <small><code class="backrefs-query"></code></small>
+        <ul class="backrefs">
+        </ul>
+      </div>
+    </main>
+  </body>
 </html>
