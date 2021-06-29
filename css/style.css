@@ -146,7 +146,7 @@ body>header:before {
   top: -2vmin;
 }
 
-h1.banner {
+span.banner {
   --hover-delay: .15s;
   --transition-fn: cubic-bezier(.19,1,.22,1);
   --cover-width: min(323px,16vw);
@@ -156,6 +156,7 @@ h1.banner {
   font-variation-settings: "opsz"8, "GRAD"0.55;
   /* fallback */
   font-size: 3rem;
+  font-weight: bolder;
   /* scale with viewport width size */
   font-size: min(5vw, 3rem);
   font-size: clamp(5vw, 3rem, 10vw);
@@ -172,7 +173,7 @@ h1.banner {
 }
 
 @supports (background-clip: text) or (-webkit-background-clip: text)  {
-  h1.banner {
+  span.banner {
     color: transparent;
     background: radial-gradient(var(--spoiled-orange) 12%, var(--blood) 22%);
     background-size: 3px 4px;
@@ -184,7 +185,7 @@ h1.banner {
 }
 
 @supports not ((background-clip: text) or (-webkit-background-clip: text)) {
-  h1.banner {
+  span.banner {
     --dark-blood: #5c1212;
     letter-spacing: 2px;
     text-shadow: 1px 1px 0px var(--dark-blood), -1px -1px 0px var(--dark-blood), -2px 2px 0px var(--dark-blood);
@@ -192,7 +193,7 @@ h1.banner {
   }
 }
 
-h1.shadow {
+span.shadow {
   color: transparent;
   background: none;
   text-shadow: 1px 1px #484848;
@@ -200,15 +201,15 @@ h1.shadow {
 }
 
 
-.index h1.banner {
+.index span.banner {
   /* fallback */
   font-size: 6rem;
   /* scale with viewport width size */
   font-size: min(10vw, 6rem);
 }
 
-h1.banner:before,
-h1.banner:after {
+span.banner:before,
+span.banner:after {
   content: "";
   align-self: center;
   border: 1px outset var(--spoiled-orange);
@@ -225,8 +226,8 @@ h1.banner:after {
   text-shadow: none;
 }
 
-.index h1.banner:before,
-.index h1.banner:after {
+.index span.banner:before,
+.index span.banner:after {
   width: 3rem;
   width: min(6vw, 3rem);
   height: 0.8rem;
@@ -260,28 +261,28 @@ h1.banner:after {
       margin-top: 3rem;
     }
 
-    h1.banner {
+    span.banner {
       --cover-width: min(323px,50vw);
     }
 
-    details.click[open] h1.click:before {
+    details.click[open] span.click:before {
       grid-column: 1;
       grid-row: 2;
     }
 
-    details.click[open] h1.click:after {
+    details.click[open] span.click:after {
       grid-column: 1;
       grid-row: 3;
     }
   }
 
   @media (min-width: 1000px) {
-    details.click[open] h1.click:before {
+    details.click[open] span.click:before {
       grid-column: 2 / span 1;
       grid-row: 1;
     }
 
-    details.click[open] h1.click:after {
+    details.click[open] span.click:after {
       grid-column: 2 / span 1;
       grid-row: 2;
     }
@@ -297,7 +298,7 @@ div.h1.banner {
   right: 20%;
 }
 
-details.click[open] h1.click {
+details.click[open] span.click {
   /* on click, the left grid item is lost and the column gap is lost as well so
    * compensate with the same value used for the column gap */
   margin-left: var(--column-gap);
@@ -308,7 +309,7 @@ details.click[open] h1.click {
   position: relative;
 }
 
-details.click[open] h1.click:after {
+details.click[open] span.click:after {
   content: attr(title);
   border: none;
   font-size: .7rem;
@@ -332,7 +333,7 @@ details.click[open] h1.click:after {
   -webkit-background-clip: none;
 }
 
-details.click[open] h1.click:before {
+details.click[open] span.click:before {
   border: none;
   background-color: var(--bg-color);
   background-image: url(https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Dracula-First-Edition-1897.jpg/344px-Dracula-First-Edition-1897.jpg);
