@@ -547,7 +547,7 @@ blockquote> :last-child {
   margin-bottom: 0;
 }
 
-footer {
+body>footer {
   text-align: center;
   font-weight: 800;
   font-variation-settings: "opsz"8;
@@ -560,17 +560,17 @@ footer {
   grid-column: span 12;
 }
 
-.index footer {
+body.index>footer {
   margin-top: 2rem;
 }
 
-footer a {
+body>footer a {
   color: #999;
   text-decoration: initial;
   text-decoration-color: #999;
 }
 
-footer a:visited {
+body>footer a:visited {
   color: #999;
   text-decoration: initial;
   text-decoration-color: #999;
@@ -697,6 +697,13 @@ article {
   grid-column: 1 / span 12;
 }
 
+article>footer {
+  background: #f58a79;
+  outline: 2px solid var(--blood);
+  border-radius: 3px;
+  padding: 5px;
+  color: black;
+}
 
 aside {
   background: #80808021;
