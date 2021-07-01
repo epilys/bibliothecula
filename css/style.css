@@ -18,6 +18,11 @@ p {
   white-space: initial;
 }
 
+
+img {
+  display: inline-block;
+}
+
 span.nobr {
   white-space: nowrap;
 }
