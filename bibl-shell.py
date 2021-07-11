@@ -1348,6 +1348,8 @@ class Shell:
             detect_types=sqlite3.PARSE_COLNAMES | sqlite3.PARSE_DECLTYPES,
             isolation_level=None if self.options.autocommit else "DEFERRED",
         )
+        if options.create_db:
+            self.conn.executescript(SCHEMA)
         self.conn.row_factory = sqlite3.Row
         self.database = Database(
             self.conn, self.options.db_name, verbose=options.verbose
@@ -1380,6 +1382,7 @@ class Shell:
             "db": db,
             "SHELL_BANNER": SHELL_BANNER,
             "LONG_SHELL_BANNER": LONG_SHELL_BANNER,
+            "SCHEMA": SCHEMA,
             # classes
             "UUID": uuid.UUID,
             "Database": Database,
@@ -1481,6 +1484,326 @@ class Shell:
         )
 
 
+r"""generated with:
+schema = open('docs/schema.sql', 'r').read()
+schema = re.sub(r"\/\*(?:(?:[^*]|\*(?!<\/)|\s)+?)\*\/","", schema)
+schema = schema.replace("\n\n\n","\n\n").strip()
+
+extended_schema = open('docs/extended-schema.sql', 'r').read()
+extended_schema = re.sub(r"\/\*(?:(?:[^*]|\*(?!<\/)|\s)+?)\*\/","", extended_schema)
+extended_schema = extended_schema.replace("\n\n\n","\n\n").strip()
+"""
+SCHEMA = r"""CREATE TABLE IF NOT EXISTS "Documents" (
+        "uuid" CHARACTER(32) NOT NULL PRIMARY KEY,
+        "title" TEXT NOT NULL,
+        "title_suffix" TEXT DEFAULT NULL, -- disambiguate documents with matching titles
+        "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT unique_title UNIQUE ("title", "title_suffix")
+);
+
+CREATE TABLE IF NOT EXISTS "TextMetadata" (
+        "uuid" CHARACTER(32) NOT NULL PRIMARY KEY,
+        "name" TEXT NULL,
+        "data" TEXT NOT NULL,
+        "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "data")
+);
+
+CREATE TABLE IF NOT EXISTS "BinaryMetadata" (
+        "uuid" CHARACTER(32) NOT NULL PRIMARY KEY,
+        "name" TEXT NULL,
+        "data" BLOB NOT NULL,
+        "compressed" BOOLEAN NOT NULL DEFAULT (0),
+        "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "data")
+);
+
+CREATE TABLE IF NOT EXISTS "DocumentHasTextMetadata" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "name" TEXT NOT NULL,
+        "document_uuid" CHARACTER(32) NOT NULL
+            REFERENCES "Documents" ("uuid") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+        "metadata_uuid" CHARACTER(32) NOT NULL
+            REFERENCES "TextMetadata" ("uuid") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+        "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "document_uuid", "metadata_uuid")
+);
+
+CREATE TABLE IF NOT EXISTS "DocumentHasBinaryMetadata" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "name" TEXT NOT NULL,
+        "document_uuid" CHARACTER(32) NOT NULL
+            REFERENCES "Documents" ("uuid") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+        "metadata_uuid" CHARACTER(32) NOT NULL
+            REFERENCES "BinaryMetadata" ("uuid") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+        "created" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        "last_modified" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
+        CONSTRAINT uniqueness UNIQUE ("name", "document_uuid", "metadata_uuid")
+);
+
+CREATE VIEW document_title_authors (rowid, title, authors) AS
+SELECT uuid, title, authors
+FROM
+    Documents AS d
+    LEFT JOIN (SELECT
+            document_uuid,
+            GROUP_CONCAT (data, '\0') AS authors
+        FROM
+            DocumentHasTextMetadata AS dhtm
+            JOIN TextMetadata AS tm ON dhtm.metadata_uuid = tm.uuid
+        WHERE
+            tm.name = 'author'
+        GROUP BY
+            document_uuid) AS authors ON d.uuid = authors.document_uuid;
+
+CREATE VIRTUAL TABLE IF NOT EXISTS document_title_authors_text_view_fts
+    USING fts5(title, authors, full_text, uuid UNINDEXED);
+
+CREATE TRIGGER insert_full_text_trigger
+    AFTER INSERT ON DocumentHasBinaryMetadata
+WHEN EXISTS (
+        SELECT
+            *
+        FROM
+            BinaryMetadata AS bm
+        WHERE
+            NEW.metadata_uuid = bm.uuid
+            AND bm.name = 'full-text')
+BEGIN
+    INSERT INTO document_title_authors_text_view_fts (
+        uuid, title, authors, full_text)
+SELECT
+    d.rowid AS rowid, d.title AS title,
+    d.authors AS authors, bm.data AS full_text
+FROM
+    document_title_authors AS d,
+    BinaryMetadata AS bm
+WHERE
+    d.rowid = NEW.document_uuid
+    AND bm.name = 'full-text'
+    AND bm.uuid = NEW.metadata_uuid;
+END;
+
+CREATE TRIGGER IF NOT EXISTS delete_full_text_trigger
+       AFTER DELETE ON DocumentHasBinaryMetadata
+        WHEN OLD.name = 'full-text'
+       BEGIN
+       DELETE FROM document_title_authors_text_view_fts
+       WHERE uuid = OLD.document_uuid;
+END;
+
+
+
+CREATE VIRTUAL TABLE backrefs_fts USING fts5(referrer, target);
+
+CREATE TABLE IF NOT EXISTS "undolog" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "action" TEXT NOT NULL,
+        "tbl_name" TEXT NOT NULL,
+        "sql" TEXT NOT NULL,
+        "timestamp" DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS uuidtok USING fts3tokenize(
+    'unicode61',
+    "tokenchars=-1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "separators= "
+);
+
+CREATE TRIGGER update_last_modified_binary
+    AFTER UPDATE ON BinaryMetadata
+BEGIN
+    UPDATE BinaryMetadata
+    SET "last_modified" = strftime('%Y-%m-%d %H:%M:%f', 'now')
+    WHERE uuid = NEW.uuid;
+END;
+
+CREATE TRIGGER update_last_modified_document
+    AFTER UPDATE ON Documents
+BEGIN
+    UPDATE Documents
+    SET "last_modified" = strftime('%Y-%m-%d %H:%M:%f', 'now')
+    WHERE uuid = NEW.uuid;
+END;
+
+CREATE TRIGGER update_last_modified_has_binary
+    AFTER UPDATE ON DocumentHasBinaryMetadata
+BEGIN
+    UPDATE DocumentHasBinaryMetadata
+    SET "last_modified" = strftime('%Y-%m-%d %H:%M:%f', 'now')
+    WHERE id = NEW.id;
+END;
+
+CREATE TRIGGER update_last_modified_has_text
+    AFTER UPDATE ON DocumentHasTextMetadata
+BEGIN
+    UPDATE DocumentHasTextMetadata
+    SET "last_modified" = strftime('%Y-%m-%d %H:%M:%f', 'now')
+    WHERE id = NEW.id;
+END;
+
+CREATE TRIGGER update_last_modified_text
+    AFTER UPDATE ON TextMetadata
+BEGIN
+    UPDATE TextMetadata
+    SET "last_modified" = strftime('%Y-%m-%d %H:%M:%f', 'now')
+    WHERE uuid = NEW.uuid;
+END;
+
+CREATE TRIGGER binary_dt
+BEFORE DELETE ON BinaryMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('DELETE','BinaryMetadata','INSERT INTO
+  BinaryMetadata(uuid,name,data,compressed,created,last_modified)
+  VALUES('||OLD.uuid||','||quote(OLD.name)||','||quote(OLD.data)||','||
+  quote(OLD.compressed)||','||quote(OLD.created)||','||
+  quote(OLD.last_modified)||')');
+END;
+
+CREATE TRIGGER binary_it
+AFTER INSERT ON BinaryMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('INSERT','BinaryMetadata','DELETE FROM BinaryMetadata WHERE
+  uuid='||quote(NEW.uuid));
+END;
+
+CREATE TRIGGER binary_ut
+AFTER UPDATE ON BinaryMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('UPDATE','BinaryMetadata','UPDATE BinaryMetadata SET
+  uuid='||quote(OLD.uuid)||',name='||quote(OLD.name)||',data='||
+  quote(OLD.data)||',compressed='||quote(OLD.compressed)||
+  ',created='||quote(OLD.created)||',last_modified='||
+  quote(OLD.last_modified)||'
+  WHERE uuid='||quote(OLD.uuid));
+END;
+
+CREATE TRIGGER has_binary_dt
+    BEFORE DELETE ON DocumentHasBinaryMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('DELETE','DocumentHasBinaryMetadata','INSERT INTO
+  DocumentHasBinaryMetadata(id,name,document_uuid,metadata_uuid,created,last_modified)
+  VALUES('||OLD.id||','||quote(OLD.name)||','||quote(OLD.document_uuid)||
+  ','||quote(OLD.metadata_uuid)||','||quote(OLD.created)||','||
+  quote(OLD.last_modified)||')');
+END;
+
+CREATE TRIGGER has_binary_it
+AFTER INSERT ON DocumentHasBinaryMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('INSERT','DocumentHasBinaryMetadata',
+  'DELETE FROM DocumentHasBinaryMetadata WHERE id='||NEW.id);
+END;
+
+CREATE TRIGGER has_binary_ut
+    AFTER UPDATE ON DocumentHasBinaryMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('UPDATE','DocumentHasBinaryMetadata','UPDATE DocumentHasBinaryMetadata
+  SET
+  id='||OLD.id||',name='||quote(OLD.name)||',document_uuid='||
+  quote(OLD.document_uuid)||',metadata_uuid='||quote(OLD.metadata_uuid)||
+  ',created='||quote(OLD.created)||',last_modified='||
+  quote(OLD.last_modified)||'
+   WHERE id='||OLD.id);
+END;
+
+CREATE TRIGGER has_text_dt
+BEFORE DELETE ON DocumentHasTextMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('DELETE','DocumentHasTextMetadata','INSERT INTO
+  DocumentHasTextMetadata(id,name,document_uuid,metadata_uuid,created,last_modified)
+    VALUES('||OLD.id||','||quote(OLD.name)||','||
+    quote(OLD.document_uuid)||','||quote(OLD.metadata_uuid)||',
+    '||quote(OLD.created)||','||quote(OLD.last_modified)||')');
+END;
+
+CREATE TRIGGER has_text_it
+AFTER INSERT ON DocumentHasTextMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('INSERT','DocumentHasTextMetadata',
+  'DELETE FROM DocumentHasTextMetadata WHERE id='||NEW.id);
+END;
+
+CREATE TRIGGER has_text_ut
+AFTER UPDATE ON DocumentHasTextMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('UPDATE','DocumentHasTextMetadata','UPDATE DocumentHasTextMetadata
+     SET id='||OLD.id||',name='||quote(OLD.name)||',
+     document_uuid='||quote(OLD.document_uuid)||',
+     metadata_uuid='||quote(OLD.metadata_uuid)||',
+     created='||quote(OLD.created)||',
+     last_modified='||quote(OLD.last_modified)||'
+   WHERE id='||OLD.id);
+END;
+
+CREATE TRIGGER doc_dt
+BEFORE DELETE ON Documents
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql) VALUES('DELETE','Documents',
+  'INSERT INTO Documents(uuid,title,title_suffix,created,last_modified)
+    VALUES('||OLD.uuid||','||quote(OLD.title)||','||quote(OLD.title_suffix)||
+           ','||quote(OLD.created)||','||quote(OLD.last_modified)||')');
+END;
+
+CREATE TRIGGER doc_it
+AFTER INSERT ON Documents
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql) VALUES('INSERT','Documents',
+  'DELETE FROM Documents WHERE uuid='||quote(NEW.uuid));
+END;
+
+CREATE TRIGGER doc_ut
+AFTER UPDATE ON Documents
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql) VALUES('UPDATE','Documents',
+  'UPDATE Documents SET uuid='||quote(OLD.uuid)||',title='||quote(OLD.title)||',
+  title_suffix='||quote(OLD.title_suffix)||',created='||quote(OLD.created)||',
+  last_modified='||quote(OLD.last_modified)||'
+   WHERE uuid='||quote(OLD.uuid));
+END;
+
+CREATE TRIGGER text_dt
+BEFORE DELETE ON TextMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('DELETE','TextMetadata','INSERT INTO
+  TextMetadata(uuid,name,data,created,last_modified)
+  VALUES('||OLD.uuid||','||quote(OLD.name)||','||quote(OLD.data)||
+      ','||quote(OLD.created)||','||quote(OLD.last_modified)||')');
+END;
+
+CREATE TRIGGER text_it
+AFTER INSERT ON TextMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql) VALUES('INSERT','TextMetadata',
+  'DELETE FROM TextMetadata WHERE uuid='||quote(NEW.uuid));
+END;
+
+CREATE TRIGGER text_ut
+AFTER UPDATE ON TextMetadata
+BEGIN
+  INSERT INTO undolog(action,tbl_name,sql)
+  VALUES('UPDATE','TextMetadata','UPDATE TextMetadata SET
+  uuid='||quote(OLD.uuid)||',name='||quote(OLD.name)||',data='||
+  quote(OLD.data)||',created='||quote(OLD.created)||',last_modified='||
+  quote(OLD.last_modified)||'
+  WHERE uuid='||quote(OLD.uuid));
+END;
+"""
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="bibl-shell.py",
@@ -1514,6 +1837,22 @@ if __name__ == "__main__":
         action="store_true",
         help="When using plain Python, ignore the PYTHONSTARTUP environment variable and ~/.pythonrc.py script.",
     )
+    parser.add_argument(
+        "--create-db",
+        action="store_true",
+        help="Create database with given filename. Filename must not already exist.",
+    )
     args = parser.parse_args()
+    path = Path(args.db_name)
+    if path.is_dir():
+        raise IsADirectoryError(f"{path} is a directory.")
+    if not path.exists() and not args.create_db:
+        raise FileNotFoundError(
+            f"{path} doesn't exist and you have not specified --create-db."
+        )
+    if args.create_db and path.exists():
+        raise FileExistsError(
+            f"{path} already exists and you have specified --create-db."
+        )
     with Shell(args) as shell:
         shell.run()
