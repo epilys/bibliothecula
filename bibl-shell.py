@@ -117,6 +117,7 @@ class Database:
         self.conn = conn
         self.verbose = verbose
         self.cur = self.conn.cursor()
+        self.created_objects: List[AnyDatabaseObject] = []
 
     @staticmethod
     def from_path(
@@ -475,6 +476,32 @@ class Database:
                 )
         return [self.convert_has_binary_metadata(r) for r in self.cur.fetchall()]
 
+    def create_document(
+        self, title: str, title_suffix: Optional[str] = None
+    ) -> "Document":
+        new_uuid = uuid.uuid4()
+        new_doc = Document(self, new_uuid, title, title_suffix)
+        new_doc.save()
+        self.created_objects.append(new_doc)
+        return new_doc
+
+    def create_tag(self, data: str) -> "TextMetadata":
+        return self.create_text_metadata("tag", data)
+
+    def create_text_metadata(self, name: str, data: str) -> "TextMetadata":
+        new_uuid = uuid.uuid4()
+        new_m = TextMetadata(self, new_uuid, name, data)
+        new_m.save()
+        self.created_objects.append(new_m)
+        return new_m
+
+    def create_binary_metadata(self, name: str, data: bytes) -> "BinaryMetadata":
+        new_uuid = uuid.uuid4()
+        new_m = BinaryMetadata(self, new_uuid, name, data)
+        new_m.save()
+        self.created_objects.append(new_m)
+        return new_m
+
 
 class DbObject:
     """Abstract class for database objectsa"""
@@ -521,8 +548,6 @@ class DbObject:
     def edit(
         self,
         program: Optional[str] = None,
-        stdin: bool = True,
-        use_tempfile: bool = False,
     ):
         """Open with program. The following things are tried in this order:
         - if program is not None, launch subprocess
@@ -533,8 +558,6 @@ class DbObject:
         (This method only modifies the object and doesn't save to database)
 
         :param program: str: path or name of program to launch (Default value = None)
-        :param stdin: bool: program will expect input from stdin (Default value = True)
-        :param use_tempfile: program will expect input from file given as first argument Default value = False)
 
         """
         ...
@@ -591,28 +614,58 @@ class Document(DbObject):
         """Returns the column value used as primary key"""
         return self.uuid
 
-    def edit_metadata(
+    def __iadd__(
         self,
-        program: Optional[str] = None,
-        stdin: bool = True,
-        use_tempfile: bool = False,
+        obj: Union[
+            "TextMetadata",
+            "BinaryMetadata",
+        ],
     ):
-        """Edit metadata as JSON with program. The following things are tried in this order:
-        - if program is not None, launch subprocess
-        - launch with $EDITOR
-        - fail
-        Returns the modified objects, including self if modified.
-
-        (This method only modifies the object and doesn't save to database)
-
-        :param program: str:  (Default value = None)
-        :param stdin: bool:  (Default value = True)
-        :param use_tempfile: Default value = False)
-        :param program: str:  (Default value = None)
-        :param stdin: bool:  (Default value = True)
-
-        """
-        raise NotImplementedError("")
+        if not (isinstance(obj, TextMetadata) or isinstance(obj, BinaryMetadata)):
+            raise TypeError(
+                f"Can only add TextMetadata, BinaryMetadata to Document. You added: {type(obj)}."
+            )
+        if isinstance(obj, TextMetadata):
+            table_name = "DocumentHasTextMetadata"
+            is_text = True
+        else:
+            table_name = "DocumentHasBinaryMetadata"
+            is_text = False
+        with self.db.conn as conn:
+            cur = conn.cursor()
+            created = datetime.datetime.now()
+            cur.execute(
+                f"INSERT OR ABORT INTO {table_name} (name, document_uuid, metadata_uuid, created, last_modified) VALUES (?, ?, ?, ?, ?)",
+                [
+                    obj.name,
+                    self.pk().hex,
+                    obj.pk().hex,
+                    created,
+                    created,
+                ],
+            )
+            cur.execute(
+                f"SELECT * FROM {table_name} WHERE name = ? AND document_uuid = ? AND metadata_uuid = ? AND created = ?",
+                [
+                    obj.name,
+                    self.pk().hex,
+                    obj.pk().hex,
+                    created,
+                ],
+            )
+            new_rows = cur.fetchall()
+            if len(new_rows) == 1:
+                new_has: Any[DocumentHasTextMetadata, DocumentHasBinaryMetadata]
+                if is_text:
+                    new_has = self.db.convert_has_text_metadata(new_rows[0])
+                else:
+                    new_has = self.db.convert_has_binary_metadata(new_rows[0])
+                self.db.created_objects.append(new_has)
+            else:
+                raise Exception(
+                    f"Insert {table_name} returned {len(new_rows)} items: {[r.keys() for r in new_rows]}"
+                )
+        return self
 
     def create_file(
         self, filename: str, mime_type: Optional[str], program: Optional[str] = None
@@ -684,6 +737,7 @@ class Document(DbObject):
                 )
 
             new_text_metadata = self.db.convert_text_metadata(new_rows[0])
+            self.db.created_objects.append(new_text_metadata)
             cur.execute(
                 f"INSERT OR IGNORE INTO DocumentHasTextMetadata (name, document_uuid, metadata_uuid, created, last_modified) VALUES (?, ?, ?, ?, ?)",
                 [
@@ -725,6 +779,7 @@ class Document(DbObject):
             new_rows = cur.fetchall()
             if len(new_rows) == 1:
                 new_file = self.db.convert_binary_metadata(new_rows[0])
+                self.db.created_objects.append(new_file)
             else:
                 raise Exception(
                     f"Insert BinaryMetadata returned {len(new_rows)} items: {[r.keys() for r in new_rows]}"
@@ -854,14 +909,30 @@ class Document(DbObject):
     def __str__(self):
         return f"<Document {repr(self.title)}{'' if self.title_suffix else ''}{self.title_suffix if self.title_suffix else ''}>"
 
-    def edit(self, program: str = None, stdin: bool = True, use_tempfile=False):
+    def edit(
+        self,
+        program: Optional[str] = None,
+    ):
         raise NotImplementedError("")
 
     def save(self):
-        raise NotImplementedError("")
+        """This method persists modifications to database."""
+        # insert if not already existing
+        self.db.cur.execute(
+            f"INSERT OR IGNORE INTO Documents(uuid, title, title_suffix, last_modified) VALUES (?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))",
+            [self.uuid.hex, self.title, self.title_suffix],
+        )
+        self.db.cur.execute(
+            f"UPDATE Documents SET title=?, title_suffix=?, last_modified = strftime('%Y-%m-%d %H:%M:%f', 'now') WHERE uuid = '{self.uuid.hex}'",
+            [self.title, self.title_suffix],
+        )
 
     def delete(self):
-        raise NotImplementedError("")
+        self.db.cur.execute(
+            f"DELETE FROM Documents WHERE uuid = '{self.uuid.hex}'",
+            [],
+        )
+        return True
 
 
 class TextMetadata(DbObject):
@@ -892,40 +963,89 @@ class TextMetadata(DbObject):
     def __str__(self):
         return f"<TextMetadata {repr(self.name)} {repr(self.data)}>"
 
-    def edit_rel(
-        self,
-        program: Optional[str] = None,
-        stdin: bool = True,
-        use_tempfile: bool = False,
-    ):
-        """Edit relationships as JSON with program. The following things are tried in this order:
-        - if program is not None, launch subprocess
-        - launch with $EDITOR
-        - fail
-        Returns the modified objects.
+    def size(self) -> int:
+        return len(self.data)
 
-        (This method only modifies the object and doesn't save to database)
+    def save_data_to_path(self, path: Union[Path, str]):
+        """
 
-        :param program: Default value = None)
-        :param stdin: Default value = True)
-        :param use_tempfile: Default value = False)
+        :param path:
 
         """
-        raise NotImplementedError("")
+
+        if isinstance(path, str):
+            path = Path(path)
+        if path.is_dir():
+            print(path, "is a directory.")
+            return -1
+        if path.exists():
+            print(path, "already exists, won't overwrite existing files.")
+            return -1
+        with open(path, "w") as f:
+            wrote = f.write(self.data)
+        print("Wrote", sizeof_fmt(wrote), "from database entry", self.pk(), "to", path)
+        return wrote
+
+    def replace_data_with(self, path: Union[Path, str]):
+        """
+
+        :param path:
+
+        """
+        if isinstance(path, str):
+            path = Path(path)
+        if path.is_dir():
+            print(path, "is a directory.")
+            return -1
+        if not path.exists():
+            print(path, "doesn't exist.")
+            return -1
+        with open(path, "r") as f:
+            new_data = f.read()
+            new_len = len(new_data)
+            self.data = new_data
+            print("Wrote", sizeof_fmt(new_len), "to database entry", self.pk())
+            return new_len
 
     def edit(
         self,
         program: Optional[str] = None,
-        stdin: bool = True,
-        use_tempfile: bool = False,
     ):
-        raise NotImplementedError("")
+        if program is None:
+            program = "xdg-open"
+        size_before = self.size()
+        print("Editing ", self.name, f" with {repr(program)}")
+        with tempfile.NamedTemporaryFile() as tmpfile:
+            full_path = tmpfile.name
+            tmpfile.write(self.data.encode("utf-8"))
+            tmpfile.flush()
+            mtime = os.stat(full_path).st_mtime
+            ret = subprocess.run([program, full_path])
+            mtime2 = os.stat(full_path).st_mtime
+            if mtime2 == mtime:
+                print("No change detected, aborting.")
+            else:
+                tmpfile.seek(0)
+                self.replace_data_with(full_path)
 
     def save(self):
-        raise NotImplementedError("")
+        """This method persists modifications to database."""
+        # insert if not already existing
+        self.db.cur.execute(
+            f"INSERT OR IGNORE INTO TextMetadata(uuid, name, data, last_modified) VALUES (?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))",
+            [self.uuid.hex, self.name, self.data],
+        )
+        self.db.cur.execute(
+            f"UPDATE TextMetadata SET name=?, data=?, last_modified = strftime('%Y-%m-%d %H:%M:%f', 'now') WHERE uuid = '{self.uuid.hex}'",
+            [self.name, self.data],
+        )
 
     def delete(self):
-        raise NotImplementedError("")
+        self.db.cur.execute(
+            f"DELETE FROM TextMetadata WHERE uuid = '{self.uuid.hex}'",
+            [],
+        )
+        return True
 
 
 class BinaryMetadata(DbObject):
@@ -968,14 +1088,6 @@ class BinaryMetadata(DbObject):
         except Exception as exc:
             print(exc)
         return len(self.data)
-
-    def edit_rel(self, program: Optional[str] = None):
-        """
-
-        :param program: Default value = None)
-
-        """
-        raise NotImplementedError("")
 
     def save_blob_to_path(self, path: Union[Path, str]):
         """
@@ -1041,8 +1153,6 @@ class BinaryMetadata(DbObject):
     def edit(
         self,
         program: Optional[str] = None,
-        stdin: bool = True,
-        use_tempfile: bool = False,
     ):
         if program is None:
             program = "xdg-open"
@@ -1063,13 +1173,22 @@ class BinaryMetadata(DbObject):
 
     def save(self):
         """This method persists modifications to database."""
+        # insert if not already existing
+        self.db.cur.execute(
+            f"INSERT OR IGNORE INTO BinaryMetadata(uuid, name, data, last_modified) VALUES (?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))",
+            [self.uuid.hex, self.name, self.data],
+        )
         self.db.cur.execute(
             f"UPDATE BinaryMetadata SET name=?, data=?, last_modified = strftime('%Y-%m-%d %H:%M:%f', 'now') WHERE uuid = '{self.uuid.hex}'",
             [self.name, self.data],
         )
 
     def delete(self):
-        raise NotImplementedError("")
+        self.db.cur.execute(
+            f"DELETE FROM BinaryMetadata WHERE uuid = '{self.uuid.hex}'",
+            [],
+        )
+        return True
 
 
 class DocumentHasTextMetadata(DbObject):
@@ -1115,27 +1234,30 @@ class DocumentHasTextMetadata(DbObject):
     def __str__(self):
         return f"<DocumentHasTextMetadata {repr(self.name)}>"
 
-    def edit_associations(self, program: Optional[str] = None):
-        """
-
-        :param program: Default value = None)
-
-        """
-        raise NotImplementedError("")
-
     def edit(
         self,
         program: Optional[str] = None,
-        stdin: bool = True,
-        use_tempfile: bool = False,
     ):
         raise NotImplementedError("")
 
     def save(self):
-        raise NotImplementedError("")
+        """This method persists modifications to database."""
+        # insert if not already existing
+        self.db.cur.execute(
+            f"INSERT OR IGNORE INTO DocumentHasTextMetadata(id, name, document_uuid, metadata_uuid, last_modified) VALUES (?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))",
+            [self.id, self.name, self.document_uuid, self.metadata_uuid],
+        )
+        self.db.cur.execute(
+            f"UPDATE DocumentHasTextMetadata SET name=?, document_uuid=?, metadata_uuid=?, last_modified = strftime('%Y-%m-%d %H:%M:%f', 'now') WHERE id = ?",
+            [self.name, self.document_uuid.hex, self.metadata_uuid.hex, self.id],
+        )
 
     def delete(self):
-        raise NotImplementedError("")
+        self.db.cur.execute(
+            f"DELETE FROM DocumentHasTextMetadata WHERE id = ?",
+            [self.id],
+        )
+        return True
 
 
 class DocumentHasBinaryMetadata(DbObject):
@@ -1181,27 +1303,30 @@ class DocumentHasBinaryMetadata(DbObject):
     def __str__(self):
         return f"<DocumentHasBinaryMetadata {repr(self.name)}>"
 
-    def edit_associations(self, program: Optional[str] = None):
-        """
-
-        :param program: Default value = None)
-
-        """
-        raise NotImplementedError("")
-
     def edit(
         self,
         program: Optional[str] = None,
-        stdin: bool = True,
-        use_tempfile: bool = False,
     ):
         raise NotImplementedError("")
 
     def save(self):
-        raise NotImplementedError("")
+        """This method persists modifications to database."""
+        # insert if not already existing
+        self.db.cur.execute(
+            f"INSERT OR IGNORE INTO DocumentHasBinaryMetadata(id, name, document_uuid, metadata_uuid, last_modified) VALUES (?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))",
+            [self.id, self.name, self.document_uuid, self.metadata_uuid],
+        )
+        self.db.cur.execute(
+            f"UPDATE DocumentHasBinaryMetadata SET name=?, document_uuid=?, metadata_uuid=?, last_modified = strftime('%Y-%m-%d %H:%M:%f', 'now') WHERE id = ?",
+            [self.name, self.document_uuid.hex, self.metadata_uuid.hex, self.id],
+        )
 
     def delete(self):
-        raise NotImplementedError("")
+        self.db.cur.execute(
+            f"DELETE FROM DocumentHasBinaryMetadata WHERE id = ?",
+            [self.id],
+        )
+        return True
 
 
 class Shell:
@@ -1254,6 +1379,7 @@ class Shell:
             "conn": conn,
             "db": db,
             "SHELL_BANNER": SHELL_BANNER,
+            "LONG_SHELL_BANNER": LONG_SHELL_BANNER,
             # classes
             "UUID": uuid.UUID,
             "Database": Database,
