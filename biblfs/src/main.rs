@@ -5,7 +5,7 @@ use fuser::{
     ReplyDirectoryPlus, ReplyEmpty, ReplyEntry, ReplyIoctl, ReplyLock, ReplyLseek, ReplyOpen,
     ReplyStatfs, ReplyWrite, ReplyXattr, Request, TimeOrNow,
 };
-use libc::{ENOENT, ENOSYS};
+use libc::{EEXIST, ENODATA, ENOENT, ENOSYS, ENOTSUP, ERANGE};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{self, Connection, DatabaseName, Result};
 use signal_hook::{consts::SIGINT, iterator::Signals};
@@ -14,6 +14,7 @@ use std::convert::TryInto;
 use std::dbg;
 use std::env;
 use std::ffi::OsStr;
+use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -28,7 +29,7 @@ pub struct Uuid(Uuid_);
 
 impl FromSql for Uuid {
     fn column_result(value: ValueRef) -> FromSqlResult<Self> {
-        String::column_result(value).map(|as_str| Uuid(Uuid_::parse_str(&as_str).unwrap()))
+        String::column_result(value).map(|as_str| Self(Uuid_::parse_str(&as_str).unwrap()))
     }
 }
 
@@ -40,6 +41,119 @@ impl ToSql for Uuid {
             .encode_lower(&mut Uuid_::encode_buffer())
             .to_string()
             .into())
+    }
+}
+
+macro_rules! xattr_text_document_uuid_by_name {
+    ($tx:ident, $ino:ident, $name:ident, $t_uuid:ident) => {{
+        let mut stmt = $tx
+            .prepare(
+                "SELECT t.uuid as uuid FROM DocumentHasTextMetadata as h, DocumentHasBinaryMetadata as hb, TextMetadata as t WHERE h.document_uuid = hb.document_uuid AND hb.metadata_uuid = ? AND t.uuid = h.metadata_uuid AND t.name = ?",
+            )
+            .unwrap();
+        $t_uuid = TextMetadataUuid(
+            stmt.query_row(rusqlite::params![&$ino.0, &$name], |row| {
+                let tu: Uuid = row.get(0)?;
+                Ok(tu)
+            })
+            .unwrap(),
+        );
+    }};
+}
+
+macro_rules! documents_that_have_xattr {
+    ($tx:ident, $xattr_metadata_uuid:ident, $result_vec:ident) => {{
+        let mut stmt = $tx
+            .prepare(
+                "SELECT h.document_uuid as document_uuid FROM DocumentHasTextMetadata as h WHERE h.metadata_uuid = ?",
+            )
+            .unwrap();
+        let iter = stmt
+            .query_map(rusqlite::params![&$xattr_metadata_uuid.0], |row| {
+                let du: Uuid = row.get(0)?;
+                Ok(DocumentUuid(du))
+            })
+        .unwrap();
+        for i in iter {
+            $result_vec.push(i.unwrap());
+        }
+    }};
+    ($tx:ident, $xattr_metadata_uuid:ident, $result_vec:ident except $document_uuid:ident) => {{
+        let mut stmt = $tx
+            .prepare(
+                "SELECT h.document_uuid as document_uuid FROM DocumentHasTextMetadata as h WHERE h.metadata_uuid = ? AND h.document_uuid != ?",
+            )
+            .unwrap();
+        let iter = stmt
+            .query_map(rusqlite::params![&$xattr_metadata_uuid.0, &$document_uuid.0], |row| {
+                let du: Uuid = row.get(0)?;
+                Ok(DocumentUuid(du))
+            })
+        .unwrap();
+        for i in iter {
+            $result_vec.push(i.unwrap());
+        }
+    }};
+}
+
+impl Uuid {
+    fn new() -> Self {
+        Self(Uuid_::new_v4())
+    }
+
+    fn get_xattr(&self, fs: &BiblFs, name: &str) -> Option<Vec<u8>> {
+        let mut stmt = fs
+            .connection
+            .prepare(
+                "SELECT t.data as data FROM DocumentHasTextMetadata as h, DocumentHasBinaryMetadata as hb, TextMetadata as t WHERE h.document_uuid = hb.document_uuid AND hb.metadata_uuid = ? AND t.uuid = h.metadata_uuid AND t.name = ?",
+            )
+            .unwrap();
+        let attr_iter = stmt
+            .query_map(rusqlite::params![&self.0, name], |row| {
+                let v: String = row.get(0)?;
+                Ok(v)
+            })
+            .unwrap();
+        let mut ret = vec![];
+        for attr in attr_iter {
+            let v = attr.unwrap();
+            ret.extend(v.into_bytes().into_iter());
+            ret.push(0);
+        }
+        if ret.is_empty() {
+            return None;
+        }
+        Some(ret)
+    }
+
+    fn has_xattr(&self, fs: &BiblFs, name: &str) -> bool {
+        {
+            let mut stmt = fs
+            .connection
+            .prepare(
+                "SELECT t.uuid, t.name, t.data FROM DocumentHasTextMetadata as h, DocumentHasBinaryMetadata as hb, TextMetadata as t WHERE h.document_uuid = hb.document_uuid AND hb.metadata_uuid = ? AND t.uuid = h.metadata_uuid",
+            )
+            .unwrap();
+            let iter = stmt
+                .query_map(rusqlite::params![self], |row| {
+                    let uuid: Uuid = row.get(0)?;
+                    let name: String = row.get(1)?;
+                    let data: String = row.get(2)?;
+                    Ok((uuid, name, data))
+                })
+                .unwrap();
+            dbg!("has_xattr", name);
+            for i in iter {
+                dbg!(i.unwrap());
+            }
+        }
+        let mut stmt = fs
+            .connection
+            .prepare(
+                "SELECT t.name FROM DocumentHasTextMetadata as h, DocumentHasBinaryMetadata as hb, TextMetadata as t WHERE h.document_uuid = hb.document_uuid AND hb.metadata_uuid = ? AND t.uuid = h.metadata_uuid AND t.name = ?",
+            )
+            .unwrap();
+        stmt.exists(rusqlite::params![self, name]).unwrap()
     }
 }
 
@@ -162,6 +276,10 @@ impl DateTime {
     fn to_systemtime(&self) -> SystemTime {
         std::time::UNIX_EPOCH + std::time::Duration::from_secs(self.0.unix_timestamp() as u64)
     }
+
+    fn from_systemtime(val: SystemTime) -> Self {
+        Self(OffsetDateTime::from(val))
+    }
 }
 
 fn make_dir_attr(ino: INode) -> FileAttr {
@@ -206,7 +324,7 @@ fn make_file_attr(
         ctime: ctime.0.to_systemtime(),
         crtime: UNIX_EPOCH,
         kind: FileType::RegularFile,
-        perm: 0o644,
+        perm: 0o744,
         nlink: 1,
         uid,
         gid,
@@ -274,9 +392,18 @@ struct BiblFs {
     rev_inodes_tags: HashMap<TextMetadataUuid, INode>,
     query_dir: QueryDir,
     next_inode: INode,
+    // config
+    never_replace_common_tags: bool,
 }
 
 impl BiblFs {
+    fn document_uuid_for_ino(&self, ino: &INode) -> Option<DocumentUuid> {
+        self.rev_inodes_doc
+            .iter()
+            .find(|(_, v)| v.contains(ino))
+            .map(|(k, _)| *k)
+    }
+
     fn select(&mut self, query_str: String) {
         self.query_dir.query = QueryType::Fts(query_str);
         self.execute_query();
@@ -321,9 +448,7 @@ impl BiblFs {
 
 impl Filesystem for BiblFs {
     fn lookup(&mut self, _req: &Request, parent: INode, name: &OsStr, reply: ReplyEntry) {
-        dbg!("lookup");
-        dbg!(&parent);
-        dbg!(&name);
+        println!("lookup parent {:?} name {:?}", &parent, &name);
         match parent {
             parent if parent == TAG_DIR_INO => {
                 if let Some(uuid) = self.rev_tags.get(name.to_str().unwrap()) {
@@ -420,8 +545,7 @@ impl Filesystem for BiblFs {
     }
 
     fn getattr(&mut self, _req: &Request, ino: INode, reply: ReplyAttr) {
-        dbg!("getattr");
-        dbg!(&ino);
+        eprintln!("getattr ino {}", &ino);
         match ino {
             i if i == ROOT_DIR_INO => reply.attr(&TTL, &make_dir_attr(ROOT_DIR_INO)),
             i if i == TAG_DIR_INO => reply.attr(&TTL, &make_dir_attr(TAG_DIR_INO)),
@@ -494,13 +618,10 @@ impl Filesystem for BiblFs {
         _lock: Option<u64>,
         reply: ReplyData,
     ) {
-        dbg!("read");
-        dbg!(&ino);
-        dbg!(&_fh);
-        dbg!(&offset);
-        dbg!(&size);
-        dbg!(&_flags);
-        dbg!(&_lock);
+        println!(
+            "read ino {:?} _fh {:?} offset {:?} size {:?} _flags {:?} _lock {:?}",
+            &ino, &_fh, &offset, &size, &_flags, &_lock
+        );
         match ino {
             i if i == SQL_TEXT_FILE_INO => {
                 if !self.query_dir.executed {
@@ -536,13 +657,12 @@ impl Filesystem for BiblFs {
             reply.error(ENOENT);
             return;
         }
-        dbg!(offset);
         let row_id = self.files[&self.inodes_map[&ino]].row_id;
         let blob = self
             .connection
             .blob_open(DatabaseName::Main, "BinaryMetadata", "data", row_id, true)
             .unwrap();
-        dbg!(blob.len());
+        dbg!(offset, blob.len());
         let mut buf =
             vec![0; std::cmp::min(size as usize, blob.len().saturating_sub(offset as usize))];
         dbg!(buf.len());
@@ -559,10 +679,10 @@ impl Filesystem for BiblFs {
         offset: i64,
         mut reply: ReplyDirectory,
     ) {
-        print!("readdir: ");
-        dbg!(&ino);
-        dbg!(&_fh);
-        dbg!(&offset);
+        println!(
+            "readdir: ino {:?} _fh {:?} offset {:?}",
+            &ino, &_fh, &offset
+        );
 
         let entries = match ino {
             ino if ino == TAG_DIR_INO => {
@@ -597,8 +717,7 @@ impl Filesystem for BiblFs {
                     ),
                 ];
                 let query_s = &self.query_dir.query_inodes[&ino];
-                println!("{}", query_s);
-                dbg!(&self.query_dir);
+                println!("query_s {} query_dir = {:?}", query_s, &self.query_dir);
                 if !(self.query_dir.query.is_fts()
                     && query_s == self.query_dir.query.as_ref()
                     && self.query_dir.executed)
@@ -711,20 +830,72 @@ impl Filesystem for BiblFs {
         flags: Option<u32>,
         reply: ReplyAttr,
     ) {
-        println!("setattr: {}", ino);
-        dbg!(&mode);
-        dbg!(&uid);
-        dbg!(&gid);
-        dbg!(&size);
-        dbg!(&atime);
-        dbg!(&mtime);
-        dbg!(&ctime);
-        dbg!(&fh);
-        dbg!(&crtime);
-        dbg!(&chgtime);
-        dbg!(&bkuptime);
-        dbg!(&flags);
-        reply.error(ENOSYS);
+        println!(
+            "setattr:  ino = {:?} &mode = {:?} &uid = {:?} &gid = {:?} &size = {:?} &atime =
+            {:?} &mtime = {:?} &ctime = {:?} &fh = {:?} &crtime = {:?} &chgtime = {:?} &bkuptime =
+            {:?} &flags = {:?}",
+            ino,
+            &mode,
+            &uid,
+            &gid,
+            &size,
+            &atime,
+            &mtime,
+            &ctime,
+            &fh,
+            &crtime,
+            &chgtime,
+            &bkuptime,
+            &flags
+        );
+        if mode.is_some()
+            || uid.is_some()
+            || gid.is_some()
+            || size.is_some()
+            || atime.is_some()
+            || mtime.is_some()
+            || ctime.is_some()
+            || fh.is_some()
+            || crtime.is_some()
+            || chgtime.is_some()
+            || bkuptime.is_some()
+            || flags.is_some()
+        {
+            return reply.error(ENOSYS);
+        }
+        if let Some(u) = self.inodes_map.get(&ino) {
+            let f = &self.files[u];
+            if mtime.is_none() && ctime.is_none() {
+                return reply.attr(
+                    &TTL,
+                    &make_file_attr(ino, f.size, FILE_BLOCKS, f.last_modified, f.created),
+                );
+            }
+            let f = self.files.get_mut(u).unwrap();
+            match mtime {
+                Some(TimeOrNow::SpecificTime(mtime)) => {
+                    f.last_modified = LastModifiedTime(DateTime::from_systemtime(mtime));
+                }
+                Some(TimeOrNow::Now) => {
+                    f.last_modified =
+                        LastModifiedTime(DateTime::from_systemtime(SystemTime::now()));
+                }
+                None => {}
+            }
+            match ctime {
+                Some(ctime) => {
+                    f.created = CreatedTime(DateTime::from_systemtime(ctime));
+                }
+                None => {}
+            }
+            let f = &self.files[u];
+            return reply.attr(
+                &TTL,
+                &make_file_attr(ino, f.size, FILE_BLOCKS, f.last_modified, f.created),
+            );
+        } else {
+            return reply.error(ENOENT);
+        }
     }
 
     /// Read symbolic link.
@@ -1002,13 +1173,138 @@ impl Filesystem for BiblFs {
         _req: &Request<'_>,
         ino: INode,
         name: &OsStr,
-        _value: &[u8],
-        _flags: i32,
+        value: &[u8],
+        flags: i32,
         _position: u32,
         reply: ReplyEmpty,
     ) {
-        println!("setxattr: {} name {}", ino, name.to_str().unwrap());
-        reply.error(ENOSYS);
+        println!(
+            "setxattr: {} name {:?} value: {:?}",
+            ino,
+            name.to_str().unwrap(),
+            String::from_utf8_lossy(value)
+        );
+        let Some(name) = name.to_str() else {
+            println!(
+                "name is not a valid UTF-8 string, which is not supported. Value was {:?}",
+                String::from_utf8_lossy(name.as_bytes())
+            );
+            reply.error(ENOTSUP);
+            return;
+        };
+        let Ok(value) = core::str::from_utf8(value) else {
+            println!(
+                "value is not a valid UTF-8 string, which is not supported. Value was {:?}",
+                String::from_utf8_lossy(value)
+            );
+            reply.error(ENOTSUP);
+            return;
+        };
+        let create_flag = flags & libc::XATTR_CREATE > 0;
+        let replace_flag = flags & libc::XATTR_REPLACE > 0;
+        if !self.inodes_map.contains_key(&ino) {
+            reply.error(dbg!(ENOENT));
+            return;
+        }
+        let u = &self.inodes_map[&ino];
+        let exists = u.0.has_xattr(&self, name);
+        if create_flag && exists {
+            reply.error(dbg!(EEXIST));
+            return;
+        } else if replace_flag && !exists {
+            reply.error(dbg!(ENODATA));
+            return;
+        }
+        println!("{}", u.0 .0.to_hyphenated());
+
+        let mut new_attr = Uuid::new();
+        let document_uuid = self.document_uuid_for_ino(&ino).unwrap();
+
+        let tx = self.connection.transaction().unwrap();
+        {
+            if exists {
+                let t_uuid: TextMetadataUuid;
+                xattr_text_document_uuid_by_name! { tx, u, name, t_uuid };
+                new_attr.0 = t_uuid.0 .0;
+                if replace_flag && self.never_replace_common_tags {
+                    let mut document_owner_uuids: Vec<DocumentUuid> = vec![];
+                    documents_that_have_xattr! { tx, t_uuid, document_owner_uuids except document_uuid };
+                    if !document_owner_uuids.is_empty() {
+                        println!(
+                            "Cannot replace an attribute that belongs to other documents as well:"
+                        );
+                        for du in document_owner_uuids {
+                            let doc = &self.documents[&du];
+                            println!(
+                                "Document {}{}{}{}{} [{}] has attribute {}.",
+                                doc.title,
+                                if doc.title_suffix.is_some() { " " } else { "" },
+                                if doc.title_suffix.is_some() { "(" } else { "" },
+                                if let Some(v) = doc.title_suffix.as_ref() {
+                                    &v
+                                } else {
+                                    ""
+                                },
+                                if doc.title_suffix.is_some() { ")" } else { "" },
+                                (du.0).0.to_hyphenated(),
+                                name,
+                            );
+                        }
+                        reply.error(ENOTSUP);
+                        return;
+                    }
+                }
+            }
+            let mut stmt = if create_flag {
+                tx
+            .prepare(
+                "INSERT OR ABORT INTO TextMetadata (uuid,name,data) VALUES(?,?,?) RETURNING uuid",
+            )
+            .unwrap()
+            } else {
+                tx
+            .prepare(
+                "INSERT OR REPLACE INTO TextMetadata (uuid,name,data) VALUES(?,?,?) RETURNING uuid",
+            )
+            .unwrap()
+            };
+            let res = stmt
+                .query_row(rusqlite::params![&new_attr, &name, value], |row| {
+                    let u: Uuid = row.get(0)?;
+                    Ok(u)
+                })
+                .unwrap();
+            assert_eq!(res, new_attr);
+            println!("New text metadata uuid is {}", new_attr.0.to_hyphenated());
+        }
+        {
+            let mut stmt = if create_flag {
+                tx
+                    .prepare(
+                        "INSERT OR ABORT INTO DocumentHasTextMetadata (name,document_uuid,metadata_uuid) VALUES(?,?,?) RETURNING id",
+                    )
+                    .unwrap()
+            } else {
+                tx
+                    .prepare(
+                        "INSERT OR IGNORE INTO DocumentHasTextMetadata (name,document_uuid,metadata_uuid) VALUES(?,?,?) RETURNING id",
+                    )
+                    .unwrap()
+            };
+            let res = stmt
+                .query_row(
+                    rusqlite::params!["xattr(7)", &document_uuid.0, &new_attr],
+                    |row| {
+                        let u: i64 = row.get(0)?;
+                        Ok(u)
+                    },
+                )
+                .unwrap();
+            println!("New has text metadata id is {}", res);
+        }
+
+        tx.commit().unwrap();
+        reply.ok();
     }
 
     /// Get an extended attribute.
@@ -1020,26 +1316,153 @@ impl Filesystem for BiblFs {
         _req: &Request<'_>,
         ino: INode,
         name: &OsStr,
-        _size: u32,
+        size: u32,
         reply: ReplyXattr,
     ) {
-        println!("getxattr: {} name {}", ino, name.to_str().unwrap());
-        reply.error(ENOSYS);
+        println!("getxattr: {} name {:?}", ino, name.to_str().unwrap());
+        if !self.inodes_map.contains_key(&ino) {
+            dbg!(reply.error(ENOENT));
+            return;
+        }
+        let u = &self.inodes_map[&ino];
+        println!("{}", u.0 .0.to_hyphenated());
+        let mut stmt = self
+            .connection
+            .prepare(
+                "SELECT t.data as data FROM DocumentHasTextMetadata as h, DocumentHasBinaryMetadata as hb, TextMetadata as t WHERE h.document_uuid = hb.document_uuid AND hb.metadata_uuid = ? AND t.uuid = h.metadata_uuid AND t.name = ?",
+            )
+            .unwrap();
+        let attr_iter = stmt
+            .query_map(
+                rusqlite::params![&u.0, dbg!(&name.to_str().unwrap())],
+                |row| {
+                    let v: String = row.get(0)?;
+                    dbg!(&v);
+                    Ok(v)
+                },
+            )
+            .unwrap();
+        let mut ret = vec![];
+        for attr in attr_iter {
+            let v = attr.unwrap();
+            dbg!(&v);
+            ret.extend(v.into_bytes().into_iter());
+            ret.push(0);
+        }
+        if ret.len() as u32 <= size {
+            reply.data(&ret);
+        } else if size > 0 {
+            reply.error(ERANGE);
+        } else {
+            reply.size(ret.len() as u32);
+        }
     }
 
     /// List extended attribute names.
     /// If `size` is 0, the size of the value should be sent with `reply.size()`.
     /// If `size` is not 0, and the value fits, send it with `reply.data()`, or
     /// `reply.error(ERANGE)` if it doesn't.
-    fn listxattr(&mut self, _req: &Request<'_>, ino: INode, _size: u32, reply: ReplyXattr) {
+    fn listxattr(&mut self, _req: &Request<'_>, ino: INode, size: u32, reply: ReplyXattr) {
         println!("listxattr: {}", ino);
-        reply.error(ENOSYS);
+        let u = &self.inodes_map[&ino];
+        println!("{}", u.0 .0.to_hyphenated());
+        let mut stmt = self
+            .connection
+            .prepare(
+                "SELECT t.name as name FROM DocumentHasTextMetadata as h, DocumentHasBinaryMetadata as hb, TextMetadata as t WHERE h.document_uuid = hb.document_uuid AND hb.metadata_uuid = ? AND t.uuid = h.metadata_uuid ORDER BY t.last_modified ASC",
+            )
+            .unwrap();
+        let mut ret = vec![];
+        let attr_iter = stmt
+            .query_map([&u.0], |row| {
+                let n: String = row.get(0)?;
+                Ok(n)
+            })
+            .unwrap();
+        for attr in attr_iter {
+            let n = attr.unwrap();
+            eprintln!("listxattr n = {}", &n);
+            ret.extend(n.into_bytes().into_iter());
+            ret.push(0);
+        }
+        eprintln!("listxattr reply data: {:?}", String::from_utf8_lossy(&ret));
+        if ret.len() as u32 <= size {
+            reply.data(&ret);
+        } else if size > 0 {
+            reply.error(ERANGE);
+        } else {
+            reply.size(ret.len() as u32);
+        }
     }
 
     /// Remove an extended attribute.
     fn removexattr(&mut self, _req: &Request<'_>, ino: INode, name: &OsStr, reply: ReplyEmpty) {
-        println!("removexattr: {} name {}", ino, name.to_str().unwrap());
-        reply.error(ENOSYS);
+        println!("removexattr: {} name {:?}", ino, name.to_str().unwrap(),);
+        let Some(name) = name.to_str() else {
+            println!(
+                "name is not a valid UTF-8 string, which is not supported. Value was {:?}",
+                String::from_utf8_lossy(name.as_bytes())
+            );
+            reply.error(ENOTSUP);
+            return;
+        };
+        if !self.inodes_map.contains_key(&ino) {
+            reply.error(dbg!(ENOENT));
+            return;
+        }
+        let u = &self.inodes_map[&ino];
+        dbg!(ino, &u, &name);
+        if !u.0.has_xattr(&self, name) {
+            return reply.error(dbg!(ENODATA));
+        }
+        println!("{}", u.0 .0.to_hyphenated());
+        let document_uuid = self
+            .rev_inodes_doc
+            .iter()
+            .find(|(_, v)| v.contains(&ino))
+            .unwrap()
+            .0;
+
+        let tx = self.connection.transaction().unwrap();
+        {
+            let mut document_owner_uuids: Vec<DocumentUuid> = vec![];
+            let t_uuid: TextMetadataUuid;
+            {
+                xattr_text_document_uuid_by_name! { tx, u, name, t_uuid };
+            }
+            {
+                documents_that_have_xattr! { tx, t_uuid, document_owner_uuids except document_uuid };
+            }
+            {
+                let mut stmt = tx
+                    .prepare(
+                        "DELETE FROM DocumentHasTextMetadata as h WHERE h.metadata_uuid = ? AND h.document_uuid = ? RETURNING document_uuid",
+                    )
+                    .unwrap();
+                let ret_du = stmt
+                    .query_row(rusqlite::params![&t_uuid.0, &document_uuid.0], |row| {
+                        let du: Uuid = row.get(0)?;
+                        Ok(DocumentUuid(du))
+                    })
+                    .unwrap();
+                assert_eq!(ret_du, *document_uuid);
+            }
+            if document_owner_uuids.is_empty() {
+                let mut stmt = tx
+                    .prepare("DELETE FROM TextMetadata as t WHERE t.uuid = ? RETURNING uuid")
+                    .unwrap();
+                let ret_tu_brute = stmt
+                    .query_row(rusqlite::params![&t_uuid.0], |row| {
+                        let tu: Uuid = row.get(0)?;
+                        Ok(TextMetadataUuid(tu))
+                    })
+                    .unwrap();
+                assert_eq!(ret_tu_brute, t_uuid);
+            }
+        }
+
+        tx.commit().unwrap();
+        reply.ok();
     }
 
     /// Check file access permissions.
@@ -1229,7 +1652,7 @@ fn main() -> Result<()> {
     let _verbosity: u64 = matches.occurrences_of("v");
     let db_path = matches.value_of("db").unwrap_or("bibliothecula.db");
     let connection =
-        Connection::open_with_flags(&db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+        Connection::open_with_flags(&db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE)?;
 
     let mountpoint = matches.value_of("mount-point").unwrap();
     /*
@@ -1271,6 +1694,7 @@ fn main() -> Result<()> {
             results: Ok(vec![]),
             query: QueryType::Sql(String::new()),
         },
+        never_replace_common_tags: false,
         next_inode: 6,
     };
     {
@@ -1288,6 +1712,7 @@ fn main() -> Result<()> {
             ref mut rev_inodes_tags,
             query_dir: _,
             ref mut next_inode,
+            never_replace_common_tags: _,
         } = &mut fs;
         let mut stmt =
             connection.prepare("SELECT uuid, data FROM TextMetadata WHERE name = 'tag'")?;
